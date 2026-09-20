@@ -1,0 +1,427 @@
+{
+  "_comment": "Controlled genre taxonomy. Open Library subjects are noisy (median 12 per work, 2550 distinct strings per 180 works), so mapping is deliberately conservative: anchored patterns, not greedy substrings. 'strong' patterns carry full confidence; 'weak' patterns only contribute when nothing strong matched. Edit this file and re-run the genre stage; raw_subjects is retained so no re-ingest is needed. Revised after the first full ingest: coverage gaps measured across 788 unmapped works drove looser anchors for poetry/young-adult, much broader technology coverage, bare 'fiction' as a weak literary-fiction signal, and a new art-design genre. raw_subjects is retained precisely so this can be iterated without re-fetching.",
+  "genres": [
+    {
+      "slug": "literary-fiction",
+      "name": "Literary Fiction",
+      "strong": [
+        "^literary fiction$",
+        "^fiction, literary"
+      ],
+      "weak": [
+        "^literature$",
+        "^novel",
+        "^fiction$",
+        "^fiction, general$",
+        "^fiction, psychological",
+        "^translations into english$"
+      ]
+    },
+    {
+      "slug": "historical-fiction",
+      "name": "Historical Fiction",
+      "strong": [
+        "^historical fiction$",
+        "^fiction, historical"
+      ],
+      "weak": [
+        "^historical romance$"
+      ]
+    },
+    {
+      "slug": "fantasy",
+      "name": "Fantasy",
+      "strong": [
+        "^fantasy$",
+        "^fantasy fiction$",
+        "^fiction, fantasy",
+        "^epic fantasy$"
+      ],
+      "weak": [
+        "^magic$",
+        "^wizards$",
+        "^dragons$"
+      ]
+    },
+    {
+      "slug": "science-fiction",
+      "name": "Science Fiction",
+      "strong": [
+        "^science fiction$",
+        "^fiction, science fiction",
+        "^science fiction,",
+        "^science fantasy$"
+      ],
+      "weak": [
+        "^dystopia",
+        "^space opera$",
+        "^time travel$"
+      ]
+    },
+    {
+      "slug": "mystery",
+      "name": "Mystery",
+      "strong": [
+        "^mystery$",
+        "^mystery fiction$",
+        "^fiction, mystery",
+        "^detective and mystery stories"
+      ],
+      "weak": [
+        "^detective",
+        "^private investigators$"
+      ]
+    },
+    {
+      "slug": "thriller",
+      "name": "Thriller",
+      "strong": [
+        "^thriller",
+        "^fiction, thriller",
+        "^suspense$",
+        "^psychological thriller"
+      ],
+      "weak": [
+        "^espionage$",
+        "^spy stories$"
+      ]
+    },
+    {
+      "slug": "romance",
+      "name": "Romance",
+      "strong": [
+        "^romance$",
+        "^romance fiction$",
+        "^fiction, romance",
+        "^love stories$"
+      ],
+      "weak": [
+        "^man-woman relationships$",
+        "^courtship$"
+      ]
+    },
+    {
+      "slug": "horror",
+      "name": "Horror",
+      "strong": [
+        "^horror$",
+        "^horror fiction$",
+        "^fiction, horror",
+        "^horror tales"
+      ],
+      "weak": [
+        "^ghost stories$",
+        "^vampires$",
+        "^haunted houses$"
+      ]
+    },
+    {
+      "slug": "young-adult",
+      "name": "Young Adult",
+      "strong": [
+        "^young adult fiction",
+        "^young adult literature",
+        "^ya fiction"
+      ],
+      "weak": [
+        "^teenagers",
+        "^high schools$"
+      ]
+    },
+    {
+      "slug": "childrens",
+      "name": "Children's",
+      "strong": [
+        "^children's fiction$",
+        "^children's stories$",
+        "^picture books",
+        "^juvenile fiction$"
+      ],
+      "weak": [
+        "^juvenile literature$",
+        "^children's literature$"
+      ]
+    },
+    {
+      "slug": "classics",
+      "name": "Classics",
+      "strong": [
+        "^classical literature$",
+        "^classics$"
+      ],
+      "weak": [
+        "^english literature$",
+        "^american literature$",
+        "^french literature$"
+      ]
+    },
+    {
+      "slug": "biography-memoir",
+      "name": "Biography & Memoir",
+      "strong": [
+        "^biography$",
+        "^autobiography$",
+        "^memoirs?$",
+        "biography$",
+        "^personal narratives"
+      ],
+      "weak": [
+        "^diaries$",
+        "^correspondence$"
+      ]
+    },
+    {
+      "slug": "history",
+      "name": "History",
+      "strong": [
+        "^history$",
+        "^world war, 19",
+        "^military history$"
+      ],
+      "weak": [
+        "-- history$",
+        "^civilization",
+        "^antiquities$"
+      ]
+    },
+    {
+      "slug": "science",
+      "name": "Science",
+      "strong": [
+        "^science$",
+        "^physics$",
+        "^biology$",
+        "^astronomy$",
+        "^chemistry$",
+        "^evolution",
+        "^mathematics$"
+      ],
+      "weak": [
+        "^natural history$",
+        "^scientists$"
+      ]
+    },
+    {
+      "slug": "psychology",
+      "name": "Psychology",
+      "strong": [
+        "^psychology$",
+        "^psychological aspects$",
+        "^cognitive psychology$",
+        "^mental health$"
+      ],
+      "weak": [
+        "^human behavior$",
+        "^emotions$"
+      ]
+    },
+    {
+      "slug": "business",
+      "name": "Business",
+      "strong": [
+        "^business$",
+        "^business & economics$",
+        "^economics$",
+        "^management$",
+        "^entrepreneurship$",
+        "^leadership$"
+      ],
+      "weak": [
+        "^success in business$",
+        "^marketing$",
+        "^finance"
+      ]
+    },
+    {
+      "slug": "self-help",
+      "name": "Self-Help",
+      "strong": [
+        "^self-help",
+        "^self help",
+        "^conduct of life$",
+        "^self-actualization"
+      ],
+      "weak": [
+        "^success$",
+        "^habit",
+        "^motivation"
+      ]
+    },
+    {
+      "slug": "philosophy",
+      "name": "Philosophy",
+      "strong": [
+        "^philosophy$",
+        "^ethics$",
+        "^stoicism$",
+        "^metaphysics$"
+      ],
+      "weak": [
+        "^philosophers$",
+        "^logic$"
+      ]
+    },
+    {
+      "slug": "technology",
+      "name": "Technology",
+      "strong": [
+        "^computers?$",
+        "^computer programming",
+        "^programming",
+        "^software engineering$",
+        "^artificial intelligence$",
+        "^computer science$",
+        "^computer software",
+        "^computer security$",
+        "^agile software",
+        "^coding theory$",
+        "^data structures",
+        "^object-oriented programming",
+        "^operating systems \\(computers\\)$",
+        "^electronic digital computers$",
+        "^machine learning$",
+        "\\(computer program language\\)$",
+        "^web site development"
+      ],
+      "weak": [
+        "^technology",
+        "^internet$",
+        "^data processing$",
+        "^hackers$",
+        "^information technology$"
+      ]
+    },
+    {
+      "slug": "poetry",
+      "name": "Poetry",
+      "strong": [
+        "^poetry\\b",
+        "^poems\\b",
+        "^american poetry",
+        "^english poetry"
+      ],
+      "weak": [
+        "^verse$",
+        "^sonnets$"
+      ]
+    },
+    {
+      "slug": "travel",
+      "name": "Travel",
+      "strong": [
+        "^travel$",
+        "^voyages and travels$",
+        "description and travel$"
+      ],
+      "weak": [
+        "^guidebooks$"
+      ]
+    },
+    {
+      "slug": "cooking",
+      "name": "Cooking",
+      "strong": [
+        "^cooking$",
+        "^cookbooks?$",
+        "^cookery",
+        "^recipes$"
+      ],
+      "weak": [
+        "^food$",
+        "^baking$"
+      ]
+    },
+    {
+      "slug": "true-crime",
+      "name": "True Crime",
+      "strong": [
+        "^true crime$",
+        "^crime$",
+        "^murder -- case studies$"
+      ],
+      "weak": [
+        "^criminals$",
+        "^serial murderers$"
+      ]
+    },
+    {
+      "slug": "graphic-novels",
+      "name": "Graphic Novels",
+      "strong": [
+        "^graphic novels?$",
+        "^comic books, strips",
+        "^comics",
+        "^manga$"
+      ],
+      "weak": [
+        "^cartoons and comics$"
+      ]
+    },
+    {
+      "slug": "art-design",
+      "name": "Art & Design",
+      "strong": [
+        "^art$",
+        "^arts$",
+        "^design$",
+        "^creativity$",
+        "^artists$",
+        "^painting$",
+        "^photography$",
+        "^architecture$",
+        "^graphic design$"
+      ],
+      "weak": [
+        "^aesthetics$",
+        "^creative ability",
+        "^art appreciation$"
+      ]
+    }
+  ],
+  "conflicts": [
+    [
+      "childrens",
+      "horror"
+    ],
+    [
+      "childrens",
+      "true-crime"
+    ],
+    [
+      "childrens",
+      "business"
+    ],
+    [
+      "cooking",
+      "horror"
+    ],
+    [
+      "business",
+      "fantasy"
+    ],
+    [
+      "technology",
+      "romance"
+    ]
+  ],
+  "noise": [
+    "accessible book",
+    "protected daisy",
+    "in library",
+    "overdrive",
+    "internet archive",
+    "large type books",
+    "reading level",
+    "lending library",
+    "open library staff picks",
+    "new york times bestseller",
+    "new york times reviewed",
+    "nyt:",
+    "popular print disabled",
+    "long now manual for civilization",
+    "textbooks",
+    "browsers",
+    "kindle",
+    "audiobook"
+  ]
+}

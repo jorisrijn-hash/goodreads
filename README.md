@@ -10,7 +10,7 @@ catalogue comes from [Open Library](https://openlibrary.org) (CC0).
 
 ## Status
 
-**Phase 1 — Core Reading System.** Checkpoint A (foundation) complete.
+**Phase 1 — Core Reading System.** Checkpoints A (foundation) and B (catalogue) complete.
 
 The Phase 1 loop is: Discover/Search → Book Detail → Save → My Library →
 Reading Progress → Reading Journal. Ratings, reviews, social features,
@@ -94,12 +94,21 @@ empty database.
 
 ## Data ingest
 
-Not yet implemented — Checkpoint B. The approach is documented in
-[docs/decisions/0001](docs/decisions/0001-open-library-as-sole-data-source.md);
-the evidence behind it is in [docs/spike/](docs/spike/README.md).
+The catalogue is built offline from Open Library (CC0) and written into our own
+PostgreSQL. No external API is called while serving a user request.
 
-Target catalogue: ~10,000 canonical works
-(~8,500 established, ~1,200 from 2018–2022, up to 300 vetted 2023–2026).
+```bash
+cd backend
+INGEST_CONTACT=you@example.com \
+  JAVA_HOME=$(brew --prefix openjdk@25) \
+  ./mvnw spring-boot:run -Dspring-boot.run.profiles=ingest
+```
+
+The pipeline is resumable and idempotent — re-running updates rows rather than
+duplicating them, and replays cached responses instead of re-fetching.
+
+Full documentation, including the selection strategy, quality gates, rate limiting and
+genre taxonomy: **[docs/INGEST.md](docs/INGEST.md)**.
 
 ## Demo account
 
@@ -109,9 +118,12 @@ Not yet implemented — Checkpoint C.
 
 ```
 backend/     Spring Boot API — all business logic
+  .../ingest/  Catalogue pipeline (a task, not a service)
 frontend/    Next.js app — rendering and interaction only
 docs/
+  INGEST.md  How the catalogue is produced
   spike/     Book-data spike: scripts, raw datasets, measured findings
   decisions/ Architecture decision records
 scripts/     Local development helpers
+data/        Ingest artifacts and covers (gitignored, regenerable)
 ```

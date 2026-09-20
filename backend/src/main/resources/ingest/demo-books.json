@@ -1,0 +1,30 @@
+{
+  "_comment": "Books the case-study demo narrative references. They are harvested by targeted search and exempted from the bucket caps, but NOT from the quality gates — a demo book with no cover or no page count is still rejected. No metadata is ever fabricated to make one pass.",
+  "queries": [
+    "The Secret History Donna Tartt",
+    "Dune Frank Herbert",
+    "The Creative Act Rick Rubin",
+    "Tomorrow and Tomorrow and Tomorrow Gabrielle Zevin",
+    "Project Hail Mary Andy Weir",
+    "Pride and Prejudice Jane Austen",
+    "To Kill a Mockingbird Harper Lee",
+    "The Great Gatsby Fitzgerald",
+    "Kafka on the Shore Murakami",
+    "Nineteen Eighty-Four Orwell",
+    "Sapiens Yuval Noah Harari",
+    "Clean Code Robert Martin",
+    "The Hitchhiker's Guide to the Galaxy Douglas Adams",
+    "Gone Girl Gillian Flynn",
+    "Educated Tara Westover",
+    "Normal People Sally Rooney",
+    "Circe Madeline Miller",
+    "The Midnight Library Matt Haig",
+    "Atomic Habits James Clear",
+    "Thinking Fast and Slow Kahneman",
+    "The Name of the Wind Patrick Rothfuss",
+    "Never Let Me Go Kazuo Ishiguro",
+    "Beloved Toni Morrison",
+    "The Road Cormac McCarthy",
+    "A Little Life Hanya Yanagihara"
+  ]
+}

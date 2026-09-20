@@ -1,11 +1,10 @@
 package dev.jorisvrr.reading.config;
 
 import jakarta.servlet.DispatcherType;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -16,6 +15,9 @@ import org.springframework.security.web.SecurityFilterChain;
  * reviewable stance rather than relying on framework defaults.
  */
 @Configuration
+// The filter chain only applies to the web application. The ingest task runs with
+// web-application-type=none, where HttpSecurity does not exist.
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 class SecurityConfig {
 
     @Bean
@@ -37,12 +39,4 @@ class SecurityConfig {
                 .build();
     }
 
-    /**
-     * Argon2id. Deliberately chosen over BCrypt: it is memory-hard and is the
-     * current OWASP recommendation for new applications.
-     */
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
-    }
 }

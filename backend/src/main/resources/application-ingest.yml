@@ -1,0 +1,24 @@
+# Catalogue ingest task. Not a server: the app runs the pipeline and exits.
+#   ./mvnw spring-boot:run -Dspring-boot.run.profiles=ingest
+spring:
+  main:
+    web-application-type: none
+
+ingest:
+  # Open Library allows 3 req/s for clients that identify themselves with a contact
+  # address, versus 1 req/s anonymously. Set INGEST_CONTACT in your environment.
+  user-agent: "goodreads-redesign-casestudy/0.1 (${INGEST_CONTACT:jorisvrr@gmail.com})"
+  data-dir: ${INGEST_DATA_DIR:./data/ingest}
+  cover-dir: ${INGEST_COVER_DIR:./data/covers}
+  target:
+    established: ${INGEST_TARGET_ESTABLISHED:8500}
+    contemporary: ${INGEST_TARGET_CONTEMPORARY:1200}
+    recent: ${INGEST_TARGET_RECENT:300}
+  pages:
+    established: ${INGEST_PAGES_ESTABLISHED:6}
+    contemporary: ${INGEST_PAGES_CONTEMPORARY:3}
+    recent: ${INGEST_PAGES_RECENT:2}
+
+logging:
+  level:
+    dev.jorisvrr.reading.ingest: INFO
