@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: ${TEST_DATABASE_URL:jdbc:postgresql://localhost:5432/goodreads_test}
+    username: ${DATABASE_USER:goodreads}
+    password: ${DATABASE_PASSWORD:goodreads_dev}
+  flyway:
+    clean-disabled: false
