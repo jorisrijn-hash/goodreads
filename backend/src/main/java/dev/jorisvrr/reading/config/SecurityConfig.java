@@ -1,42 +1,126 @@
 package dev.jorisvrr.reading.config;
 
+import dev.jorisvrr.reading.identity.AppUserDetailsService;
 import jakarta.servlet.DispatcherType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 /**
- * Checkpoint A security posture: the catalogue and health endpoints are public,
- * everything else is denied. Real session authentication arrives in Checkpoint C.
+ * Deny by default. Only the routes named here are reachable without a session.
  *
- * <p>This class exists from the first commit so the application has an explicit,
- * reviewable stance rather than relying on framework defaults.
+ * <p>The filter chain applies to the web application only — the ingest task runs with
+ * {@code web-application-type: none}, where {@code HttpSecurity} does not exist.
  */
 @Configuration
-// The filter chain only applies to the web application. The ingest task runs with
-// web-application-type=none, where HttpSecurity does not exist.
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 class SecurityConfig {
 
+    private final AppUserDetailsService userDetailsService;
+    private final PasswordEncoder passwordEncoder;
+    private final String allowedOrigin;
+
+    SecurityConfig(AppUserDetailsService userDetailsService, PasswordEncoder passwordEncoder,
+                   @Value("${app.frontend-origin:http://localhost:3000}") String allowedOrigin) {
+        this.userDetailsService = userDetailsService;
+        this.passwordEncoder = passwordEncoder;
+        this.allowedOrigin = allowedOrigin;
+    }
+
+    /** Shared so {@code SessionService} rotates the very same token store. */
+    @Bean
+    org.springframework.security.web.csrf.CsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
+    }
+
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // The browser reads this cookie and echoes it in the X-XSRF-TOKEN header. The
+        // plain handler (rather than the XOR default) is what makes the cookie value and
+        // the header value comparable, which a JavaScript client needs.
+        CsrfTokenRequestAttributeHandler csrfHandler = new CsrfTokenRequestAttributeHandler();
+        csrfHandler.setCsrfRequestAttributeName(null);
+
         return http
-                // CSRF is disabled only while the API is unauthenticated. It is
-                // re-enabled in Checkpoint C when cookie-based sessions arrive,
-                // because cookie auth is exactly what CSRF protection guards.
-                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Cookie-based sessions are exactly what CSRF protection exists for, so
+                // it is on for every state-changing request -- including login, which is
+                // vulnerable to login-CSRF (an attacker silently signing a victim into an
+                // account they control). Nothing is exempt.
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(csrfTokenRepository())
+                        .csrfTokenRequestHandler(csrfHandler))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        // One reader, one session. A second login elsewhere ends the first.
+                        .maximumSessions(1))
+                .exceptionHandling(ex -> ex
+                        // An API answers 401; it does not redirect a fetch() to a login page.
+                        .authenticationEntryPoint(
+                                new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
-                        // Spring dispatches errors as a separate internal request.
-                        // Without this, `anyRequest().denyAll()` intercepts the
-                        // ERROR dispatch and every 404 is reported to the client
-                        // as 403, which would make the error contract unusable.
+                        // Spring dispatches errors as a separate internal request. Without
+                        // this, denyAll intercepts the ERROR dispatch and every 404 reaches
+                        // the client as 403.
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
-                        .requestMatchers("/api/v1/books/**").permitAll()
+                        .requestMatchers("/api/v1/csrf").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/session").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/demo-session").permitAll()
+                        // Logging out requires being logged in.
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/auth/session").authenticated()
+                        // Everything under /api/v1/me is personal and stays protected as
+                        // later checkpoints add resources beneath it.
+                        .requestMatchers("/api/v1/me/**").authenticated()
                         .anyRequest().denyAll())
+                .logout(logout -> logout.disable()) // handled by DELETE /api/v1/auth/session
+                .httpBasic(basic -> basic.disable())
+                .formLogin(form -> form.disable())
+                .authenticationManager(authenticationManager())
                 .build();
     }
 
+    @Bean
+    AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        // Without this, a request for an unknown account fails faster than one for a
+        // known account with a wrong password, and the timing difference reveals which
+        // emails are registered.
+        provider.setHideUserNotFoundExceptions(true);
+        return new ProviderManager(provider);
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(allowedOrigin));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN", "Accept"));
+        // Required for the session and CSRF cookies to travel at all.
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
+    }
 }

@@ -1,10 +1,16 @@
 spring:
   application:
     name: reading-api
+  # No credential defaults here, deliberately. A fallback in the base configuration
+  # applies everywhere, including production, where a missing environment variable would
+  # silently become a known password instead of a startup failure. Local defaults live in
+  # application-local.yml, and `local` is only the default profile when none is set.
+  profiles:
+    default: local
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/goodreads}
-    username: ${DATABASE_USER:goodreads}
-    password: ${DATABASE_PASSWORD:goodreads_dev}
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
   jpa:
     hibernate:
       # Flyway owns the schema. Hibernate must never alter it.
@@ -18,12 +24,30 @@ spring:
   threads:
     virtual:
       enabled: true
+  session:
+    # Sessions live in PostgreSQL so they survive a restart. The deployment target
+    # scales to zero, and in-memory sessions would sign every reader out on each cold
+    # start. No new infrastructure: the database is already there. See ADR 0008.
+    store-type: jdbc
+    jdbc:
+      # Flyway owns the schema (V4). Spring Session must not create its own tables.
+      initialize-schema: never
+    timeout: 30d
 
 server:
   port: ${PORT:8080}
   error:
     include-message: never
     include-stacktrace: never
+
+app:
+  # The single browser origin permitted to send credentialed requests.
+  frontend-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+  session:
+    # Applied by SessionCookieConfig. Spring Session ignores server.servlet.session.*,
+    # so these must not be set there or they are silently dropped.
+    cookie-name: GRSESSION
+    cookie-secure: ${SESSION_COOKIE_SECURE:false}
 
 management:
   endpoints.web.exposure.include: health,info

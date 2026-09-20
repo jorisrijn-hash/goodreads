@@ -1,26 +1,107 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens.
+ *
+ * Contrast was measured, not assumed (docs/spike/scripts/contrast.py):
+ *   ink on ivory      15.61:1     forest on ivory   10.93:1
+ *   ink on paper      13.68:1     burgundy on ivory  8.87:1
+ *   ink-70 on ivory    6.31:1     ink-60 on ivory    4.86:1
+ *
+ * Two findings shaped these tokens:
+ *   - paper vs ivory is only 1.14:1, so it can zone a surface but must never be the
+ *     sole indicator of an interactive boundary. That is what --border-strong is for.
+ *   - forest vs burgundy is 1.23:1 — near-identical in luminance. Using both as
+ *     semantic action colours would be invisible in greyscale and to many colour-blind
+ *     readers, so forest is the only action colour and burgundy is reserved for
+ *     destructive states and editorial accent.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ivory: #f4f0e7;
+  --paper: #e9e1d4;
+  --ink: #191815;
+  --ink-70: #5c574e;
+  --ink-60: #6e685d;
+  --border: #d8cebd;
+  --border-strong: #837c6f;
+  --forest: #26382f;
+  --forest-hover: #1b2922;
+  --burgundy: #63352f;
+
+  --font-serif: var(--font-literata), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+
+  --radius-input: 2px;
+  --radius-card: 4px;
+
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ivory: var(--ivory);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-70: var(--ink-70);
+  --color-ink-60: var(--ink-60);
+  --color-border-subtle: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-forest: var(--forest);
+  --color-burgundy: var(--burgundy);
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  /* rem-based so the reader's browser font-size setting is respected */
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+/*
+ * A focus ring that is always visible against ivory, paper and forest alike.
+ * :focus-visible rather than :focus so it appears for keyboard users without
+ * following every mouse click.
+ */
+:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::selection { background: var(--paper); }
+
+/*
+ * Motion is decoration here, never information: with it removed, everything still
+ * reads and every state is still distinguishable.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

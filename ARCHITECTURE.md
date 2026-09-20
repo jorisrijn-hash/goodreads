@@ -38,7 +38,7 @@ Package-by-feature under `dev.jorisvrr.reading`:
 
 | Module | Owns | May depend on |
 |---|---|---|
-| `identity` | users, passwords, sessions | — |
+| `identity` | users, passwords, sessions, the demo account | — |
 | `catalog` | books, authors, genres, search | — |
 | `library` | library items, statuses, save reasons | `catalog`, `identity` |
 | `reading` | progress updates, reading events, journal | `library` |
@@ -47,6 +47,24 @@ Dependencies point one way. `catalog` must never depend on `reading`.
 
 There is no `social`, `recommendation` or `challenge` module. Those are later
 milestones and are not stubbed out.
+
+## Authentication
+
+Spring owns all of it: credentials, session lifecycle, authorisation and the decision
+about who may reach what. Next.js renders the forms, forwards the request and displays
+what comes back.
+
+The browser talks to Spring directly, with CORS restricted to the one frontend origin
+and `allowCredentials` enabled so the session and CSRF cookies travel. Server Components
+read identity by forwarding the incoming cookie header to `GET /api/v1/me` — the cookie
+is `HttpOnly`, so the page can pass it on but never read it.
+
+`middleware.ts` checks only whether a session cookie is *present*. That is a
+user-experience guard, not a security boundary: it cannot tell whether the cookie is
+valid, and a forged one simply fails at the API. Real enforcement is Spring's
+deny-by-default filter chain plus a per-request check during server rendering.
+
+See [docs/decisions/0008](docs/decisions/0008-session-and-csrf.md).
 
 ## Data model
 

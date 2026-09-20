@@ -1,0 +1,12 @@
+# Local development only. Active automatically when no profile is set
+# (spring.profiles.default: local), and never active in staging or production, which
+# set SPRING_PROFILES_ACTIVE explicitly.
+#
+# These values intentionally match scripts/setup-db.sh so `git clone` to running
+# application needs no configuration. They reach a database on localhost and are not
+# secrets. Nothing here may ever be a real credential.
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/goodreads}
+    username: ${DATABASE_USER:goodreads}
+    password: ${DATABASE_PASSWORD:goodreads_dev}

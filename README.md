@@ -10,7 +10,7 @@ catalogue comes from [Open Library](https://openlibrary.org) (CC0).
 
 ## Status
 
-**Phase 1 — Core Reading System.** Checkpoints A (foundation) and B (catalogue) complete.
+**Phase 1 — Core Reading System.** Checkpoints A (foundation), B (catalogue) and C (identity) complete.
 
 The Phase 1 loop is: Discover/Search → Book Detail → Save → My Library →
 Reading Progress → Reading Journal. Ratings, reviews, social features,
@@ -70,17 +70,73 @@ npm run dev
 
 Runs on `http://localhost:3000`.
 
+## Authentication
+
+Email and password, with a **server-side session** in PostgreSQL identified by an
+opaque `HttpOnly` cookie. No JWTs, no tokens in `localStorage`, no OAuth providers.
+
+| | |
+|---|---|
+| Hashing | Argon2id (memory-hard, current OWASP guidance) |
+| Password policy | At least 10 characters. No composition rules — length beats symbols |
+| Session store | PostgreSQL via Spring Session, so sessions survive restarts |
+| Cookie | `GRSESSION`, `HttpOnly`, `SameSite=Lax`, `Secure` in production |
+| CSRF | Cookie-to-header (`XSRF-TOKEN` → `X-XSRF-TOKEN`); nothing exempt, including login |
+| On login | Session id **and** CSRF token are both rotated, against fixation |
+| Failed login | A wrong password and an unknown account are byte-identical |
+
+Endpoints: `POST /api/v1/users` (sign up), `POST /api/v1/auth/session` (log in),
+`DELETE /api/v1/auth/session` (log out), `POST /api/v1/auth/demo-session`,
+`GET /api/v1/me`, `GET /api/v1/csrf`. Everything else is denied by default.
+
+Design and reasoning: [docs/decisions/0008](docs/decisions/0008-session-and-csrf.md).
+
+### Demo account
+
+`Explore demo account` signs in a seeded reader in one click, with **no password**. A
+shared demo credential would be a real credential that works from anywhere and would
+leak; instead the server authenticates a known `is_demo` identity, and the account is
+stored with a hash no submitted password can produce, so ordinary login cannot reach it.
+
 ## Environment variables
 
-Copy `.env.example` to `.env`. Defaults work for local development; no secrets are
-required until deployment. `.env` is gitignored.
+Copy `.env.example` to `.env` (backend) and `frontend/.env.example` to
+`frontend/.env.local`. Defaults work for local development. `.env` files are gitignored.
+
+| Variable | Scope | Local default |
+|---|---|---|
+| `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | backend | supplied by the `local` profile |
+| `NEXT_PUBLIC_API_URL` | frontend | `http://localhost:8080` |
+| `SESSION_COOKIE_SECURE` | backend | `false` |
+| `FRONTEND_ORIGIN` | backend | `http://localhost:3000` |
+
+> ### `goodreads_dev` is local development only
+>
+> `.env.example` contains `DATABASE_PASSWORD=goodreads_dev` deliberately: it matches
+> `scripts/setup-db.sh` so a fresh clone runs with no configuration. It reaches a
+> database on localhost and is not a secret.
+>
+> **Production and staging must supply `DATABASE_PASSWORD` explicitly**, and must never
+> fall back to it. This is enforced, not merely documented:
+> - the base configuration has **no credential fallback at all** — the local defaults
+>   live in `application-local.yml`, active only when no profile is set;
+> - `CredentialGuard` refuses to start when a non-local profile is active and the
+>   development password is in use.
+>
+> No real credential belongs in `.env.example`, ever.
 
 ## Tests
 
 ```bash
-cd backend && JAVA_HOME=$(brew --prefix openjdk@25) ./mvnw test   # needs goodreads_test
-cd frontend && npm run build                                      # typecheck + build
+cd backend  && JAVA_HOME=$(brew --prefix openjdk@25) ./mvnw test   # needs goodreads_test
+cd frontend && npm run build      # typecheck + production build
+cd frontend && npm test           # unit tests (open-redirect guard)
+cd frontend && npm run test:e2e   # Playwright; needs the backend running
 ```
+
+The E2E suite covers the whole authentication loop on desktop and mobile viewports:
+sign up, refresh, log out, log in, wrong password, unknown account, demo entry,
+`returnTo` handling including hostile targets, and keyboard-only completion.
 
 Integration tests run against a real local PostgreSQL rather than Testcontainers,
 because this machine has no container runtime — see
@@ -110,9 +166,11 @@ duplicating them, and replays cached responses instead of re-fetching.
 Full documentation, including the selection strategy, quality gates, rate limiting and
 genre taxonomy: **[docs/INGEST.md](docs/INGEST.md)**.
 
-## Demo account
+## Deployment
 
-Not yet implemented — Checkpoint C.
+The Next.js app deploys to Vercel from the `frontend` directory; the Spring API deploys
+separately and is **not** on Vercel. Settings, environment variables and current status:
+**[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
 ## Project layout
 
