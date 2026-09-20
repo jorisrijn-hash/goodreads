@@ -34,8 +34,19 @@
   --radius-input: 2px;
   --radius-card: 4px;
 
-  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
-  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  /* One declaration per line so "used but never defined" is greppable. A missing
+     token silently resolves to nothing — --space-5 was absent and left the mobile
+     layout with no horizontal padding at all. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
 
   --motion-fast: 120ms;
   --motion-base: 200ms;
@@ -94,10 +105,42 @@ h1, h2, h3 {
 ::selection { background: var(--paper); }
 
 /*
+ * Hero entrance. A single short settle on load, not a continuous animation.
+ * `translateY` is tiny on purpose — the page should feel placed, not flown in.
+ */
+@keyframes hero-settle {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-enter {
+  animation: hero-settle 560ms var(--ease) both;
+}
+
+.hero-enter-delayed {
+  animation-delay: 120ms;
+}
+
+/* Each paper plane settles in turn; the delay is set per element. */
+.hero-plane {
+  animation: hero-settle 640ms var(--ease) both;
+  transition: filter var(--motion-base) var(--ease);
+  will-change: transform;
+}
+
+.hero-composition:hover .hero-plane {
+  filter: brightness(0.995);
+}
+
+/*
  * Motion is decoration here, never information: with it removed, everything still
  * reads and every state is still distinguishable.
  */
 @media (prefers-reduced-motion: reduce) {
+  /* Entrance animations are removed entirely rather than merely shortened, so
+     nothing starts at opacity 0 and risks never arriving. */
+  .hero-enter, .hero-plane { animation: none !important; opacity: 1 !important; }
+
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

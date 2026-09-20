@@ -12,7 +12,15 @@ import { Button } from "./Button";
  * works from anywhere would inevitably leak. The server authenticates a known
  * `is_demo` identity instead.
  */
-export function DemoButton({ returnTo = "/home" }: { returnTo?: string }) {
+export function DemoButton({
+  returnTo = "/home",
+  label = "Explore demo account",
+  size = "default",
+}: {
+  returnTo?: string;
+  label?: string;
+  size?: "default" | "large";
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -32,8 +40,8 @@ export function DemoButton({ returnTo = "/home" }: { returnTo?: string }) {
 
   return (
     <div className="flex flex-col gap-[var(--space-2)]">
-      <Button type="button" variant="quiet" loading={loading} onClick={enter}>
-        Explore demo account
+      <Button type="button" variant="quiet" size={size} loading={loading} onClick={enter}>
+        {label}
       </Button>
       {failed && (
         <p role="alert" className="text-sm text-[var(--burgundy)]">

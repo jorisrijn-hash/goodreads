@@ -102,7 +102,8 @@ test.describe("login", () => {
 test.describe("demo account", () => {
   test("enters in one click from the landing page", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Explore demo account" }).click();
+    // The landing CTA is labelled "Explore demo"; the auth pages use the longer form.
+    await page.getByRole("button", { name: "Explore demo", exact: true }).click();
 
     await expect(page).toHaveURL("/home");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Demo Reader");
