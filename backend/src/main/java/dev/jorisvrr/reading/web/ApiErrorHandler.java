@@ -90,6 +90,19 @@ public class ApiErrorHandler {
         return problem;
     }
 
+    /**
+     * A body that cannot be parsed — malformed JSON, or a value outside an enum such as
+     * an invented reading status. The client sent something wrong, so this is a 400.
+     */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    ProblemDetail onUnreadableBody(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        // The exception text can quote the request body, so it is not echoed back.
+        log.debug("unreadable request body: {}", ex.getMostSpecificCause().getClass().getSimpleName());
+        return problem(HttpStatus.BAD_REQUEST, "invalid-request",
+                "Invalid request", "The request body could not be read.");
+    }
+
     @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
     ProblemDetail onMissingParameter(
             org.springframework.web.bind.MissingServletRequestParameterException ex) {

@@ -190,6 +190,32 @@ changing what was asked.
 
 No rating or review count appears anywhere in these responses, because we hold neither.
 
+## Personal library API
+
+Authenticated. Every call takes the reader's id from the session — the client names a
+book, never a user.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/me/library` | The reader's library; filter by `status`, search with `q` |
+| `GET /api/v1/me/library/summary` | Counts per status |
+| `GET /api/v1/me/library/{slug}` | What the reader has saved for one book |
+| `PUT /api/v1/me/library/{slug}` | Save a book. **Idempotent** — saving twice updates |
+| `PATCH /api/v1/me/library/{slug}` | Change status, or add the reason and note later |
+| `DELETE /api/v1/me/library/{slug}` | Remove it |
+
+Statuses are `WANT_TO_READ`, `CURRENTLY_READING`, `READ`, `DNF`. **Status is a state on
+the reader's row, not a shelf** — which is what lets notes, dates and history survive a
+status change. `UNIQUE (user_id, book_id)` means one relationship per reader and book.
+
+Dates are set when they first become true and never cleared: marking a finished book as
+currently reading again does not erase that it was once finished. A book can also be
+marked read without ever being marked started, which is the common case for logging
+something read last year.
+
+The save reason and note are always optional and can be added after the fact, so nothing
+stands between a reader and saving a book.
+
 ## Deployment
 
 The Next.js app deploys to Vercel from the `frontend` directory; the Spring API deploys
