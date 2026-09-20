@@ -76,6 +76,48 @@ public class ApiErrorHandler {
                 "Not found", "That resource does not exist.");
     }
 
+    /**
+     * A query parameter that cannot be converted — an unknown sort value, a
+     * non-numeric page. That is a bad request, not a server fault, and without this
+     * handler the catch-all reports it as a 500.
+     */
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    ProblemDetail onBadParameter(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "invalid-parameter",
+                "Invalid request", "A query parameter has an unsupported value.");
+        problem.setProperty("errors", Map.of(ex.getName(), "Unsupported value."));
+        return problem;
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    ProblemDetail onMissingParameter(
+            org.springframework.web.bind.MissingServletRequestParameterException ex) {
+        ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "invalid-parameter",
+                "Invalid request", "A required query parameter is missing.");
+        problem.setProperty("errors", Map.of(ex.getParameterName(), "This parameter is required."));
+        return problem;
+    }
+
+    /**
+     * Errors that already carry a status — a controller's 404, or a missing static
+     * resource. Without this they fall through to the catch-all below and a deliberate
+     * 404 is reported as a 500.
+     */
+    @ExceptionHandler(org.springframework.web.ErrorResponseException.class)
+    ProblemDetail onErrorResponse(org.springframework.web.ErrorResponseException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        return problem(status, status == HttpStatus.NOT_FOUND ? "not-found" : "request-failed",
+                status.getReasonPhrase(),
+                ex.getBody().getDetail() != null ? ex.getBody().getDetail() : status.getReasonPhrase());
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    ProblemDetail onMissingResource(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+        return problem(HttpStatus.NOT_FOUND, "not-found", "Not found", "That resource does not exist.");
+    }
+
     /** Last resort. The cause is logged; the client is told nothing about internals. */
     @ExceptionHandler(Exception.class)
     ProblemDetail onUnexpectedFailure(Exception ex) {

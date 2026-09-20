@@ -78,7 +78,10 @@ class CatalogueWriterTest {
         // Genres are reconciled, not accumulated.
         assertThat(count("book_genre")).isEqualTo(1);
         assertThat(one("""
-                SELECT g.slug FROM book_genre bg JOIN genre g ON g.id = bg.genre_id
+                SELECT g.slug FROM book_genre bg
+                JOIN genre g ON g.id = bg.genre_id
+                JOIN book b ON b.id = bg.book_id
+                WHERE b.source_key = '/works/OL1W'
                 """)).isEqualTo("fantasy");
     }
 
@@ -101,7 +104,10 @@ class CatalogueWriterTest {
                 new CatalogueWriter.AuthorRow("/authors/OL2A", "Neil Gaiman")));
 
         List<String> ordered = db.sql("""
-                SELECT a.name FROM book_author ba JOIN author a ON a.id = ba.author_id
+                SELECT a.name FROM book_author ba
+                JOIN author a ON a.id = ba.author_id
+                JOIN book b ON b.id = ba.book_id
+                WHERE b.source_key = '/works/OL1W'
                 ORDER BY ba.position
                 """).query(String.class).list();
         assertThat(ordered).containsExactly("Terry Pratchett", "Neil Gaiman");
@@ -130,7 +136,8 @@ class CatalogueWriterTest {
 
         Integer hits = db.sql("""
                 SELECT count(*)::int FROM book
-                WHERE search_vector @@ websearch_to_tsquery('simple', norm_text('etranger'))
+                WHERE source_key = '/works/OL1W'
+                  AND search_vector @@ websearch_to_tsquery('simple', norm_text('etranger'))
                 """).query(Integer.class).single();
         assertThat(hits).isEqualTo(1);
     }
@@ -143,7 +150,8 @@ class CatalogueWriterTest {
 
         Integer hits = db.sql("""
                 SELECT count(*)::int FROM book
-                WHERE search_text % norm_text('The Secre Histroy')
+                WHERE source_key = '/works/OL1W'
+                  AND search_text % norm_text('The Secre Histroy')
                 """).query(Integer.class).single();
         assertThat(hits).isEqualTo(1);
     }
@@ -155,12 +163,34 @@ class CatalogueWriterTest {
         writer.upsert(book("/works/OL2W", "Selected Poems", List.of("fantasy"),
                 new CatalogueWriter.AuthorRow("/authors/OL2A", "Author Two")));
 
-        List<String> slugs = db.sql("SELECT slug FROM book ORDER BY slug").query(String.class).list();
+        List<String> slugs = db.sql(
+                "SELECT slug FROM book WHERE source_key LIKE '/works/OL_W' ORDER BY slug")
+                .query(String.class).list();
         assertThat(slugs).hasSize(2).doesNotHaveDuplicates();
     }
 
+    /**
+     * Counts only the rows this test created.
+     *
+     * <p>The test database holds the real ingested catalogue so the catalogue API tests
+     * have something to query, so absolute counts are meaningless here. Every fixture
+     * uses an /works/OL…W key of its own, and these queries scope to those.
+     */
     private int count(String table) {
-        return db.sql("SELECT count(*)::int FROM " + table).query(Integer.class).single();
+        String scoped = switch (table) {
+            case "book" -> "SELECT count(*)::int FROM book WHERE source_key LIKE '/works/OL_W'";
+            case "author" -> "SELECT count(*)::int FROM author WHERE source_key LIKE '/authors/OL_A'";
+            case "book_author" -> """
+                    SELECT count(*)::int FROM book_author ba
+                    JOIN book b ON b.id = ba.book_id
+                    WHERE b.source_key LIKE '/works/OL_W'""";
+            case "book_genre" -> """
+                    SELECT count(*)::int FROM book_genre bg
+                    JOIN book b ON b.id = bg.book_id
+                    WHERE b.source_key LIKE '/works/OL_W'""";
+            default -> "SELECT count(*)::int FROM " + table;
+        };
+        return db.sql(scoped).query(Integer.class).single();
     }
 
     private String one(String sql) {

@@ -23,11 +23,16 @@ offline, and the application reads only from our own PostgreSQL and cover storag
 cd backend
 INGEST_CONTACT=you@example.com \
   JAVA_HOME=$(brew --prefix openjdk@25) \
-  ./mvnw spring-boot:run -Dspring-boot.run.profiles=ingest
+  ./mvnw spring-boot:run -Dspring-boot.run.profiles=local,ingest
 ```
 
 The `ingest` profile sets `web-application-type: none`, so this is a task that runs to
 completion and exits — not a server.
+
+`local` is listed alongside it because the base configuration deliberately carries no
+database credentials; the local defaults live in the `local` profile, and naming an
+active profile stops it applying by default. In a deployed environment the pairing is
+`prod,ingest` with real credentials supplied by the environment.
 
 ### Configuration
 
@@ -233,7 +238,7 @@ review-queue size, cover storage and duration.
 
 ```bash
 ./scripts/reset-catalogue.sh          # DESTRUCTIVE — catalogue tables only
-cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=ingest
+cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local,ingest
 ```
 
 `reset-catalogue.sh` empties **only** `book`, `author`, `book_author`, `genre` and

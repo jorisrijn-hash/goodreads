@@ -1,5 +1,6 @@
 package dev.jorisvrr.reading.identity.web;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import dev.jorisvrr.reading.identity.*;
 import dev.jorisvrr.reading.identity.web.dto.LoginRequest;
 import dev.jorisvrr.reading.identity.web.dto.UserResponse;
@@ -13,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 /**
  * The session is the resource: creating one is logging in, deleting it is logging out.
  */
+// Authentication only exists in the web application. The ingest task runs with
+// web-application-type=none, where AuthenticationManager is not created.
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @RestController
 @RequestMapping("/api/v1/auth")
 class SessionController {

@@ -1,5 +1,6 @@
 package dev.jorisvrr.reading.identity;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -31,6 +32,9 @@ import org.springframework.stereotype.Service;
  * fixation. Spring's form-login filter does this automatically; a programmatic login
  * must do it explicitly.
  */
+// Authentication only exists in the web application. The ingest task runs with
+// web-application-type=none, where AuthenticationManager is not created.
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @Service
 public class SessionService {
 

@@ -157,7 +157,7 @@ PostgreSQL. No external API is called while serving a user request.
 cd backend
 INGEST_CONTACT=you@example.com \
   JAVA_HOME=$(brew --prefix openjdk@25) \
-  ./mvnw spring-boot:run -Dspring-boot.run.profiles=ingest
+  ./mvnw spring-boot:run -Dspring-boot.run.profiles=local,ingest
 ```
 
 The pipeline is resumable and idempotent — re-running updates rows rather than
@@ -165,6 +165,30 @@ duplicating them, and replays cached responses instead of re-fetching.
 
 Full documentation, including the selection strategy, quality gates, rate limiting and
 genre taxonomy: **[docs/INGEST.md](docs/INGEST.md)**.
+
+## Catalogue API
+
+Public — browsing and searching need no account.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/books` | Discovery and search in one surface: without `q` it browses, with `q` it searches |
+| `GET /api/v1/books/{slug}` | Book detail |
+| `GET /api/v1/genres` | The controlled taxonomy, with counts |
+| `GET /covers/{shard}/{id}-{160\|320\|640}.jpg` | Cover derivatives, served by us |
+
+Parameters: `q`, `genre`, `minPages`, `maxPages`, `sort`, `page`, `size`. The set is
+closed — nothing is passed through to SQL as a column or ordering fragment, `size` is
+capped, and `sort` is an enum mapped to SQL the repository owns.
+
+**Search runs entirely in PostgreSQL** against the ingested 9,021-book catalogue. Open
+Library is never called at request time. Full text resolves exact, partial, author,
+punctuation and accent queries; trigram catches typos; short queries try a prefix match
+and then a low-threshold fuzzy pass. When a fallback recovers a query the response sets
+`correctedFrom`, so the interface can say *showing results for…* rather than silently
+changing what was asked.
+
+No rating or review count appears anywhere in these responses, because we hold neither.
 
 ## Deployment
 

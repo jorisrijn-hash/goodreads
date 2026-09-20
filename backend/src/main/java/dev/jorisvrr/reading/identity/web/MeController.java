@@ -1,5 +1,6 @@
 package dev.jorisvrr.reading.identity.web;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import dev.jorisvrr.reading.identity.AppUserDetails;
 import dev.jorisvrr.reading.identity.UserRepository;
 import dev.jorisvrr.reading.identity.web.dto.UserResponse;
@@ -9,6 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// Authentication only exists in the web application. The ingest task runs with
+// web-application-type=none, where AuthenticationManager is not created.
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @RestController
 @RequestMapping("/api/v1/me")
 class MeController {

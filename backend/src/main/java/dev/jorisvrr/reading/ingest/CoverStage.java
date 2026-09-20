@@ -67,7 +67,7 @@ public class CoverStage {
     }
 
     public static String coverKey(long coverId) {
-        return "covers/%s/%d".formatted(shard(coverId), coverId);
+        return "%s/%d".formatted(shard(coverId), coverId);
     }
 
     private static String shard(long coverId) {

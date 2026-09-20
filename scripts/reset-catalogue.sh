@@ -124,4 +124,4 @@ done
 echo
 echo "Re-run the ingest to rebuild from cached artifacts:"
 echo "  cd backend && JAVA_HOME=\$(brew --prefix openjdk@25) \\"
-echo "    ./mvnw spring-boot:run -Dspring-boot.run.profiles=ingest"
+echo "    ./mvnw spring-boot:run -Dspring-boot.run.profiles=local,ingest"

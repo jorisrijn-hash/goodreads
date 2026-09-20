@@ -43,6 +43,8 @@ server:
 app:
   # The single browser origin permitted to send credentialed requests.
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:3000}
+  # Cover derivatives written by the ingest task, served under /covers/**.
+  cover-dir: ${COVER_DIR:./data/covers}
   session:
     # Applied by SessionCookieConfig. Spring Session ignores server.servlet.session.*,
     # so these must not be set there or they are silently dropped.

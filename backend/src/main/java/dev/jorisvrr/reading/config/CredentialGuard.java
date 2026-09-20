@@ -23,6 +23,13 @@ class CredentialGuard implements ApplicationListener<ApplicationReadyEvent> {
     /** The value in .env.example and scripts/setup-db.sh. */
     private static final String LOCAL_DEV_PASSWORD = "goodreads_dev";
     private static final List<String> LOCAL_PROFILES = List.of("local", "test");
+    /**
+     * Profiles that describe what the process does rather than where it runs. "ingest"
+     * is a task, not an environment, so it must not be mistaken for production — that
+     * would block a perfectly ordinary local ingest. A production ingest still activates
+     * a production profile alongside it, and is still caught.
+     */
+    private static final List<String> TASK_PROFILES = List.of("ingest");
 
     private final Environment environment;
     private final String password;
@@ -35,8 +42,13 @@ class CredentialGuard implements ApplicationListener<ApplicationReadyEvent> {
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        boolean localOnly = Arrays.stream(environment.getActiveProfiles())
-                .allMatch(LOCAL_PROFILES::contains);
+        List<String> environmentProfiles = Arrays.stream(environment.getActiveProfiles())
+                .filter(profile -> !TASK_PROFILES.contains(profile))
+                .toList();
+        // No environment profile at all means local development, where the default
+        // profile supplies these credentials deliberately.
+        boolean localOnly = environmentProfiles.isEmpty()
+                || environmentProfiles.stream().allMatch(LOCAL_PROFILES::contains);
         if (localOnly) {
             return;
         }
