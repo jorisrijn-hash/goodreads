@@ -103,10 +103,14 @@ stored with a hash no submitted password can produce, so ordinary login cannot r
 Copy `.env.example` to `.env` (backend) and `frontend/.env.example` to
 `frontend/.env.local`. Defaults work for local development. `.env` files are gitignored.
 
+The browser never addresses the API host: it calls `/api/v1/…` on the frontend's own
+origin and Next.js rewrites those to `API_ORIGIN`. That keeps the session cookie
+first-party — see [ADR 0009](docs/decisions/0009-same-origin-api-proxy.md).
+
 | Variable | Scope | Local default |
 |---|---|---|
 | `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | backend | supplied by the `local` profile |
-| `NEXT_PUBLIC_API_URL` | frontend | `http://localhost:8080` |
+| `API_ORIGIN` | frontend (server-only) | `http://localhost:8080` |
 | `SESSION_COOKIE_SECURE` | backend | `false` |
 | `FRONTEND_ORIGIN` | backend | `http://localhost:3000` |
 

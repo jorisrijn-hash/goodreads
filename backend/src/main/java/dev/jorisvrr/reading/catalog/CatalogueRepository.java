@@ -193,7 +193,7 @@ public class CatalogueRepository {
             case LONGEST -> "b.page_count DESC NULLS LAST, b.title ASC";
             case TITLE -> "norm_text(b.title) ASC";
             // Stable tiebreaker on id so pagination never repeats or drops a row.
-            case POPULAR, RELEVANCE -> "b.id ASC";
+            case DEFAULT, RELEVANCE -> "b.id ASC";
         };
     }
 

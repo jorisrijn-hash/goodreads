@@ -6,32 +6,14 @@
  * surfaces what comes back. Authentication rules live in Spring.
  */
 /**
- * Where the Spring API lives.
+ * The API is same-origin from the browser's point of view.
  *
- * The localhost fallback applies in development only. In a production build an unset
- * variable is a configuration error, and failing loudly is far better than silently
- * asking the visitor's own machine for an API that is not there.
- *
- * This is a URL, not a secret, so NEXT_PUBLIC_ is appropriate. Database credentials and
- * anything else the backend holds must never be exposed this way.
+ * Requests go to `/api/v1/…` on whatever origin the app is served from, and Next.js
+ * rewrites them to the Spring host (see next.config.ts). Nothing here needs to know
+ * where the backend actually is, and no API host is exposed to the browser at all —
+ * which is what keeps the session cookie first-party.
  */
-function resolveApiBase(): string {
-  const configured = process.env.NEXT_PUBLIC_API_URL;
-  if (configured) return configured.replace(/\/$/, "");
-  if (process.env.NODE_ENV === "development") return "http://localhost:8080";
-  return "";
-}
-
-export const API_BASE = resolveApiBase();
-
-export class ApiNotConfiguredError extends Error {
-  constructor() {
-    super(
-      "NEXT_PUBLIC_API_URL is not set, so there is no API to talk to. " +
-        "Set it to the deployed Spring backend.",
-    );
-  }
-}
+export const API_BASE = "";
 
 export type ApiUser = {
   id: number;
@@ -83,8 +65,6 @@ async function request<T>(
   path: string,
   body?: unknown,
 ): Promise<T | null> {
-  if (!API_BASE) throw new ApiNotConfiguredError();
-
   const headers: Record<string, string> = { Accept: "application/json" };
 
   if (method !== "GET") {
@@ -172,13 +152,17 @@ export type LibrarySummary = {
   didNotFinish: number;
 };
 
-/** Builds a cover URL. The API returns a key; widths are the three we generate. */
+/**
+ * Builds a cover URL. The API returns a key; the widths are the three the ingest
+ * generates. Same-origin and relative, so it works unchanged in development, in
+ * production, and if the bytes later move to object storage behind the same path.
+ */
 export function coverUrl(
   coverKey: string | null | undefined,
   width: 160 | 320 | 640,
 ): string | null {
-  if (!coverKey || !API_BASE) return null;
-  return `${API_BASE}/covers/${coverKey}-${width}.jpg`;
+  if (!coverKey) return null;
+  return `/covers/${coverKey}-${width}.jpg`;
 }
 
 function query(params: Record<string, string | number | null | undefined>): string {

@@ -166,7 +166,9 @@ function Pagination({ params, page, hasMore }: { params: Params; page: number; h
  * you", no match percentage and no invented popularity.
  */
 async function browseView() {
-  const [recent, short, long, classics, genres] = await Promise.all([
+  const [total, recent, short, long, classics, genres] = await Promise.all([
+    // size=1 so this is a count query, not a page of books we then discard.
+    fetchPublic<BookPage>("/api/v1/books?size=1"),
     fetchPublic<BookPage>("/api/v1/books?sort=NEWEST&size=12"),
     fetchPublic<BookPage>("/api/v1/books?maxPages=200&size=12"),
     fetchPublic<BookPage>("/api/v1/books?minPages=600&size=12"),
@@ -188,7 +190,14 @@ async function browseView() {
       <div className="max-w-[640px]">
         <h1 className="text-[clamp(1.75rem,4vw,2.5rem)] leading-tight">Discover</h1>
         <p className="mt-[var(--space-3)] text-[var(--ink-70)]">
-          {genres ? "Nine thousand books, and a search that forgives a typo." : "Find your next book."}
+          {/*
+            The count comes from the catalogue itself. It was hardcoded as "Nine thousand
+            books", which happened to be true and would have quietly stopped being true
+            the first time the catalogue changed.
+          */}
+          {total
+            ? `${total.total.toLocaleString()} books, and a search that forgives a typo.`
+            : "Find your next book."}
         </p>
         <div className="mt-[var(--space-6)]">
           <Suspense fallback={null}>

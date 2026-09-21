@@ -52,11 +52,19 @@ app:
     cookie-secure: ${SESSION_COOKIE_SECURE:false}
 
 management:
-  endpoints.web.exposure.include: health,info
+  # Only health is exposed. Nothing else — env, configprops, beans, mappings and
+  # heapdump all leak configuration or internals and none of them belong on a public
+  # port. The host needs a liveness/readiness probe and nothing more.
+  endpoints.web.exposure.include: health
+  endpoints.web.discovery.enabled: false
   endpoint.health:
     probes.enabled: true
-    show-details: when-authorized
+    # Unauthenticated callers get UP/DOWN. Component detail (database URLs, disk paths)
+    # is not public.
+    show-details: never
+    show-components: never
   health.db.enabled: true
+  info.env.enabled: false
 
 logging:
   level:

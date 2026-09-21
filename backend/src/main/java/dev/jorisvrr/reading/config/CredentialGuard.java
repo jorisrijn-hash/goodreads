@@ -33,11 +33,17 @@ class CredentialGuard implements ApplicationListener<ApplicationReadyEvent> {
 
     private final Environment environment;
     private final String password;
+    private final boolean secureCookie;
+    private final String frontendOrigin;
 
     CredentialGuard(Environment environment,
-                    @Value("${spring.datasource.password:}") String password) {
+                    @Value("${spring.datasource.password:}") String password,
+                    @Value("${app.session.cookie-secure:false}") boolean secureCookie,
+                    @Value("${app.frontend-origin:}") String frontendOrigin) {
         this.environment = environment;
         this.password = password;
+        this.secureCookie = secureCookie;
+        this.frontendOrigin = frontendOrigin;
     }
 
     @Override
@@ -51,6 +57,18 @@ class CredentialGuard implements ApplicationListener<ApplicationReadyEvent> {
                 || environmentProfiles.stream().allMatch(LOCAL_PROFILES::contains);
         if (localOnly) {
             return;
+        }
+        // Outside local development these are not optional. Failing at startup is far
+        // better than serving traffic with a session cookie that can travel in clear text.
+        if (!secureCookie) {
+            throw new IllegalStateException(
+                    "Refusing to start: SESSION_COOKIE_SECURE must be true outside local "
+                            + "development, or the session cookie can be sent over plain HTTP.");
+        }
+        if (frontendOrigin.isBlank() || frontendOrigin.contains("localhost")) {
+            throw new IllegalStateException(
+                    "Refusing to start: FRONTEND_ORIGIN must be set to the real frontend "
+                            + "origin outside local development (was: '" + frontendOrigin + "').");
         }
         if (LOCAL_DEV_PASSWORD.equals(password)) {
             throw new IllegalStateException("""

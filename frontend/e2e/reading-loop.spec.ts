@@ -56,6 +56,9 @@ test.describe("search", () => {
     await page.getByLabel("Search books, authors or ISBN").fill("the secret history");
     await page.getByRole("button", { name: "Search" }).click();
     await page.waitForURL(/q=/);
+    // The results are server-rendered, so wait for the count line to land before
+    // asserting on a specific book — otherwise this races the navigation under load.
+    await expect(page.getByText(/\d+ books?$/).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "The Secret History" }).first()).toBeVisible();
   });
 

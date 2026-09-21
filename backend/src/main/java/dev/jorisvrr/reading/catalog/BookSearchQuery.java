@@ -17,15 +17,21 @@ public record BookSearchQuery(
         int size) {
 
     public enum Sort {
-        /** Search relevance when there is a query; falls back to POPULAR without one. */
+        /** Search relevance when there is a query; falls back to DEFAULT without one. */
         RELEVANCE,
         NEWEST,
         OLDEST,
         SHORTEST,
         LONGEST,
         TITLE,
-        /** Deterministic stand-in for popularity: more editions means more printings. */
-        POPULAR
+        /**
+         * The catalogue's own stable order.
+         *
+         * <p>Named for what it is. This was briefly called POPULAR, which was a claim the
+         * system cannot support: there is no popularity signal anywhere in the data. It
+         * was a stable id ordering wearing a label that implied readership.
+         */
+        DEFAULT
     }
 
     public static final int MAX_SIZE = 48;
@@ -36,7 +42,7 @@ public record BookSearchQuery(
     public BookSearchQuery {
         q = (q == null || q.isBlank()) ? null : q.trim();
         genre = (genre == null || genre.isBlank()) ? null : genre.trim();
-        sort = sort == null ? (q == null ? Sort.POPULAR : Sort.RELEVANCE) : sort;
+        sort = sort == null ? (q == null ? Sort.DEFAULT : Sort.RELEVANCE) : sort;
         page = Math.max(0, page);
         size = size <= 0 ? DEFAULT_SIZE : Math.min(size, MAX_SIZE);
     }
