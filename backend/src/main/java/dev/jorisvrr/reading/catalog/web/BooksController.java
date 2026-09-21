@@ -37,7 +37,9 @@ class BooksController {
             @RequestParam(required = false) @Min(0) Integer minPages,
             @RequestParam(required = false) @Max(5000) Integer maxPages,
             @RequestParam(required = false) BookSearchQuery.Sort sort,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
+            // Bounded so page * size cannot overflow into a negative OFFSET. Far past the
+            // last page of any catalogue this size; beyond it is an empty page, not an error.
+            @RequestParam(defaultValue = "0") @Min(0) @Max(10_000) int page,
             @RequestParam(defaultValue = "24") @Min(1) int size) {
 
         BookSearchQuery query =

@@ -55,7 +55,8 @@ public record BookSearchQuery(
         return q != null && q.length() < SHORT_QUERY_LENGTH;
     }
 
-    public int offset() {
-        return page * size;
+    /** Long, so no page number can wrap the product into a negative OFFSET. */
+    public long offset() {
+        return (long) page * size;
     }
 }

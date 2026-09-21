@@ -206,6 +206,31 @@ class CatalogueApiTest {
                 .andExpect(status().is4xxClientError());
     }
 
+    @ParameterizedTest(name = "{0}={1} is a 400, not a 500")
+    @DisplayName("out-of-range parameters are the client's error")
+    @CsvSource({
+            "page, -1",
+            "page, 99999999",
+            "size, 0",
+            "size, -5",
+            "minPages, -10",
+            "maxPages, 9000",
+    })
+    void outOfRangeParametersAreRejected(String name, String value) throws Exception {
+        mvc.perform(get("/api/v1/books").param(name, value))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors." + name).exists())
+                .andExpect(jsonPath("$.detail").value("A query parameter has an unsupported value."));
+    }
+
+    @Test
+    @DisplayName("the last allowed page is an empty page, not an overflowed offset")
+    void deepPageIsEmptyNotAnError() throws Exception {
+        mvc.perform(get("/api/v1/books").param("page", "10000").param("size", "48"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0));
+    }
+
     @Test
     void bookDetailReturnsFullMetadata() throws Exception {
         needsCatalogue();

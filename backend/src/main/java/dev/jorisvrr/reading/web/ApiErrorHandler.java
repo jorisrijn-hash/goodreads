@@ -91,6 +91,25 @@ public class ApiErrorHandler {
     }
 
     /**
+     * A query parameter that converts but breaks a declared bound — a negative page, a
+     * size of zero. Found in production answering 500 (with a stack trace in the log)
+     * because only conversion failures were mapped.
+     */
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    ProblemDetail onConstraintViolation(jakarta.validation.ConstraintViolationException ex) {
+        Map<String, String> errors = new java.util.TreeMap<>();
+        for (var violation : ex.getConstraintViolations()) {
+            // The path is "method.parameter"; only the parameter name means anything to a client.
+            String path = violation.getPropertyPath().toString();
+            errors.put(path.substring(path.lastIndexOf('.') + 1), "Out of range.");
+        }
+        ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, "invalid-parameter",
+                "Invalid request", "A query parameter has an unsupported value.");
+        problem.setProperty("errors", errors);
+        return problem;
+    }
+
+    /**
      * A body that cannot be parsed — malformed JSON, or a value outside an enum such as
      * an invented reading status. The client sent something wrong, so this is a 400.
      */
