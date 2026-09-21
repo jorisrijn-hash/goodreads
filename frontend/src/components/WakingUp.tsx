@@ -3,8 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-/** Render Free cold starts measured at well under this; beyond it, something is wrong. */
-const GIVE_UP_AFTER_MS = 120_000;
+/**
+ * A real Render Free cold start, measured in production: 168 s from the first request to
+ * the first healthy response (container start plus Spring Boot on a fraction of a CPU).
+ * The original two-minute window gave up while the service was still booting. Five
+ * minutes leaves margin over that; past it, something is genuinely wrong.
+ */
+const GIVE_UP_AFTER_MS = 300_000;
 const POLL_EVERY_MS = 3_000;
 
 /**
@@ -68,7 +73,7 @@ export function WakingUp({ what = "the library" }: { what?: string }) {
           {what.charAt(0).toUpperCase() + what.slice(1)} is not responding
         </h2>
         <p className="mt-[var(--space-2)] max-w-[52ch] leading-relaxed text-[var(--ink-70)]">
-          The service has not answered for two minutes, which is longer than a normal start.
+          The service has not answered for five minutes, which is longer than a normal start.
         </p>
         <button
           type="button"
@@ -91,8 +96,8 @@ export function WakingUp({ what = "the library" }: { what?: string }) {
     <div role="status" aria-live="polite" className="border-l-2 border-[var(--border-strong)] py-[var(--space-2)] pl-[var(--space-5)]">
       <h2 className="font-serif text-[1.375rem] text-[var(--ink)]">Opening {what}…</h2>
       <p className="mt-[var(--space-2)] max-w-[56ch] leading-relaxed text-[var(--ink-70)]">
-        The server behind this demo sleeps when nobody is using it and takes up to a minute
-        to wake. This page will fill in by itself as soon as it does.
+        The server behind this demo sleeps when nobody is using it and can take two or
+        three minutes to wake. This page will fill in by itself as soon as it does.
       </p>
     </div>
   );
