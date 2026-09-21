@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but the example must be committed: it is the only documentation a fresh clone has
+# for API_ORIGIN and COVERS_BASE_URL. It contains placeholders, never real values.
+!.env.example
 
 # vercel
 .vercel

@@ -35,8 +35,8 @@ route handlers; Spring owns the business logic.
 
 | Variable | Required | Value |
 |---|---|---|
-| `API_ORIGIN` | **yes** | The Spring API's origin, e.g. `https://reading-api.up.railway.app` |
-| `COVERS_ORIGIN` | no | Defaults to `API_ORIGIN`. Point at a CDN if covers move to object storage |
+| `API_ORIGIN` | **yes** | The Render service origin, e.g. `https://reading-api.onrender.com` |
+| `COVERS_BASE_URL` | **yes** | `https://<project-ref>.supabase.co/storage/v1/object/public/book-covers` |
 
 **Both are server-only.** Neither is `NEXT_PUBLIC_`, deliberately: a `NEXT_PUBLIC_`
 variable is compiled into the browser bundle, and exposing the API host there is what
@@ -54,18 +54,17 @@ Flyway remains the schema authority.
 ### Mapping the Supabase connection onto our variables
 
 Take the **Session pooler** JDBC string from
-*Project Settings → Database → Connection string → JDBC*. It looks like:
+*Project Settings → Database → Connection string → JDBC*.
 
-```
-jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres
-   user=postgres.<project-ref>   password=<your password>
-```
+> **Copy the hostname exactly as Supabase prints it.** Do not reconstruct it from a
+> region: the `aws-N-<region>` index varies between projects, and a hostname assembled by
+> hand will simply not resolve.
 
 | Our variable | Value from Supabase |
 |---|---|
-| `DATABASE_URL` | `jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require` |
+| `DATABASE_URL` | The session-pooler JDBC URL **verbatim**, with `?sslmode=require` appended |
 | `DATABASE_USER` | `postgres.<project-ref>` — the project ref belongs in the **username**, after the dot |
-| `DATABASE_PASSWORD` | The database password (not the `anon` or `service_role` key — those are Supabase API keys and are unrelated) |
+| `DATABASE_PASSWORD` | The database password (not the `anon` or `service_role` key — those are Supabase API keys and unrelated to this) |
 
 Three details that matter:
 
@@ -108,9 +107,37 @@ message rather than starting up and returning empty results forever.
 
 ### Connection pool
 
-`DB_POOL_SIZE` defaults to 10, which suits one small instance behind a pooler. Supabase's
-free tier allows a limited number of pooled connections; if the ingest runs against
-production while the API is live, both are drawing from that budget.
+`DB_POOL_SIZE` defaults to **5**, and that number is derived from how session mode
+actually behaves rather than from a generic default.
+
+In **session mode** each client connection holds a *dedicated* Postgres backend
+connection for its entire lifetime; connections are not shared between clients as they
+are in transaction mode. So the binding limit is not Supavisor's ~200 client connections
+but its **pool size — roughly 15–20 backend connections on Nano**, shared across both the
+session and transaction ports. Every connection the API holds is one the ingest, or
+anything else, cannot have.
+
+Against one Render Free instance (0.1 CPU, which cannot usefully serve ten concurrent
+database-bound requests anyway) and portfolio-level traffic, five leaves roughly two
+thirds of the budget free. **Verified locally:** under 40 concurrent search requests the
+pool opened exactly 5 backend connections and no more.
+
+| Setting | Value | Why |
+|---|---|---|
+| `maximum-pool-size` | 5 | See above |
+| `minimum-idle` | 1 | An idle connection occupies a scarce backend slot for nothing |
+| `idle-timeout` | 120s | **Supavisor closes a connection unused for 5 minutes.** Retiring ours at 2 minutes means we release first and never meet a connection the pooler already closed |
+| `max-lifetime` | 240s | Total age ceiling, comfortably inside the same 5-minute window |
+| `keepalive-time` | disabled | It exists to hold idle connections open, which is the opposite of what we want here |
+| `connection-timeout` | 20s | Supavisor itself queues session-mode clients for up to a minute; waiting longer only stacks latency |
+
+The ingest task uses a pool of **2** — its upsert phase writes serially, and it often runs
+against production while the API is live.
+
+> An earlier version of this file justified `max-lifetime` as sitting "under a pooler's
+> typical 30s idle timeout". That was wrong in two ways: 4 minutes is not under 30
+> seconds, and the figure was assumed rather than checked. Supavisor's actual idle close
+> is **5 minutes**, which is what the values above are derived from.
 
 **Do not copy the local database.** Flyway builds the schema from scratch on first
 startup and the ingest builds the catalogue. There is no manual schema step and no dump.
@@ -138,7 +165,7 @@ railway up --service reading-api   # root directory: backend
 | `SPRING_PROFILES_ACTIVE` | **yes** | `prod` — anything other than `local`/`test` |
 | `SESSION_COOKIE_SECURE` | **yes** | `true` |
 | `FRONTEND_ORIGIN` | **yes** | The Vercel origin |
-| `COVER_DIR` | **yes** | `/app/data/covers`, on a persistent volume |
+| `COVER_DIR` | no | Unused in production — covers come from Supabase Storage |
 | `PORT` | platform | Railway and Fly set this |
 
 There is **no credential fallback outside local development.** The base configuration
@@ -152,21 +179,97 @@ using a password published in `.env.example`.
 
 ---
 
-## 4. Cover storage
+## 4. Cover storage — Supabase Storage
 
-27,330 files, about 709 MB — three derivatives for each of 9,021 books.
+27,330 files, about 709 MB: three derivatives for each of 9,021 books. They live in the
+**public** Supabase Storage bucket `book-covers`, with the object paths unchanged:
 
-**A platform's application filesystem is ephemeral.** Without a persistent volume every
-deploy silently deletes the covers and every cover 404s, while the application otherwise
-looks healthy. Mount a volume at `COVER_DIR`.
+```
+<shard>/<id>-160.jpg
+<shard>/<id>-320.jpg
+<shard>/<id>-640.jpg
+```
 
-Two supported options:
+Those are exactly the keys already stored in `book.cover_key`, so **nothing in the
+database changes** and nothing in the application knows where the bytes are.
 
-1. **Persistent volume** (simplest). Mount at `/app/data/covers`, set
-   `COVER_DIR=/app/data/covers`, and run the ingest once (below) to populate it.
-2. **Object storage / CDN.** Upload the `<shard>/<id>-<width>.jpg` tree preserving its
-   paths, then set `COVERS_ORIGIN` on the frontend to the bucket's public origin. No
-   application change: the public path is identical either way.
+### Delivery
+
+```
+Browser → /covers/<path> → Vercel rewrite → Supabase Storage CDN
+```
+
+Set on Vercel:
+
+```
+COVERS_BASE_URL=https://<project-ref>.supabase.co/storage/v1/object/public/book-covers
+```
+
+Covers are **never proxied through Spring in production** — that would put a backend hop
+in front of every image on a page full of them. Spring still serves `/covers/**` from
+disk in local development, which is why `COVERS_BASE_URL` defaults to the API.
+
+The browser only ever requests `/covers/<path>` on our own origin, so the storage
+provider is one environment variable. No Supabase SDK is installed to build these URLs;
+a public URL is just configuration plus a path.
+
+### Render needs no persistent disk
+
+Because covers are served from Supabase, `COVER_DIR` is irrelevant in production and
+Render Free's ephemeral filesystem stops mattering. Leave `COVER_DIR` unset there.
+
+### Uploading
+
+One-time setup — a throwaway virtualenv, deliberately not an application dependency:
+
+```bash
+python3 -m venv scripts/.venv && scripts/.venv/bin/pip install boto3
+```
+
+Generate a manifest of the cover keys the catalogue actually references, then upload:
+
+```bash
+psql -d goodreads -tAc "SELECT cover_key FROM book" > /tmp/cover-keys.txt
+
+scripts/.venv/bin/python scripts/upload-covers.py --manifest /tmp/cover-keys.txt
+scripts/.venv/bin/python scripts/upload-covers.py --manifest /tmp/cover-keys.txt --upload
+scripts/.venv/bin/python scripts/upload-covers.py --manifest /tmp/cover-keys.txt --verify
+```
+
+Without `--upload` it is a dry run and reports exactly what it would do.
+
+**The manifest matters.** The local cover directory accumulates derivatives from earlier
+ingest runs whose books were later rejected — currently 267 files across 89 books that
+nothing references. Uploading them would put objects in the bucket no request can ever
+reach, and the free tier is 1 GB. With the manifest the upload is **27,063 objects,
+648.8 MB**; without it, 27,330 and 655.7 MB.
+
+Credentials come from the environment, never from the repository:
+
+| Variable | From |
+|---|---|
+| `SUPABASE_S3_ENDPOINT` | Storage → S3 connection |
+| `SUPABASE_S3_REGION` | Storage → S3 connection |
+| `SUPABASE_S3_ACCESS_KEY_ID` | Storage → S3 access keys |
+| `SUPABASE_S3_SECRET_ACCESS_KEY` | Storage → S3 access keys |
+| `SUPABASE_STORAGE_BUCKET` | `book-covers` |
+
+These are **write** credentials. They belong to the upload tool and to nothing else —
+never in frontend configuration, never in a `NEXT_PUBLIC_` variable, never committed.
+
+The upload is idempotent and resumable: it lists what the bucket already holds and
+uploads only what is missing, so an interrupted run is resumed by running it again, and a
+completed run is a no-op. It uses the already-generated local derivatives and **never
+re-downloads anything from Open Library**.
+
+### Free-tier headroom
+
+**649 MB against Supabase Free's 1 GB** — measured as the true byte sum, not `du`'s
+block-rounded figure. There is room, but not a lot. If it becomes tight
+the next step is converting the JPEG derivatives to WebP or AVIF — typically 25-35%
+smaller at equivalent quality — rather than introducing paid infrastructure. Not done
+now: it is unnecessary while we are inside quota, and it would invalidate every stored
+object path.
 
 ---
 

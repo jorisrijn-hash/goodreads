@@ -12,17 +12,45 @@ spring:
     username: ${DATABASE_USER}
     password: ${DATABASE_PASSWORD}
     hikari:
-      # Managed Postgres and connection poolers cap concurrent connections far below a
-      # JDBC pool's default appetite, and a pooler hands out a fixed number of server
-      # connections per client. Ten is plenty for one small instance and leaves room for
-      # the ingest task to connect alongside it.
-      maximum-pool-size: ${DB_POOL_SIZE:10}
-      minimum-idle: ${DB_POOL_MIN_IDLE:2}
-      # Below the typical 30s idle timeout of a pooler, so the pool retires a connection
-      # before the pooler does and callers never meet a half-closed socket.
-      max-lifetime: 240000
+      # Sized for Supavisor SESSION mode (port 5432), where every client connection holds
+      # a DEDICATED Postgres backend connection for its whole lifetime — connections are
+      # not shared between clients as they are in transaction mode.
+      #
+      # The binding constraint is therefore not Supavisor's ~200 client-connection limit
+      # but its pool size: roughly 15-20 backend connections on Nano, shared across both
+      # the session and transaction ports. Every connection we hold is one another client
+      # (or the ingest task) cannot have.
+      #
+      # Five is deliberate, not a default. One Render Free instance has 0.1 CPU and cannot
+      # usefully serve ten concurrent database-bound requests, portfolio traffic is low,
+      # and this leaves roughly two thirds of the backend budget free for the ingest task
+      # and for headroom.
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+
+      # Let the pool shrink when idle. HikariCP normally recommends a fixed-size pool, but
+      # that advice assumes connections are cheap; in session mode an idle connection
+      # occupies a scarce backend slot for nothing.
+      minimum-idle: ${DB_POOL_MIN_IDLE:1}
+
+      # Supavisor closes a connection that has been unused for 5 minutes. Retiring our own
+      # idle connections at 2 minutes means we release them first and never discover a
+      # connection the pooler has already closed underneath us.
       idle-timeout: 120000
+
+      # Total age ceiling, comfortably under the same 5-minute window. HikariCP's guidance
+      # is to keep this below any infrastructure-imposed connection lifetime.
+      max-lifetime: 240000
+
+      # keepalive is deliberately left disabled. It exists to hold idle connections open,
+      # which is the opposite of what we want here: idle-timeout already retires them well
+      # before the pooler would, and keeping them alive would pin backend slots we are not
+      # using.
+
+      # A request that cannot get a connection within 20s should fail rather than queue.
+      # Supavisor itself queues session-mode clients for up to a minute, so waiting longer
+      # only stacks latency on top of latency.
       connection-timeout: 20000
+
   jpa:
     hibernate:
       # Flyway owns the schema. Hibernate must never alter it.

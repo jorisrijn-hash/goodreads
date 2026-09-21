@@ -32,7 +32,8 @@ data/
 *.log
 npm-debug.log*
 
-# Python (spike scripts)
+# Python (spike scripts, migration tooling)
 __pycache__/
 *.pyc
 .venv/
+scripts/.venv/

@@ -3,6 +3,13 @@
 spring:
   main:
     web-application-type: none
+  datasource:
+    hikari:
+      # The ingest writes serially in its upsert phase, so it needs almost nothing — and
+      # it frequently runs against production while the API is live, drawing from the same
+      # ~15-20 backend connection budget.
+      maximum-pool-size: ${DB_POOL_SIZE:2}
+      minimum-idle: 1
 
 ingest:
   # Open Library allows 3 req/s for clients that identify themselves with a contact

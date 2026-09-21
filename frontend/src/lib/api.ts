@@ -153,9 +153,15 @@ export type LibrarySummary = {
 };
 
 /**
- * Builds a cover URL. The API returns a key; the widths are the three the ingest
- * generates. Same-origin and relative, so it works unchanged in development, in
- * production, and if the bytes later move to object storage behind the same path.
+ * Builds a cover URL.
+ *
+ * <p>The single place cover URLs are constructed anywhere in the application. The API
+ * returns a storage key; the widths are the three the ingest generates.
+ *
+ * <p>Always same-origin and relative. Where the bytes physically live — the API's disk
+ * in development, Supabase Storage in production, something else later — is decided by
+ * one rewrite in next.config.ts and is invisible here. Nothing in the frontend, and no
+ * value in the database, knows the storage provider.
  */
 export function coverUrl(
   coverKey: string | null | undefined,

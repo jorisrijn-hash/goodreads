@@ -10,13 +10,20 @@ import type { NextConfig } from "next";
 const API_ORIGIN = process.env.API_ORIGIN ?? "http://localhost:8080";
 
 /**
- * Where cover bytes live. Defaults to the API, which serves them from its own storage.
+ * Where cover bytes actually live, as a full base URL including any path prefix.
  *
- * Separate from API_ORIGIN so covers can move to object storage or a CDN by changing one
- * variable — the public path stays `/covers/<shard>/<id>-<width>.jpg`, so no application
- * code, no stored key and no rendered URL has to change.
+ * A base *URL* rather than an origin, because object storage puts the bucket in the
+ * path. Supabase public objects live at
+ * `https://<ref>.supabase.co/storage/v1/object/public/book-covers`, which an
+ * origin-only variable could not express.
+ *
+ * Changing storage provider is this one variable. The public path the browser sees
+ * stays `/covers/<shard>/<id>-<width>.jpg`, so no application code, no database key and
+ * no rendered URL moves with the bytes.
+ *
+ * Defaults to the API, which serves covers from disk in local development.
  */
-const COVERS_ORIGIN = process.env.COVERS_ORIGIN ?? API_ORIGIN;
+const COVERS_BASE_URL = process.env.COVERS_BASE_URL ?? `${API_ORIGIN}/covers`;
 
 /**
  * The API is proxied so that it is same-origin with the frontend.
@@ -38,7 +45,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/api/v1/:path*", destination: `${API_ORIGIN}/api/v1/:path*` },
-      { source: "/covers/:path*", destination: `${COVERS_ORIGIN}/covers/:path*` },
+      { source: "/covers/:path*", destination: `${COVERS_BASE_URL}/:path*` },
     ];
   },
 };
