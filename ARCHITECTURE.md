@@ -84,6 +84,8 @@ follows, challenges. They are not Phase 1.
 
 Hybrid, verified against PostgreSQL 17.11 — see `docs/decisions/0002`.
 
+0. A query that is a valid ISBN-13 or ISBN-10 (hyphens and spaces allowed, checksum
+   verified) is an exact lookup on `book_isbn13_idx`.
 1. `tsvector` full-text, title weighted above author. Handles exact, partial,
    author, punctuation and accent queries. ~0.08 ms.
 2. `pg_trgm` similarity fallback when FTS returns nothing. Recovers typos that

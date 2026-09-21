@@ -146,6 +146,37 @@ class CatalogueApiTest {
     }
 
     @Test
+    @DisplayName("an ISBN finds its book, however it is typed")
+    void isbnLookup() throws Exception {
+        needsCatalogue();
+        // A real row, not a hardcoded ISBN, so this holds for whatever the catalogue is.
+        var book = db.sql("""
+                SELECT slug, isbn13 FROM book WHERE isbn13 LIKE '978%' ORDER BY id LIMIT 1""")
+                .query((rs, n) -> new String[] {rs.getString("slug"), rs.getString("isbn13")})
+                .single();
+        String isbn13 = book[1];
+        String hyphenated = isbn13.substring(0, 3) + "-" + isbn13.substring(3, 4) + "-"
+                + isbn13.substring(4, 12) + "-" + isbn13.substring(12);
+        // The same book's ISBN-10: drop the 978 prefix and recompute the check character.
+        String stem = isbn13.substring(3, 12);
+        int sum = 0;
+        for (int i = 0; i < 9; i++) {
+            sum += (stem.charAt(i) - '0') * (10 - i);
+        }
+        int check = (11 - sum % 11) % 11;
+        String isbn10 = stem + (check == 10 ? "X" : String.valueOf(check));
+
+        for (String typed : new String[] {isbn13, hyphenated, isbn10}) {
+            mvc.perform(get("/api/v1/books").param("q", typed))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.total").value(1))
+                    .andExpect(jsonPath("$.items[0].slug").value(book[0]))
+                    // An exact identifier match is not a correction.
+                    .andExpect(jsonPath("$.correctedFrom").doesNotExist());
+        }
+    }
+
+    @Test
     void nonsenseReturnsAnEmptyPageRatherThanAnError() throws Exception {
         needsCatalogue();
         mvc.perform(get("/api/v1/books").param("q", "zzzqqqxxnotabook"))

@@ -200,7 +200,8 @@ closed — nothing is passed through to SQL as a column or ordering fragment, `s
 capped, and `sort` is an enum mapped to SQL the repository owns.
 
 **Search runs entirely in PostgreSQL** against the ingested 9,021-book catalogue. Open
-Library is never called at request time. Full text resolves exact, partial, author,
+Library is never called at request time. A valid ISBN (13 or 10 digits, hyphens allowed)
+is an exact lookup; full text resolves exact, partial, author,
 punctuation and accent queries; trigram catches typos; short queries try a prefix match
 and then a low-threshold fuzzy pass. When a fallback recovers a query the response sets
 `correctedFrom`, so the interface can say *showing results for…* rather than silently

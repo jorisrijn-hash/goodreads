@@ -17,8 +17,9 @@ import java.util.*;
  * N+1 storm.
  *
  * <p>Search behaviour is the one proven in Checkpoint B against the real catalogue:
- * full-text first, trigram as the typo fallback, and a prefix path for very short
- * queries where trigram similarity is unreliable.
+ * an exact ISBN lookup when the query is one, then full-text, trigram as the typo
+ * fallback, and a prefix path for very short queries where trigram similarity is
+ * unreliable.
  */
 @Repository
 public class CatalogueRepository {
@@ -71,9 +72,18 @@ public class CatalogueRepository {
         if (!query.hasQuery()) {
             return browse(query);
         }
+        // An ISBN is an identifier, not text: look it up exactly. Full text would never
+        // match it, and the trigram fallback would return near-miss digit strings.
+        Optional<String> isbn = Isbn.toIsbn13(query.q());
+        if (isbn.isPresent()) {
+            SearchResult exact = runSearch(query, Mode.ISBN, isbn.get());
+            if (exact.total() > 0) {
+                return exact;
+            }
+        }
         // Full text first: exact, partial, author and punctuation/accent queries all
         // resolve here, and it is an order of magnitude faster than the fallback.
-        SearchResult fullText = runSearch(query, Mode.FULL_TEXT);
+        SearchResult fullText = runSearch(query, Mode.FULL_TEXT, query.q());
         if (fullText.total() > 0) {
             return fullText;
         }
@@ -83,7 +93,7 @@ public class CatalogueRepository {
         for (Mode fallback : query.isShortQuery()
                 ? List.of(Mode.PREFIX, Mode.FUZZY_SHORT)
                 : List.of(Mode.TRIGRAM)) {
-            SearchResult recovered = runSearch(query, fallback);
+            SearchResult recovered = runSearch(query, fallback, query.q());
             if (recovered.total() > 0) {
                 return new SearchResult(recovered.books(), recovered.total(), query.q());
             }
@@ -91,7 +101,7 @@ public class CatalogueRepository {
         return new SearchResult(List.of(), 0, null);
     }
 
-    private enum Mode { FULL_TEXT, TRIGRAM, PREFIX, FUZZY_SHORT }
+    private enum Mode { ISBN, FULL_TEXT, TRIGRAM, PREFIX, FUZZY_SHORT }
 
     /**
      * pg_trgm's default similarity threshold is 0.3, and a four-character typo like
@@ -102,8 +112,9 @@ public class CatalogueRepository {
      */
     private static final double SHORT_QUERY_SIMILARITY = 0.2;
 
-    private SearchResult runSearch(BookSearchQuery query, Mode mode) {
+    private SearchResult runSearch(BookSearchQuery query, Mode mode, String term) {
         String predicate = switch (mode) {
+            case ISBN -> "b.isbn13 = :q";
             case FULL_TEXT -> "b.search_vector @@ websearch_to_tsquery('simple', norm_text(:q))";
             case TRIGRAM -> "b.search_text % norm_text(:q)";
             // Prefix on the title only: a three-letter query against author names
@@ -115,6 +126,7 @@ public class CatalogueRepository {
                     + SHORT_QUERY_SIMILARITY;
         };
         String relevance = switch (mode) {
+            case ISBN -> "b.id ASC";
             case FULL_TEXT -> """
                     (norm_text(b.title) = norm_text(:q)) DESC,
                     ts_rank(b.search_vector, websearch_to_tsquery('simple', norm_text(:q))) DESC,
@@ -134,8 +146,8 @@ public class CatalogueRepository {
         var rows = db.sql(SELECT_BOOK + " FROM book b WHERE " + predicate + filters
                 + " ORDER BY " + orderBy + " LIMIT :limit OFFSET :offset");
 
-        count = count.param("q", query.q());
-        rows = rows.param("q", query.q()).param("limit", query.size()).param("offset", query.offset());
+        count = count.param("q", term);
+        rows = rows.param("q", term).param("limit", query.size()).param("offset", query.offset());
         for (var entry : filterParams(query).entrySet()) {
             count = count.param(entry.getKey(), entry.getValue());
             rows = rows.param(entry.getKey(), entry.getValue());
