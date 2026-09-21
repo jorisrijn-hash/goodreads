@@ -5,7 +5,8 @@ import { BookCover } from "@/components/BookCover";
 import { SaveControl } from "@/components/SaveControl";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { BookDetail, LibraryEntry } from "@/lib/api";
-import { fetchPrivate, fetchPublic } from "@/lib/server-api";
+import { fetchPrivate, fetchPublic, fetchPublicResult } from "@/lib/server-api";
+import { WakingPage } from "@/components/WakingPage";
 import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -36,11 +37,15 @@ export default async function BookPage({
   const { slug } = await params;
   const { save } = await searchParams;
 
-  const [book, user] = await Promise.all([
-    fetchPublic<BookDetail>(`/api/v1/books/${slug}`, 3600),
+  const [result, user] = await Promise.all([
+    fetchPublicResult<BookDetail>(`/api/v1/books/${slug}`, 3600),
     getCurrentUser(),
   ]);
-  if (!book) notFound();
+  // Only an answer from the API makes this a 404. A sleeping API is not evidence that
+  // the book does not exist, and a 404 page would say it does not.
+  if (result.kind === "unavailable") return <WakingPage what="this book" />;
+  if (result.kind === "absent") notFound();
+  const book = result.data;
 
   // Only fetched for a signed-in reader; 404 from this endpoint simply means not saved.
   const entry = user ? await fetchPrivate<LibraryEntry>(`/api/v1/me/library/${slug}`) : null;

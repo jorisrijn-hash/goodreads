@@ -3,10 +3,12 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
 import { EmptyState } from "@/components/EmptyState";
+import { WakingUp } from "@/components/WakingUp";
 import { LibrarySearch } from "@/components/LibrarySearch";
 import { STATUS_LABEL, type LibraryEntry, type LibrarySummary, type ReadingStatus } from "@/lib/api";
 import { fetchPrivate } from "@/lib/server-api";
-import { getCurrentUser } from "@/lib/session";
+import { getSession } from "@/lib/session";
+import { WakingPage } from "@/components/WakingPage";
 
 export const metadata = { title: "My Library" };
 export const dynamic = "force-dynamic";
@@ -24,8 +26,12 @@ export default async function LibraryPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string }>;
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?returnTo=%2Flibrary");
+  const session = await getSession();
+  // Not knowing is not the same as signed out: sending a signed-in reader to the login
+  // page because the API is waking up would be wrong, so wait instead.
+  if (session.kind === "unavailable") return <WakingPage what="your library" />;
+  if (session.kind === "signed-out") redirect("/login?returnTo=%2Flibrary");
+  const user = session.user;
 
   const { status, q } = await searchParams;
   const active = TABS.some(tab => tab.key === status) ? (status as ReadingStatus) : "ALL";
@@ -113,10 +119,7 @@ export default async function LibraryPage({
 
       <div className="mt-[var(--space-8)]">
         {!entries ? (
-          <EmptyState
-            title="Your library is unavailable"
-            body="The service could not be reached, so your books could not be loaded."
-          />
+          <WakingUp what="your library" />
         ) : entries.length === 0 ? (
           q ? (
             <EmptyState

@@ -1,16 +1,30 @@
 import type { ApiUser } from "./api";
-import { fetchPrivate } from "./server-api";
+import { fetchPrivateResult } from "./server-api";
+
+export type Session =
+  | { kind: "signed-in"; user: ApiUser }
+  | { kind: "signed-out" }
+  /** The API could not be reached, so we do not know. Not the same as signed out. */
+  | { kind: "unavailable" };
 
 /**
- * Reads the current reader on the server.
+ * Who the reader is, or that we cannot tell yet.
  *
- * The session cookie is HttpOnly, so a Server Component cannot see its value — but it
- * can forward it. That keeps the browser from ever holding a token, and keeps the
- * decision about who is authenticated in Spring rather than here.
+ * Treating "the API is asleep" as "signed out" would bounce a signed-in reader to the
+ * login page every time the free-tier backend wakes up.
+ */
+export async function getSession(): Promise<Session> {
+  const result = await fetchPrivateResult<ApiUser>("/api/v1/me");
+  if (result.kind === "ok") return { kind: "signed-in", user: result.data };
+  if (result.kind === "absent") return { kind: "signed-out" };
+  return { kind: "unavailable" };
+}
+
+/**
+ * For pages where "unknown" may safely render as signed out — the landing and auth
+ * pages, which only use this to skip ahead for a reader who is already signed in.
  */
 export async function getCurrentUser(): Promise<ApiUser | null> {
-  // Identity is never cached; fetchPrivate forwards the session cookie and sets no-store.
-  // An unreachable API is not the same as a signed-out reader, but from the page's point
-  // of view there is nothing to render either way.
-  return fetchPrivate<ApiUser>("/api/v1/me");
+  const session = await getSession();
+  return session.kind === "signed-in" ? session.user : null;
 }

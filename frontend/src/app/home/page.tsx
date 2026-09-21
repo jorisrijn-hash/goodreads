@@ -6,7 +6,8 @@ import { BookCover } from "@/components/BookCover";
 import { EmptyState } from "@/components/EmptyState";
 import { STATUS_LABEL, type LibraryEntry, type LibrarySummary } from "@/lib/api";
 import { fetchPrivate } from "@/lib/server-api";
-import { getCurrentUser } from "@/lib/session";
+import { getSession } from "@/lib/session";
+import { WakingPage } from "@/components/WakingPage";
 
 export const metadata = { title: "Home" };
 export const dynamic = "force-dynamic";
@@ -27,8 +28,12 @@ function greeting(): string {
  * dishonest thing here.
  */
 export default async function HomePage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?returnTo=%2Fhome");
+  const session = await getSession();
+  // Not knowing is not the same as signed out: sending a signed-in reader to the login
+  // page because the API is waking up would be wrong, so wait instead.
+  if (session.kind === "unavailable") return <WakingPage what="your library" />;
+  if (session.kind === "signed-out") redirect("/login?returnTo=%2Fhome");
+  const user = session.user;
 
   const [reading, recent, summary] = await Promise.all([
     fetchPrivate<LibraryEntry[]>("/api/v1/me/library?status=CURRENTLY_READING"),

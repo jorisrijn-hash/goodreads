@@ -7,7 +7,8 @@ import { SearchInput } from "@/components/SearchInput";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AppShell } from "@/components/AppShell";
 import type { BookPage, Genre } from "@/lib/api";
-import { fetchPublic } from "@/lib/server-api";
+import { fetchPublicResult } from "@/lib/server-api";
+import { WakingUp } from "@/components/WakingUp";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata = { title: "Discover" };
@@ -57,7 +58,7 @@ export default async function DiscoverPage({
 
 async function resultsView(params: Params) {
   const page = Number(params.page ?? 0) || 0;
-  const results = await fetchPublic<BookPage>(
+  const result = await fetchPublicResult<BookPage>(
     `/api/v1/books?${new URLSearchParams({
       ...(params.q ? { q: params.q } : {}),
       ...(params.genre ? { genre: params.genre } : {}),
@@ -69,6 +70,9 @@ async function resultsView(params: Params) {
     })}`,
     0,
   );
+  // A 4xx here is the API rejecting the request itself — a hand-edited filter, say.
+  // That is an answer, and the honest one is "nothing", not "come back later".
+  const results = result.kind === "ok" ? result.data : null;
 
   return (
     <>
@@ -78,14 +82,11 @@ async function resultsView(params: Params) {
         </Suspense>
       </div>
 
-      {!results ? (
+      {result.kind === "unavailable" ? (
         <div className="mt-[var(--space-10)]">
-          <EmptyState
-            title="Search is unavailable"
-            body="The catalogue service could not be reached. This usually means the API is not running."
-          />
+          <WakingUp what="the catalogue" />
         </div>
-      ) : results.items.length === 0 ? (
+      ) : !results || results.items.length === 0 ? (
         <div className="mt-[var(--space-10)]">
           <EmptyState
             title="Nothing matched"
@@ -166,24 +167,24 @@ function Pagination({ params, page, hasMore }: { params: Params; page: number; h
  * you", no match percentage and no invented popularity.
  */
 async function browseView() {
-  const [total, recent, short, long, classics, genres] = await Promise.all([
+  const results = await Promise.all([
     // size=1 so this is a count query, not a page of books we then discard.
-    fetchPublic<BookPage>("/api/v1/books?size=1"),
-    fetchPublic<BookPage>("/api/v1/books?sort=NEWEST&size=12"),
-    fetchPublic<BookPage>("/api/v1/books?maxPages=200&size=12"),
-    fetchPublic<BookPage>("/api/v1/books?minPages=600&size=12"),
-    fetchPublic<BookPage>("/api/v1/books?genre=classics&size=12"),
-    fetchPublic<Genre[]>("/api/v1/genres", 21600),
-  ]);
+    fetchPublicResult<BookPage>("/api/v1/books?size=1"),
+    fetchPublicResult<BookPage>("/api/v1/books?sort=NEWEST&size=12"),
+    fetchPublicResult<BookPage>("/api/v1/books?maxPages=200&size=12"),
+    fetchPublicResult<BookPage>("/api/v1/books?minPages=600&size=12"),
+    fetchPublicResult<BookPage>("/api/v1/books?genre=classics&size=12"),
+    fetchPublicResult<Genre[]>("/api/v1/genres", 21600),
+  ] as const);
 
-  if (!recent && !short && !genres) {
-    return (
-      <EmptyState
-        title="The catalogue is unavailable"
-        body="The catalogue service could not be reached. This usually means the API is not running."
-      />
-    );
+  // All of them failing together is the API being asleep, not six separate problems.
+  if (results.every(r => r.kind === "unavailable")) {
+    return <WakingUp what="the catalogue" />;
   }
+
+  const [total, recent, short, long, classics, genres] = results.map(r =>
+    r.kind === "ok" ? r.data : null,
+  ) as [BookPage | null, BookPage | null, BookPage | null, BookPage | null, BookPage | null, Genre[] | null];
 
   return (
     <>

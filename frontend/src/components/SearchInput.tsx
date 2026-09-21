@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 /**
  * The search field for Discover.
@@ -12,13 +12,18 @@ import { useEffect, useRef, useState } from "react";
 export function SearchInput({ autoFocus = false }: { autoFocus?: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
-  const [value, setValue] = useState(params.get("q") ?? "");
+  const urlQuery = params.get("q") ?? "";
+  const [value, setValue] = useState(urlQuery);
+  const [syncedQuery, setSyncedQuery] = useState(urlQuery);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Keep the field in step when navigation changes the query (back button, a genre link).
-  useEffect(() => {
-    setValue(params.get("q") ?? "");
-  }, [params]);
+  // Adjusted during render rather than in an effect, so there is no frame showing the
+  // stale query.
+  if (urlQuery !== syncedQuery) {
+    setSyncedQuery(urlQuery);
+    setValue(urlQuery);
+  }
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
