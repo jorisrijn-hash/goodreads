@@ -307,24 +307,49 @@ Notes:
   it as production. Run it as `prod,ingest` against a real deployment and the guard still
   applies.
 - Run it **from a machine that already has `backend/data/ingest/`** and it replays from
-  cache: about a minute, no network. Run it anywhere else and it re-harvests from Open
+  cache with no Open Library traffic. Run it anywhere else and it re-harvests from Open
   Library at 3 req/s — roughly 1–2 hours, but entirely reproducible.
+- **Against production it is slow: about 40 minutes** for 9,021 books from the
+  Netherlands. The upsert phase writes book by book, and every statement is a round trip
+  to the Frankfurt pooler (locally the same run takes ~30 s).
+- **Keep the machine awake** (`caffeinate -dims` on macOS). The first production run
+  died at 4,858 books when the laptop slept: the pooler connection dropped and the
+  transaction for the book in flight rolled back. Rerunning was safe — it commits per
+  book and is idempotent — and finished with 4,163 inserted and 4,858 updated.
+- To *prove* a replay makes no network calls, run it in a sandbox that denies HTTP(S)
+  but allows Postgres. On macOS:
+
+  ```
+  (version 1)
+  (allow default)
+  (deny network-outbound (remote tcp "*:80"))
+  (deny network-outbound (remote tcp "*:443"))
+  ```
+
+  `sandbox-exec -f nonet.sb java -jar target/reading-api-0.0.1-SNAPSHOT.jar
+  --spring.profiles.active=prod,ingest`. The run still reports ~116 attempted requests:
+  the 29 candidates whose cover failed in the original harvest are retried every run,
+  fail again, and are rejected exactly as before.
 - It is idempotent. Re-running updates rows rather than duplicating them.
 
-Expected afterwards: **9,021 books, 7,984 authors, 25 genres**. Verify against the
-production database:
+Expected afterwards: **9,021 books, 7,984 authors, 25 genres, 12,574 book–author and
+15,466 book–genre links** — verified in production on 2026-09-21, with content
+fingerprints identical to the local catalogue. Check the counts with the same
+credentials Render uses, taking the pooler host verbatim from the Supabase dashboard:
 
 ```bash
-PGPASSWORD='<password>' psql \
-  "host=aws-0-<region>.pooler.supabase.com port=5432 dbname=postgres \
-   user=postgres.<project-ref> sslmode=require" \
-  -c "SELECT (SELECT count(*) FROM book)    AS books,
-             (SELECT count(*) FROM author)  AS authors,
-             (SELECT count(*) FROM genre)   AS genres;"
+PGHOST='<pooler host, copied exactly>' PGPORT=5432 PGDATABASE=postgres \
+PGUSER='postgres.<project-ref>' PGPASSWORD='<password>' PGSSLMODE=require \
+  psql -c "SELECT (SELECT count(*) FROM book)        AS books,
+                  (SELECT count(*) FROM author)      AS authors,
+                  (SELECT count(*) FROM genre)       AS genres,
+                  (SELECT count(*) FROM book_author) AS book_author,
+                  (SELECT count(*) FROM book_genre)  AS book_genre;"
 ```
 
-`./scripts/verify-catalogue.sh` runs the full battery — coverage, distributions, demo
-books, the search tests and the integrity checks — against a local `psql` connection.
+`./scripts/verify-catalogue.sh <db>` runs the full battery — coverage, distributions,
+demo books, the search tests and the integrity checks. It uses plain `psql`, so the
+`PG*` variables above point it at production.
 
 ---
 
@@ -349,12 +374,22 @@ component detail — no database URLs, no disk paths. `env`, `configprops`, `bea
 
 ## Current status
 
-The Spring API is **not deployed yet**, so production serves the frontend only:
+Deployed and verified end to end on 2026-09-21 (Checkpoint D.5): Vercel → Render → Supabase
+PostgreSQL, covers from Supabase Storage, all through the Vercel origin.
 
-- `/`, `/login`, `/signup` render correctly. The landing hero falls back to its blank
-  paper composition, because there are no covers to show.
-- `/discover` renders its "catalogue is unavailable" state.
-- Signing in cannot work — there is no API to reach.
+**Cold starts.** Render Free spins the API down after 15 idle minutes. Measured in
+production, the first request after that takes **~170–180 s** to be answered (168 s and
+179 s in two measurements): container start plus Spring Boot on a fraction of a CPU.
+What a reader sees:
 
-Stated here rather than disguised with a mock API. Everything above has been verified
-locally through the same proxy path production will use.
+- Pages whose data Vercel has cached (the Discover browse view) render immediately from
+  the cache — 0.6–2 s during a cold start.
+- Uncached pages (search, a book not recently viewed, anything personal) render within
+  ~5 s as "Opening the catalogue…", explain that the demo server sleeps, poll in the
+  background, and fill in by themselves when the API answers — 181 s in the final
+  measurement, with no reload. After five minutes without an answer they say so and offer
+  "Try again".
+
+The only fixes are paying for an always-on instance or pinging the service to keep it
+awake; neither is used. The wait is a property of the free tier, stated rather than
+hidden.
