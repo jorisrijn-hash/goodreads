@@ -45,14 +45,75 @@ keys, internal hostnames — may ever be `NEXT_PUBLIC_`.
 
 ---
 
-## 2. PostgreSQL
+## 2. PostgreSQL — Supabase
 
-Any managed Postgres 17 with `pg_trgm` and `unaccent` available. Both are *trusted*
-extensions, so migration `V2` creates them as the ordinary application user — no
-superuser needed.
+Supabase is used as **PostgreSQL only**. No Supabase Auth, no Supabase client SDK, no
+`NEXT_PUBLIC_SUPABASE_*` variable anywhere. Spring owns every database access and
+Flyway remains the schema authority.
+
+### Mapping the Supabase connection onto our variables
+
+Take the **Session pooler** JDBC string from
+*Project Settings → Database → Connection string → JDBC*. It looks like:
+
+```
+jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres
+   user=postgres.<project-ref>   password=<your password>
+```
+
+| Our variable | Value from Supabase |
+|---|---|
+| `DATABASE_URL` | `jdbc:postgresql://aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require` |
+| `DATABASE_USER` | `postgres.<project-ref>` — the project ref belongs in the **username**, after the dot |
+| `DATABASE_PASSWORD` | The database password (not the `anon` or `service_role` key — those are Supabase API keys and are unrelated) |
+
+Three details that matter:
+
+- **Port 5432, session mode.** Not 6543. Flyway takes a session-level advisory lock to
+  serialise migrations, and transaction-mode pooling does not preserve session state, so
+  migrations fail or corrupt under it. Session mode is also IPv4-reachable, which Render
+  needs.
+- **`?sslmode=require`.** The Postgres JDBC driver defaults to `prefer`, which will
+  silently fall back to an unencrypted connection. Append it explicitly.
+- **The username carries the project ref.** `postgres.<project-ref>`, not `postgres`.
+  That is how the pooler routes to your project, and a bare `postgres` fails to
+  authenticate.
+
+### Do not enable pg_trgm or unaccent in the Supabase dashboard
+
+Let Flyway create them (migration `V2`). Enabling them through the dashboard installs
+them into an `extensions` schema, while `norm_text()` resolves `public.unaccent`. The
+result is a migration failure reading:
+
+```
+ERROR: function public.unaccent(unknown, text) does not exist
+```
+
+If that happens, fix it once and re-deploy:
+
+```sql
+DROP EXTENSION IF EXISTS unaccent CASCADE;
+DROP EXTENSION IF EXISTS pg_trgm  CASCADE;
+-- then redeploy; V2 recreates both in public
+```
+
+Both are *trusted* extensions, so `V2` creates them as the ordinary application user —
+no superuser required.
+
+Migration `V7` then asserts the whole search layer actually works: both extensions
+present, the unaccent dictionary in the schema `norm_text()` expects, `norm_text('L’Étranger')`
+actually returning `l'etranger`, the similarity operator reachable, and all three search
+indexes built. A deployment with a broken search layer stops at migration with a readable
+message rather than starting up and returning empty results forever.
+
+### Connection pool
+
+`DB_POOL_SIZE` defaults to 10, which suits one small instance behind a pooler. Supabase's
+free tier allows a limited number of pooled connections; if the ingest runs against
+production while the API is live, both are drawing from that budget.
 
 **Do not copy the local database.** Flyway builds the schema from scratch on first
-startup, and the ingest builds the catalogue. There is no manual schema step.
+startup and the ingest builds the catalogue. There is no manual schema step and no dump.
 
 ---
 
@@ -70,9 +131,10 @@ railway up --service reading-api   # root directory: backend
 
 | Variable | Required | Notes |
 |---|---|---|
-| `DATABASE_URL` | **yes** | `jdbc:postgresql://host:5432/db` |
-| `DATABASE_USER` | **yes** | |
-| `DATABASE_PASSWORD` | **yes** | A real secret |
+| `DATABASE_URL` | **yes** | Supabase session-pooler JDBC URL **with `?sslmode=require`** |
+| `DATABASE_USER` | **yes** | `postgres.<project-ref>` |
+| `DATABASE_PASSWORD` | **yes** | The Supabase database password |
+| `DB_POOL_SIZE` | no | Defaults to 10 |
 | `SPRING_PROFILES_ACTIVE` | **yes** | `prod` — anything other than `local`/`test` |
 | `SESSION_COOKIE_SECURE` | **yes** | `true` |
 | `FRONTEND_ORIGIN` | **yes** | The Vercel origin |
@@ -130,8 +192,20 @@ Notes:
   Library at 3 req/s — roughly 1–2 hours, but entirely reproducible.
 - It is idempotent. Re-running updates rows rather than duplicating them.
 
-Expected afterwards: **9,021 books, 7,984 authors, 25 genres**. Verify with
-`./scripts/verify-catalogue.sh` pointed at the production database.
+Expected afterwards: **9,021 books, 7,984 authors, 25 genres**. Verify against the
+production database:
+
+```bash
+PGPASSWORD='<password>' psql \
+  "host=aws-0-<region>.pooler.supabase.com port=5432 dbname=postgres \
+   user=postgres.<project-ref> sslmode=require" \
+  -c "SELECT (SELECT count(*) FROM book)    AS books,
+             (SELECT count(*) FROM author)  AS authors,
+             (SELECT count(*) FROM genre)   AS genres;"
+```
+
+`./scripts/verify-catalogue.sh` runs the full battery — coverage, distributions, demo
+books, the search tests and the integrity checks — against a local `psql` connection.
 
 ---
 

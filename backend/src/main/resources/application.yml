@@ -11,6 +11,18 @@ spring:
     url: ${DATABASE_URL}
     username: ${DATABASE_USER}
     password: ${DATABASE_PASSWORD}
+    hikari:
+      # Managed Postgres and connection poolers cap concurrent connections far below a
+      # JDBC pool's default appetite, and a pooler hands out a fixed number of server
+      # connections per client. Ten is plenty for one small instance and leaves room for
+      # the ingest task to connect alongside it.
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      # Below the typical 30s idle timeout of a pooler, so the pool retires a connection
+      # before the pooler does and callers never meet a half-closed socket.
+      max-lifetime: 240000
+      idle-timeout: 120000
+      connection-timeout: 20000
   jpa:
     hibernate:
       # Flyway owns the schema. Hibernate must never alter it.
