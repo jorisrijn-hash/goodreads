@@ -166,6 +166,20 @@ duplicating them, and replays cached responses instead of re-fetching.
 Full documentation, including the selection strategy, quality gates, rate limiting and
 genre taxonomy: **[docs/INGEST.md](docs/INGEST.md)**.
 
+## Routes
+
+| Route | Access | Purpose |
+|---|---|---|
+| `/` | public | Landing, with real covers from the catalogue |
+| `/discover` | public | Discovery and search as one surface |
+| `/book/[slug]` | public | Book detail — the hub the reading loop returns to |
+| `/login`, `/signup` | public | Authentication |
+| `/home` | authenticated | The reader's hub |
+| `/library` | authenticated | My Library, by reading state |
+
+Journal is deliberately absent from the navigation until it is built. Unfinished
+destinations are not shown as dead links.
+
 ## Catalogue API
 
 Public — browsing and searching need no account.

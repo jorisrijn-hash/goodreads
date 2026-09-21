@@ -113,6 +113,85 @@ async function request<T>(
   return payload as T;
 }
 
+// ------------------------------------------------------------------ catalogue --
+
+export type Book = {
+  slug: string;
+  title: string;
+  authors: string[];
+  publishedYear: number | null;
+  pageCount: number | null;
+  genres: string[];
+  coverKey: string | null;
+};
+
+export type BookDetail = Omit<Book, "genres"> & {
+  description: string | null;
+  language: string | null;
+  isbn13: string | null;
+  genres: { slug: string; name: string }[];
+};
+
+export type BookPage = {
+  items: Book[];
+  page: number;
+  size: number;
+  total: number;
+  hasMore: boolean;
+  /** Set when a fallback recovered the query, so the UI can say "showing results for". */
+  correctedFrom: string | null;
+};
+
+export type Genre = { slug: string; name: string; bookCount: number };
+
+export type ReadingStatus = "WANT_TO_READ" | "CURRENTLY_READING" | "READ" | "DNF";
+
+export type SaveReason =
+  | "RECOMMENDED"
+  | "SAW_ONLINE"
+  | "SCHOOL_OR_WORK"
+  | "AUTHOR_INTEREST"
+  | "OTHER";
+
+export type LibraryEntry = {
+  book: Book;
+  status: ReadingStatus;
+  saveReason: SaveReason | null;
+  saveNote: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  savedAt: string;
+  updatedAt: string;
+};
+
+export type LibrarySummary = {
+  total: number;
+  wantToRead: number;
+  currentlyReading: number;
+  read: number;
+  didNotFinish: number;
+};
+
+/** Builds a cover URL. The API returns a key; widths are the three we generate. */
+export function coverUrl(
+  coverKey: string | null | undefined,
+  width: 160 | 320 | 640,
+): string | null {
+  if (!coverKey || !API_BASE) return null;
+  return `${API_BASE}/covers/${coverKey}-${width}.jpg`;
+}
+
+function query(params: Record<string, string | number | null | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== null && value !== undefined && value !== "") {
+      search.set(key, String(value));
+    }
+  }
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
 export const api = {
   signUp: (input: { email: string; username: string; password: string }) =>
     request<ApiUser>("POST", "/api/v1/users", input),
@@ -125,4 +204,59 @@ export const api = {
   logOut: () => request<void>("DELETE", "/api/v1/auth/session"),
 
   me: () => request<ApiUser>("GET", "/api/v1/me"),
+
+  // --- catalogue (public) ---
+  books: (params: {
+    q?: string;
+    genre?: string;
+    minPages?: number;
+    maxPages?: number;
+    sort?: string;
+    page?: number;
+    size?: number;
+  }) => request<BookPage>("GET", `/api/v1/books${query(params)}`),
+
+  book: (slug: string) => request<BookDetail>("GET", `/api/v1/books/${slug}`),
+
+  genres: () => request<Genre[]>("GET", "/api/v1/genres"),
+
+  // --- personal library (authenticated) ---
+  library: (params: { status?: string; q?: string } = {}) =>
+    request<LibraryEntry[]>("GET", `/api/v1/me/library${query(params)}`),
+
+  librarySummary: () => request<LibrarySummary>("GET", "/api/v1/me/library/summary"),
+
+  libraryEntry: (slug: string) =>
+    request<LibraryEntry>("GET", `/api/v1/me/library/${slug}`),
+
+  saveBook: (slug: string, body?: {
+    status?: ReadingStatus;
+    saveReason?: SaveReason;
+    saveNote?: string;
+  }) => request<LibraryEntry>("PUT", `/api/v1/me/library/${slug}`, body ?? {}),
+
+  updateLibraryEntry: (slug: string, body: {
+    status?: ReadingStatus;
+    saveReason?: SaveReason | null;
+    saveNote?: string | null;
+  }) => request<LibraryEntry>("PATCH", `/api/v1/me/library/${slug}`, body),
+
+  removeBook: (slug: string) =>
+    request<void>("DELETE", `/api/v1/me/library/${slug}`),
+};
+
+/** The labels readers see. The API's values are deliberately not shown as-is. */
+export const STATUS_LABEL: Record<ReadingStatus, string> = {
+  WANT_TO_READ: "Want to Read",
+  CURRENTLY_READING: "Currently Reading",
+  READ: "Read",
+  DNF: "Did Not Finish",
+};
+
+export const SAVE_REASON_LABEL: Record<SaveReason, string> = {
+  RECOMMENDED: "Someone recommended it",
+  SAW_ONLINE: "Saw it online",
+  SCHOOL_OR_WORK: "For school or work",
+  AUTHOR_INTEREST: "I follow the author",
+  OTHER: "Something else",
 };

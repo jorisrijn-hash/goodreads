@@ -1,50 +1,39 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import type { Book } from "@/lib/api";
+import { BookCover } from "./BookCover";
 
 /**
- * TEMPORARY — replaced in Checkpoint D13 by real catalogue covers.
+ * The landing hero's book composition.
  *
- * The catalogue exists but has no HTTP endpoint yet, so there is nothing real to show
- * here. Rather than invent covers, titles or ratings, this is an unmistakably blank
- * editorial composition: paper planes, a spine rule, small-caps marks and folio numbers.
+ * <p>Real books from our own catalogue, with covers served from our own storage. Nothing
+ * here is a placeholder or an invented title, and no rating, review count or popularity
+ * figure is shown, because we hold none.
  *
- * Every plane is already a 2:3 book-cover rectangle with the same stagger, depth and
- * hover behaviour the real thing will need. Replacing this means swapping each plane's
- * inner content for a <BookCover>; the geometry and motion stay as they are.
+ * <p>Arranged as volumes standing on a shelf rather than a floating product collage: a
+ * shared baseline, slight rotation, overlapping depth. The parallax is a few pixels and
+ * is skipped entirely for touch pointers and reduced-motion readers.
  */
 
-type Plane = {
-  /** Horizontal offset within the composition box, in percent. */
-  x: number;
-  /** How far the plane is lifted off the shelf line, in percent. Books rest on a
-   *  shelf; they do not float through it. */
-  lift: number;
-  /** Relative size, 1 = base. */
-  scale: number;
-  /** Depth: larger values drift further with the pointer. */
-  depth: number;
-  rotate: number;
-  mark: string;
-  folio: string;
-};
+type Placement = { x: number; scale: number; depth: number; rotate: number };
+
+const PLACEMENTS: Placement[] = [
+  { x: -2, scale: 0.78, depth: 0.35, rotate: -2.2 },
+  { x: 20, scale: 1.0, depth: 0.95, rotate: 0.7 },
+  { x: 48, scale: 0.86, depth: 0.65, rotate: -1.1 },
+  { x: 71, scale: 0.72, depth: 0.45, rotate: 1.9 },
+];
 
 const SHELF_FROM_BOTTOM = 10; // percent
 
-const PLANES: Plane[] = [
-  { x: -2, lift: 0, scale: 0.78, depth: 0.35, rotate: -2.2, mark: "I",   folio: "001" },
-  { x: 20, lift: 0, scale: 1.0,  depth: 0.95, rotate: 0.7,  mark: "II",  folio: "058" },
-  { x: 48, lift: 0, scale: 0.86, depth: 0.65, rotate: -1.1, mark: "III", folio: "144" },
-  { x: 71, lift: 0, scale: 0.72, depth: 0.45, rotate: 1.9,  mark: "IV",  folio: "232" },
-];
-
-export function HeroComposition() {
+export function HeroComposition({ books }: { books: Book[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // A pointer that cannot hover (touch) gets no parallax; there is nothing to track.
     const finePointer = window.matchMedia("(pointer: fine)").matches;
     if (reduced || !finePointer) return;
 
@@ -54,11 +43,12 @@ export function HeroComposition() {
       frame = requestAnimationFrame(() => {
         const box = ref.current?.getBoundingClientRect();
         if (!box) return;
-        // -1..1 relative to the composition's centre.
         const x = (event.clientX - (box.left + box.width / 2)) / (box.width / 2);
         const y = (event.clientY - (box.top + box.height / 2)) / (box.height / 2);
-        // Deliberately small: a few pixels of drift, not a parallax showpiece.
-        setOffset({ x: Math.max(-1, Math.min(1, x)) * 6, y: Math.max(-1, Math.min(1, y)) * 6 });
+        setOffset({
+          x: Math.max(-1, Math.min(1, x)) * 6,
+          y: Math.max(-1, Math.min(1, y)) * 6,
+        });
       });
     }
 
@@ -69,13 +59,12 @@ export function HeroComposition() {
     };
   }, []);
 
+  const shown = books.slice(0, PLACEMENTS.length);
+  if (shown.length === 0) return null;
+
   return (
-    <div
-      ref={ref}
-      aria-hidden="true"
-      className="hero-composition relative aspect-[7/5] w-full select-none"
-    >
-      {/* The shelf: one rule the planes rest on, with a hairline of board beneath it. */}
+    <div ref={ref} className="hero-composition relative aspect-[7/5] w-full select-none">
+      {/* The shelf the volumes stand on. */}
       <div
         className="absolute inset-x-[-6%] h-px bg-[var(--border-strong)] opacity-55"
         style={{ bottom: `${SHELF_FROM_BOTTOM}%` }}
@@ -85,51 +74,46 @@ export function HeroComposition() {
         style={{ bottom: `calc(${SHELF_FROM_BOTTOM}% - 3px)` }}
       />
 
-      {PLANES.map((plane, index) => (
-        <figure
-          key={plane.mark}
-          className="hero-plane absolute"
-          style={{
-            left: `${plane.x}%`,
-            // Anchored to the shelf rather than the top of the box, so every plane
-            // stands on the same line no matter its height.
-            bottom: `calc(${SHELF_FROM_BOTTOM}% + ${plane.lift}%)`,
-            width: `${33 * plane.scale}%`,
-            transformOrigin: "bottom center",
-            transform: `translate3d(${offset.x * plane.depth}px, ${
-              offset.y * plane.depth
-            }px, 0) rotate(${plane.rotate}deg)`,
-            animationDelay: `${index * 90}ms`,
-            zIndex: Math.round(plane.depth * 10),
-          }}
-        >
-          {/* 2:3 — the aspect ratio of the covers that will replace these. */}
-          <div
-            className="relative flex aspect-[2/3] flex-col justify-between overflow-hidden
-                       border border-[var(--border-strong)] bg-[var(--paper)]
-                       px-[var(--space-3)] py-[var(--space-4)]"
-            style={{ boxShadow: "0 18px 40px -22px rgba(25, 24, 21, 0.55)" }}
+      {shown.map((book, index) => {
+        const place = PLACEMENTS[index];
+        return (
+          <figure
+            key={book.slug}
+            className="hero-plane absolute m-0"
+            style={{
+              left: `${place.x}%`,
+              bottom: `${SHELF_FROM_BOTTOM}%`,
+              width: `${33 * place.scale}%`,
+              transform: `translate3d(${offset.x * place.depth}px, ${
+                offset.y * place.depth
+              }px, 0) rotate(${place.rotate}deg)`,
+              transformOrigin: "bottom center",
+              animationDelay: `${index * 90}ms`,
+              zIndex: Math.round(place.depth * 10),
+            }}
           >
-            {/* The spine, darker than the board so the plane reads as a bound object. */}
-            <span className="absolute inset-y-0 left-0 w-[7%] bg-[var(--border)]" />
-            <span className="absolute inset-y-0 left-[7%] w-px bg-[var(--border-strong)] opacity-70" />
-
-            <span className="ml-[12%] text-[0.6rem] uppercase tracking-[0.24em] text-[var(--ink-60)]">
-              {plane.mark}
-            </span>
-
-            {/* A title block: two rules where a title and author will go. */}
-            <span className="ml-[12%] mr-[8%] flex flex-col gap-[6px]">
-              <span className="h-px w-full bg-[var(--border-strong)] opacity-50" />
-              <span className="h-px w-2/3 bg-[var(--border-strong)] opacity-35" />
-            </span>
-
-            <span className="ml-[12%] font-serif text-[0.7rem] text-[var(--ink-60)]">
-              {plane.folio}
-            </span>
-          </div>
-        </figure>
-      ))}
+            <Link
+              href={`/book/${book.slug}`}
+              className="book-card group block no-underline focus-visible:outline-none"
+              /* The composition is decorative in aggregate, but each cover is a real
+                 link to a real book, so it needs a real name. */
+              aria-label={`${book.title}${book.authors[0] ? ` by ${book.authors[0]}` : ""}`}
+            >
+              <BookCover
+                coverKey={book.coverKey}
+                title={book.title}
+                authors={book.authors}
+                size="medium"
+                /* Above the fold on desktop, so the two largest load eagerly and the
+                   rest wait. Four covers, not dozens. */
+                priority={index < 2}
+                decorative
+                className="book-card-cover"
+              />
+            </Link>
+          </figure>
+        );
+      })}
     </div>
   );
 }

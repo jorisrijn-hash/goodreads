@@ -15,7 +15,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * A forged cookie gets past this and then fails both of those.
  */
 const SESSION_COOKIE = "GRSESSION";
-const PROTECTED = ["/home"];
+const PROTECTED = ["/home", "/library"];
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -35,5 +35,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/home/:path*"],
+  matcher: ["/home/:path*", "/library/:path*"],
 };

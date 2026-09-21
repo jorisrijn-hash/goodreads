@@ -133,6 +133,27 @@ h1, h2, h3 {
 }
 
 /*
+ * A book lifts slightly off the shelf on hover or keyboard focus. Small enough to feel
+ * physical rather than animated.
+ */
+.book-card-cover {
+  transition: transform var(--motion-base) var(--ease),
+              box-shadow var(--motion-base) var(--ease);
+}
+
+.book-card:hover .book-card-cover,
+.book-card:focus-visible .book-card-cover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -18px rgba(25, 24, 21, 0.55);
+}
+
+/* The focus ring belongs on the cover, not on the whole link box. */
+.book-card:focus-visible .book-card-cover {
+  outline: 2px solid var(--forest);
+  outline-offset: 3px;
+}
+
+/*
  * Motion is decoration here, never information: with it removed, everything still
  * reads and every state is still distinguishable.
  */
@@ -140,6 +161,9 @@ h1, h2, h3 {
   /* Entrance animations are removed entirely rather than merely shortened, so
      nothing starts at opacity 0 and risks never arriving. */
   .hero-enter, .hero-plane { animation: none !important; opacity: 1 !important; }
+  /* The lift is decoration; focus and hover remain visible through the outline. */
+  .book-card:hover .book-card-cover,
+  .book-card:focus-visible .book-card-cover { transform: none !important; }
 
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

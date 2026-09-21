@@ -107,8 +107,11 @@ test.describe("demo account", () => {
 
     await expect(page).toHaveURL("/home");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Demo Reader");
-    // The account is clearly identified as the demo, not passed off as a real reader.
-    await expect(page.getByText(/signed in to the demo account/i)).toBeVisible();
+
+    // The account is clearly identified as the demo rather than passed off as a real
+    // reader. That marker lives in the account menu, beside the identity it describes.
+    await page.getByRole("button", { name: /account menu/i }).click();
+    await expect(page.getByText("Demo account")).toBeVisible();
   });
 
   test("is also reachable from the sign-in page", async ({ page }) => {

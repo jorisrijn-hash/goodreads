@@ -4,6 +4,8 @@ import { DemoButton } from "@/components/DemoButton";
 import { HeroComposition } from "@/components/HeroComposition";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCurrentUser } from "@/lib/session";
+import type { BookPage } from "@/lib/api";
+import { fetchPublic } from "@/lib/server-api";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,10 @@ export const dynamic = "force-dynamic";
  */
 export default async function LandingPage() {
   if (await getCurrentUser()) redirect("/home");
+
+  // Real books from our own catalogue. A deterministic query, not a recommendation:
+  // nothing here is personalised and nothing claims to be.
+  const featured = await fetchPublic<BookPage>("/api/v1/books?genre=classics&size=4", 3600);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -93,11 +99,13 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          {/* Temporary; becomes real covers in Checkpoint D. Hidden on small screens,
-              where the headline and actions are the only things that matter. */}
-          <div className="hero-enter hero-enter-delayed hidden lg:block">
-            <HeroComposition />
-          </div>
+          {/* Hidden on small screens, where the headline and actions are the only
+              things that matter. */}
+          {featured && featured.items.length > 0 && (
+            <div className="hero-enter hero-enter-delayed hidden lg:block">
+              <HeroComposition books={featured.items} />
+            </div>
+          )}
         </div>
       </main>
     </div>

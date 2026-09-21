@@ -34,18 +34,25 @@ export function AppShell({ user, children }: { user: ApiUser; children: ReactNod
           </Link>
 
           <nav aria-label="Main">
-            <ul className="flex items-center gap-[var(--space-2)]">
-              <li>
-                <Link
-                  href="/home"
-                  className="inline-flex min-h-[44px] items-center rounded-[var(--radius-input)]
-                             px-[var(--space-3)] text-[var(--ink)] no-underline
-                             transition-colors duration-[var(--motion-fast)]
-                             hover:bg-[var(--paper)]"
-                >
-                  Home
-                </Link>
-              </li>
+            <ul className="flex items-center gap-[var(--space-1)] sm:gap-[var(--space-2)]">
+              {[
+                { href: "/home", label: "Home" },
+                { href: "/discover", label: "Discover" },
+                { href: "/library", label: "My Library" },
+              ].map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="inline-flex min-h-[44px] items-center whitespace-nowrap
+                               rounded-[var(--radius-input)] px-[var(--space-2)]
+                               text-[0.9375rem] text-[var(--ink)] no-underline
+                               transition-colors duration-[var(--motion-fast)]
+                               hover:bg-[var(--paper)] sm:px-[var(--space-3)] sm:text-base"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <AvatarMenu user={user} />
               </li>
