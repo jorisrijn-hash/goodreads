@@ -33,9 +33,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${literata.variable} ${inter.variable}`}>
       <head>
-        {/* Reveal starts at opacity 0 and waits for JavaScript; without it, show everything. */}
+        {/* Entrances start hidden and some wait for JavaScript; without it, show everything. */}
         <noscript>
-          <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
+          <style>{`[data-reveal],[data-motion-initial],.seq,.seq-line>span{opacity:1!important;transform:none!important;animation:none!important}`}</style>
         </noscript>
       </head>
       <body>{children}</body>

@@ -300,28 +300,10 @@ body::after {
  * `translateY` is tiny on purpose — the page should feel placed, not flown in.
  */
 @keyframes hero-settle {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.hero-enter {
-  animation: hero-settle 560ms var(--ease) both;
-}
-
-.hero-enter-delayed {
-  animation-delay: 120ms;
-}
-
-/* Each paper plane settles in turn; the delay is set per element. */
-.hero-plane {
-  animation: hero-settle 640ms var(--ease) both;
-  transition: filter var(--motion-base) var(--ease);
-  will-change: transform;
-}
-
-.hero-composition:hover .hero-plane {
-  filter: brightness(0.995);
-}
 
 /*
  * A book lifts slightly off the shelf on hover or keyboard focus. Small enough to feel
@@ -344,6 +326,198 @@ body::after {
   outline-offset: 3px;
 }
 
+/*
+ * A physical book (components/BookObject.tsx).
+ *
+ * The cover is the front board; the page block hangs off its fore-edge, turned 90° into
+ * the page, so rotating the whole body on its spine shows the pages the way a real book
+ * on a shelf does. Thickness is a fraction of the width, from the real page count.
+ */
+.book-stage {
+  perspective: 1200px;
+  perspective-origin: 50% 35%;
+}
+
+.book-object {
+  --w: 12rem;
+  --ratio: 0.667;
+  --thick: 0.18;
+  --turn: 0deg;
+  position: relative;
+  display: block;
+  width: var(--w);
+  aspect-ratio: var(--ratio);
+  transform-style: preserve-3d;
+  text-decoration: none;
+  outline: none;
+}
+
+.book-object__body {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateY(var(--turn));
+  transition: transform var(--motion-enter) var(--ease-settle);
+}
+
+.book-object__cover {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1px 3px 3px 1px;
+  background: var(--paper);
+  backface-visibility: hidden;
+  /* Contact, then the soft fall-off of a book standing in light from the left. */
+  box-shadow:
+    0 1px 1px rgba(25, 24, 21, 0.18),
+    0 12px 18px -10px rgba(25, 24, 21, 0.45),
+    18px 26px 44px -24px rgba(25, 24, 21, 0.55);
+}
+
+.book-object__cover--blank {
+  display: flex;
+  align-items: flex-end;
+  padding: 10%;
+  font-family: var(--font-serif);
+  font-size: 0.875rem;
+  color: var(--ink-70);
+}
+
+/* The binding crease: a dark fold, a highlight, then the board. */
+.book-object__body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 1px 3px 3px 1px;
+  background: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.28) 0%,
+    rgba(255, 255, 255, 0.16) 1.6%,
+    rgba(0, 0, 0, 0.14) 3%,
+    rgba(0, 0, 0, 0) 7%,
+    rgba(255, 255, 255, 0.04) 60%,
+    rgba(0, 0, 0, 0.06) 100%);
+}
+
+.book-object__pages {
+  position: absolute;
+  top: 1.2%;
+  bottom: 1.2%;
+  left: 100%;
+  width: calc(var(--w) * var(--thick));
+  transform-origin: left center;
+  transform: rotateY(90deg);
+  /* A side facing away must not show through the book. */
+  backface-visibility: hidden;
+  background:
+    linear-gradient(90deg, rgba(25, 24, 21, 0.22), rgba(25, 24, 21, 0) 30%),
+    repeating-linear-gradient(0deg, #efe7d6 0 1px, #e2d8c4 1px 2px);
+}
+
+.book-object__spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 100%;
+  width: calc(var(--w) * var(--thick));
+  overflow: hidden;
+  transform-origin: right center;
+  transform: rotateY(-90deg);
+  backface-visibility: hidden;
+  border-radius: 2px 0 0 2px;
+}
+
+.book-object__spine img {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  width: var(--w);
+  max-width: none;
+  object-fit: cover;
+  object-position: left center;
+  /* In the shade of the turn, with the roundness of a bound spine. */
+  filter: brightness(0.78) saturate(0.95);
+}
+
+.book-object__spine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,0.28), rgba(255,255,255,0.1) 45%, rgba(0,0,0,0.25));
+}
+
+/* Lifts off the surface for a pointer or keyboard; the ring sits on the cover. */
+.book-object:hover .book-object__body,
+.book-object:focus-visible .book-object__body {
+  transform: translateY(-6px) rotateY(var(--turn));
+}
+
+.book-object:focus-visible .book-object__cover {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* In an overlapping arrangement, the book being pointed at or focused comes to the front;
+   otherwise a keyboard user's focus ring can sit hidden behind a neighbour. */
+[data-motion-initial]:has(.book-object:is(:hover, :focus-visible)) {
+  z-index: 50 !important;
+}
+
+/* The ledge books stand on: a slab of pale stone, lit from above. */
+.ledge {
+  position: absolute;
+  height: 18px;
+  background: linear-gradient(180deg, #efe9dd 0%, #e2d9c9 35%, #cfc4b0 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 18px 30px -14px rgba(25, 24, 21, 0.45);
+}
+
+@media (forced-colors: active) {
+  /* Forced colours drop backgrounds, which leaves a filled button as bare text. Any
+     filled link or button gets a system-coloured border instead, wherever it is. */
+  :is(a, button)[class*="bg-[var(--forest)]"],
+  :is(a, button)[class*="bg-[var(--ivory)]"] {
+    border: 1px solid ButtonText;
+  }
+  .book-object__pages, .book-object__spine, .book-object__body::after, .ledge { display: none; }
+  .book-object:focus-visible .book-object__cover { outline-color: Highlight; }
+}
+
+/*
+ * The landing hero's text sequence. CSS rather than Motion on purpose: it starts on the
+ * first paint, without waiting for JavaScript, so the headline — the page's largest
+ * text — is never held back by a script download. --i orders the steps.
+ */
+.seq {
+  animation: hero-settle var(--motion-enter) var(--ease-settle) both;
+  animation-delay: calc(80ms + var(--i, 0) * 60ms);
+}
+
+/* A headline line rising out of its own mask, one line after another. */
+.seq-line {
+  display: block;
+  overflow: hidden;
+  /* Room for descenders inside the mask: at 0.06em the tail of "y" was cut off. The
+     negative margin gives the space back so the line spacing is unchanged. */
+  padding-bottom: 0.2em;
+  margin-bottom: -0.2em;
+}
+
+.seq-line > span {
+  display: block;
+  animation: line-rise 640ms var(--ease-settle) both;
+  animation-delay: calc(140ms + var(--i, 0) * 70ms);
+}
+
+@keyframes line-rise {
+  from { transform: translateY(104%); }
+  to   { transform: translateY(0); }
+}
+
 /* Scroll reveal: see components/motion/Reveal.tsx. */
 [data-reveal] {
   opacity: 0;
@@ -364,9 +538,11 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   /* Entrance animations are removed entirely rather than merely shortened, so
      nothing starts at opacity 0 and risks never arriving. */
-  .hero-enter, .hero-plane { animation: none !important; opacity: 1 !important; }
+  .seq, .seq-line > span { animation: none !important; opacity: 1 !important; transform: none !important; }
   /* Opacity only: content still arrives, it just does not travel. */
   [data-reveal] { transform: none !important; }
+  .book-object:hover .book-object__body,
+  .book-object:focus-visible .book-object__body { transform: rotateY(var(--turn)) !important; }
   /* The lift is decoration; focus and hover remain visible through the outline. */
   .book-card:hover .book-card-cover,
   .book-card:focus-visible .book-card-cover { transform: none !important; }

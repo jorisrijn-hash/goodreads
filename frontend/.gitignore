@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Original photographs, downloaded by scripts/prepare-photos.mjs
+/.photo-cache/

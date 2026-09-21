@@ -68,6 +68,7 @@ export function BookCover({
       style={{ boxShadow: "0 8px 24px -16px rgba(25, 24, 21, 0.5)" }}
     >
       {src && !failed ? (
+        // eslint-disable-next-line @next/next/no-img-element -- covers are already-optimised derivatives; see BookCover
         <img
           src={src}
           srcSet={srcSet}

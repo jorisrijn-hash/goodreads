@@ -9,7 +9,14 @@ import { useRef, useState } from "react";
  * Submits a real form so it works before JavaScript loads and so the query lives in the
  * URL — searches stay shareable, linkable and survive a refresh.
  */
-export function SearchInput({ autoFocus = false }: { autoFocus?: boolean }) {
+export function SearchInput({
+  autoFocus = false,
+  tone = "light",
+}: {
+  autoFocus?: boolean;
+  /** "dark" for a forest section: the field and button invert rather than glow. */
+  tone?: "light" | "dark";
+}) {
   const router = useRouter();
   const params = useSearchParams();
   const urlQuery = params.get("q") ?? "";
@@ -53,19 +60,20 @@ export function SearchInput({ autoFocus = false }: { autoFocus?: boolean }) {
           onChange={(event) => setValue(event.target.value)}
           // Short enough to survive a phone-width field; the full wording is the label.
           placeholder="Title, author or ISBN"
-          className="min-h-[52px] w-full rounded-[var(--radius-input)] border
-                     border-[var(--border-strong)] bg-white/60 px-[var(--space-4)]
-                     text-base text-[var(--ink)] transition-colors
-                     duration-[var(--motion-fast)] placeholder:text-[var(--ink-60)]
-                     focus:border-[var(--forest)] focus:bg-white/90"
+          className={`min-h-[52px] w-full rounded-[var(--radius-input)] border px-[var(--space-4)]
+                      text-base transition-colors duration-[var(--motion-fast)]
+                      ${tone === "dark"
+                        ? "border-[var(--rule-strong)] bg-[rgba(244,240,231,0.06)] text-[var(--ivory)] placeholder:text-[#a6aaa1] focus:border-[var(--ivory)] focus:bg-[rgba(244,240,231,0.1)]"
+                        : "border-[var(--border-strong)] bg-white/60 text-[var(--ink)] placeholder:text-[var(--ink-60)] focus:border-[var(--forest)] focus:bg-white/90"}`}
         />
         <button
           type="submit"
-          className="inline-flex min-h-[52px] items-center whitespace-nowrap
-                     rounded-[var(--radius-input)] bg-[var(--forest)] px-[var(--space-6)]
-                     text-base font-medium text-[var(--ivory)]
-                     transition-colors duration-[var(--motion-fast)]
-                     hover:bg-[var(--forest-hover)]"
+          className={`inline-flex min-h-[52px] items-center whitespace-nowrap
+                      rounded-[var(--radius-input)] px-[var(--space-6)] text-base font-medium
+                      transition-colors duration-[var(--motion-fast)]
+                      ${tone === "dark"
+                        ? "bg-[var(--ivory)] text-[var(--forest)] hover:bg-[var(--paper)]"
+                        : "bg-[var(--forest)] text-[var(--ivory)] hover:bg-[var(--forest-hover)]"}`}
         >
           Search
         </button>

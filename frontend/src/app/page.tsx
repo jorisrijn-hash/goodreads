@@ -1,115 +1,86 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DemoButton } from "@/components/DemoButton";
-import { HeroComposition } from "@/components/HeroComposition";
-import { PaperComposition } from "@/components/PaperComposition";
 import { PublicShell } from "@/components/PublicShell";
+import { ClosingSection } from "@/components/landing/ClosingSection";
+import { DiscoverSection } from "@/components/landing/DiscoverSection";
+import type { Placement, ShelfBook } from "@/components/landing/HeroShelf";
+import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { LandingHero } from "@/components/landing/LandingHero";
+import { LibrarySection } from "@/components/landing/LibrarySection";
+import { EXAMPLE_LIBRARY, HERO_BOOKS, HERO_BOOKS_MOBILE, TYPO_EXAMPLE } from "@/content/selected";
+import type { BookDetail, BookPage, Genre } from "@/lib/api";
+import { fetchCatalogueStats, fetchPublic } from "@/lib/server-api";
 import { getCurrentUser } from "@/lib/session";
-import type { BookPage } from "@/lib/api";
-import { fetchPublic } from "@/lib/server-api";
 
 export const dynamic = "force-dynamic";
 
+/*
+ * Where each selected book stands on the desktop ledge, left to right. Widths are capped
+ * in rem because the stored covers are about 320px wide: past ~14rem they would be
+ * upscaled on a high-density screen. Back books turn to show their fore-edge; the front
+ * one faces the reader.
+ */
+const DESKTOP: Placement[] = [
+  // Klara and the Sun, Beloved: turned spine-out at the end of the row.
+  { left: "4%", width: "min(17cqw, 8.75rem)", turn: 62, depth: 0.35, z: 1 },
+  { left: "12%", width: "min(19cqw, 9.75rem)", turn: 48, depth: 0.45, z: 2 },
+  // The Secret History, angled toward the centre.
+  { left: "23%", width: "min(23cqw, 11.75rem)", turn: 26, depth: 0.65, z: 3 },
+  // Circe faces the reader: the front of the composition.
+  { left: "43%", width: "min(27cqw, 14rem)", turn: -2, depth: 1, z: 5 },
+  // Dune and Project Hail Mary turn away, showing their pages.
+  { left: "65%", width: "min(23cqw, 11.75rem)", turn: -26, depth: 0.65, z: 4 },
+  { left: "81%", width: "min(19cqw, 9.75rem)", turn: -50, depth: 0.45, z: 3 },
+  // The Creative Act: small, standing in front where two books meet.
+  { left: "18%", width: "min(11cqw, 5.75rem)", turn: 12, depth: 1, z: 6, bottom: "-12px" },
+];
+
+const MOBILE: Placement[] = [
+  { left: "9%", width: "min(28vw, 7.5rem)", turn: 30, depth: 0, z: 1 },
+  { left: "35%", width: "min(33vw, 9rem)", turn: -2, depth: 0, z: 3 },
+  { left: "63%", width: "min(28vw, 7.5rem)", turn: -30, depth: 0, z: 2 },
+];
+
 /**
- * The entry page.
+ * The landing page: five chapters, alternating light and dark.
  *
- * Hero only. The feature, showcase, how-it-works and FAQ sections all describe
- * functionality that does not exist yet, and writing them now would be marketing copy
- * for a product that cannot do what it claims. They arrive once the catalogue does.
+ * Every number and every cover comes from the API. What is chosen by hand is which books
+ * appear in the composed scenes — the SELECTED list — and the page says so.
  */
 export default async function LandingPage() {
   if (await getCurrentUser()) redirect("/home");
 
-  // Real books from our own catalogue. A deterministic query, not a recommendation:
-  // nothing here is personalised and nothing claims to be.
-  const featured = await fetchPublic<BookPage>("/api/v1/books?genre=classics&size=4", 3600);
+  const book = (slug: string) => fetchPublic<BookDetail>(`/api/v1/books/${slug}`, 3600);
+  const [stats, genres, typo, ...selected] = await Promise.all([
+    fetchCatalogueStats(),
+    fetchPublic<Genre[]>("/api/v1/genres", 21600),
+    fetchPublic<BookPage>(`/api/v1/books?q=${encodeURIComponent(TYPO_EXAMPLE)}&size=3`, 3600),
+    ...HERO_BOOKS.map((b) => book(b.slug)),
+  ]);
+
+  const bySlug = new Map(selected.filter((b): b is BookDetail => b !== null).map((b) => [b.slug, b]));
+
+  // A missing book leaves a gap in the arrangement rather than shifting everyone along.
+  const heroBooks: ShelfBook[] = HERO_BOOKS.flatMap((entry, i) => {
+    const found = bySlug.get(entry.slug);
+    return found ? [{ book: found, ratio: entry.ratio, placement: DESKTOP[i] }] : [];
+  });
+  const mobileBooks: ShelfBook[] = HERO_BOOKS_MOBILE.flatMap((slug, i) => {
+    const found = bySlug.get(slug);
+    const ratio = HERO_BOOKS.find((b) => b.slug === slug)?.ratio ?? 2 / 3;
+    return found ? [{ book: found, ratio, placement: MOBILE[i] }] : [];
+  });
+  const library = EXAMPLE_LIBRARY.flatMap(({ slug, status }) => {
+    const found = bySlug.get(slug);
+    return found ? [{ book: { ...found, genres: found.genres.map((g) => g.slug) }, status }] : [];
+  });
 
   return (
     <PublicShell bare>
-        <div
-          className="page-frame grid items-center gap-[var(--space-12)] py-[var(--space-12)]
-                     lg:min-h-[calc(100dvh-68px)] lg:grid-cols-[minmax(0,52fr)_minmax(0,48fr)]
-                     lg:gap-[var(--space-16)] lg:py-[var(--space-16)]"
-        >
-          <div className="hero-enter">
-            <p className="text-[0.6875rem] uppercase tracking-[0.2em] text-[var(--ink-60)]">
-              A product &amp; engineering case study
-            </p>
-
-            {/*
-              text-wrap: balance evens the lines out instead of leaving a one-word orphan,
-              and the max-width keeps it to two or three lines rather than a long ribbon.
-            */}
-            {/*
-              The break is authored: "A better home / for your reading life." is the
-              intended reading, and the type size is chosen so the second line fits the
-              column rather than orphaning a word. Left to itself the browser breaks
-              wherever the column happens to end.
-            */}
-            <h1 className="mt-[var(--space-5)] text-[clamp(2rem,4.6vw,3.5rem)] leading-[1.08] tracking-[-0.02em]">
-              A better home
-              <span className="block">for your reading life.</span>
-            </h1>
-
-            <p className="mt-[var(--space-6)] max-w-[46ch] text-[1.0625rem] leading-[1.65] text-[var(--ink-70)] sm:text-[1.125rem]">
-              Discover books worth reading. Keep track of what you read. Build a reading
-              history that stays yours.
-            </p>
-
-            <div className="mt-[var(--space-8)] flex flex-wrap items-center gap-[var(--space-3)]">
-              <Link
-                href="/signup"
-                className="inline-flex min-h-[52px] items-center justify-center whitespace-nowrap
-                           rounded-[var(--radius-input)] bg-[var(--forest)] px-[var(--space-8)]
-                           text-base font-medium text-[var(--ivory)] no-underline
-                           transition-colors duration-[var(--motion-fast)]
-                           hover:bg-[var(--forest-hover)]"
-              >
-                Create an account
-              </Link>
-
-              <DemoButton label="Explore demo" size="large" />
-
-              <Link
-                href="/login"
-                className="inline-flex min-h-[52px] items-center justify-center whitespace-nowrap
-                           px-[var(--space-2)] text-base text-[var(--ink-70)] underline
-                           underline-offset-[6px] decoration-[var(--border-strong)]
-                           transition-colors duration-[var(--motion-fast)]
-                           hover:text-[var(--ink)] hover:decoration-[var(--ink)]"
-              >
-                Sign in
-              </Link>
-            </div>
-
-            <p className="mt-[var(--space-8)] max-w-[52ch] border-t border-[var(--border)]
-                          pt-[var(--space-5)] text-[0.8125rem] leading-relaxed text-[var(--ink-60)]">
-              An independent redesign, not affiliated with Goodreads or Amazon. No
-              Goodreads data is used — the catalogue comes from{" "}
-              <a
-                href="https://openlibrary.org"
-                className="text-[var(--ink-70)] underline underline-offset-2"
-              >
-                Open&nbsp;Library
-              </a>
-              .
-            </p>
-          </div>
-
-          {/*
-            Real covers when the catalogue is reachable; blank paper when it is not.
-            The fallback keeps the hero from becoming an empty field without inventing
-            a single cover, title or author.
-            Hidden on small screens, where the headline and actions are all that matter.
-          */}
-          <div className="hero-enter hero-enter-delayed hidden lg:block">
-            {featured && featured.items.length > 0 ? (
-              <HeroComposition books={featured.items} />
-            ) : (
-              <PaperComposition />
-            )}
-          </div>
-        </div>
+      <LandingHero books={heroBooks} mobileBooks={mobileBooks} stats={stats} />
+      <DiscoverSection stats={stats} genres={genres} typo={typo} typoQuery={TYPO_EXAMPLE} />
+      <LibrarySection entries={library} />
+      <HowItWorksSection />
+      <ClosingSection />
     </PublicShell>
   );
 }
