@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Book } from "@/lib/api";
 import { BookCard } from "./BookCard";
+import { Reveal } from "./motion/Reveal";
 
 /**
  * A horizontal shelf of books with an editorial heading.
@@ -22,7 +23,7 @@ export function BookRow({
   if (books.length === 0) return null;
 
   return (
-    <section className="mt-[var(--space-12)]">
+    <Reveal as="section" className="mt-[var(--space-12)]">
       <div className="flex items-end justify-between gap-[var(--space-4)]">
         <div>
           <h2 className="font-serif text-[1.5rem] leading-tight text-[var(--ink)]">{title}</h2>
@@ -41,11 +42,15 @@ export function BookRow({
         )}
       </div>
 
-      {/* Horizontal scroll with snap; each item keeps a comfortable touch width. */}
+      {/*
+        Horizontal scroll with snap; each item keeps a comfortable touch width. The row
+        bleeds by exactly the page gutter, so the first cover lines up with the heading
+        above it and the shelf still runs to the edge of the screen.
+      */}
       <ul
-        className="-mx-[var(--space-5)] mt-[var(--space-5)] flex list-none snap-x snap-mandatory
-                   gap-[var(--space-5)] overflow-x-auto px-[var(--space-5)] pb-[var(--space-2)]
-                   sm:-mx-[var(--space-8)] sm:px-[var(--space-8)]"
+        className="-mx-[var(--gutter)] mt-[var(--space-5)] flex list-none snap-x snap-mandatory
+                   scroll-px-[var(--gutter)] gap-[var(--space-5)] overflow-x-auto
+                   px-[var(--gutter)] pb-[var(--space-2)]"
       >
         {books.map((book) => (
           <li key={book.slug} className="w-[140px] shrink-0 snap-start sm:w-[168px]">
@@ -53,6 +58,6 @@ export function BookRow({
           </li>
         ))}
       </ul>
-    </section>
+    </Reveal>
   );
 }

@@ -51,7 +51,8 @@ export function SearchInput({ autoFocus = false }: { autoFocus?: boolean }) {
           value={value}
           autoFocus={autoFocus}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="Search books, authors or ISBN"
+          // Short enough to survive a phone-width field; the full wording is the label.
+          placeholder="Title, author or ISBN"
           className="min-h-[52px] w-full rounded-[var(--radius-input)] border
                      border-[var(--border-strong)] bg-white/60 px-[var(--space-4)]
                      text-base text-[var(--ink)] transition-colors

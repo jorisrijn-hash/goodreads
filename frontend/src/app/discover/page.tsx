@@ -4,7 +4,7 @@ import { BookGrid } from "@/components/BookGrid";
 import { BookRow } from "@/components/BookRow";
 import { EmptyState } from "@/components/EmptyState";
 import { SearchInput } from "@/components/SearchInput";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PublicShell } from "@/components/PublicShell";
 import { AppShell } from "@/components/AppShell";
 import type { BookPage, Genre } from "@/lib/api";
 import { fetchPublicResult } from "@/lib/server-api";
@@ -46,13 +46,7 @@ export default async function DiscoverPage({
   return user ? (
     <AppShell user={user}>{body}</AppShell>
   ) : (
-    <div className="min-h-dvh">
-      <SiteHeader />
-      <main className="mx-auto max-w-[1320px] px-[var(--space-5)] py-[var(--space-10)]
-                       sm:px-[var(--space-8)] lg:px-[var(--space-12)]">
-        {body}
-      </main>
-    </div>
+    <PublicShell>{body}</PublicShell>
   );
 }
 

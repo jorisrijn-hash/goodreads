@@ -4,6 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { BookCard } from "@/components/BookCard";
 import { BookCover } from "@/components/BookCover";
 import { EmptyState } from "@/components/EmptyState";
+import { Greeting } from "@/components/Greeting";
 import { STATUS_LABEL, type LibraryEntry, type LibrarySummary } from "@/lib/api";
 import { fetchPrivate } from "@/lib/server-api";
 import { getSession } from "@/lib/session";
@@ -11,13 +12,6 @@ import { WakingPage } from "@/components/WakingPage";
 
 export const metadata = { title: "Home" };
 export const dynamic = "force-dynamic";
-
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
 
 /**
  * The reader's home.
@@ -47,9 +41,7 @@ export default async function HomePage() {
 
   return (
     <AppShell user={user}>
-      <p className="text-[0.6875rem] uppercase tracking-[0.2em] text-[var(--ink-60)]">
-        {greeting()}
-      </p>
+      <Greeting className="type-label text-[var(--fg-subtle)]" />
       <h1 className="mt-[var(--space-2)] text-[clamp(1.875rem,5vw,2.75rem)]">
         {user.displayName}
       </h1>

@@ -50,7 +50,170 @@
 
   --motion-fast: 120ms;
   --motion-base: 200ms;
+  --motion-enter: 560ms;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* For things coming to rest: fast start, long quiet finish. */
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --page-max: 1440px;
+  --gutter: 20px;
+}
+
+@media (min-width: 640px)  { :root { --gutter: 32px; } }
+@media (min-width: 1024px) { :root { --gutter: 48px; } }
+
+/*
+ * Surfaces.
+ *
+ * A section declares what it is painted on — data-surface="forest" — and everything
+ * inside reads its colours from these roles rather than from the palette directly. That
+ * is what lets the same component sit on ivory in one place and forest in another, and
+ * what keeps the focus ring visible on both: forest-on-forest would vanish.
+ *
+ * Dark-surface text values are solid colours, not ivory at an alpha, so their contrast
+ * is exact (docs/spike/scripts/contrast.py method):
+ *   forest:   fg 10.93:1   muted #babcb3 6.47:1   subtle #a6aaa1 5.26:1   rule-strong 3.54:1
+ *   burgundy: fg  8.87:1   muted #d4c7bf 6.11:1   subtle #cbbcb3 5.47:1   rule-strong 3.48:1
+ * rule-strong is the one that must clear 3:1, because it marks interactive boundaries.
+ */
+:root,
+[data-surface="ivory"] {
+  --surface: var(--ivory);
+  --fg: var(--ink);
+  --fg-muted: var(--ink-70);
+  --fg-subtle: var(--ink-60);
+  --rule: var(--border);
+  --rule-strong: var(--border-strong);
+  --focus-ring: var(--forest);
+  --wash: var(--paper);
+}
+
+[data-surface="paper"] {
+  --surface: var(--paper);
+  --fg: var(--ink);
+  --fg-muted: var(--ink-70);
+  --fg-subtle: var(--ink-60);
+  --rule: #d3c8b6;
+  --rule-strong: var(--border-strong);
+  --focus-ring: var(--forest);
+  --wash: #e0d6c6;
+}
+
+[data-surface="forest"] {
+  --surface: var(--forest);
+  --fg: var(--ivory);
+  --fg-muted: #babcb3;
+  --fg-subtle: #a6aaa1;
+  --rule: #47554c;
+  --rule-strong: #838b82;
+  --focus-ring: var(--ivory);
+  --wash: rgba(244, 240, 231, 0.08);
+}
+
+[data-surface="burgundy"] {
+  --surface: var(--burgundy);
+  --fg: var(--ivory);
+  --fg-muted: #d4c7bf;
+  --fg-subtle: #cbbcb3;
+  --rule: #7a534c;
+  --rule-strong: #ac928b;
+  --focus-ring: var(--ivory);
+  --wash: rgba(244, 240, 231, 0.08);
+}
+
+[data-surface] {
+  background-color: var(--surface);
+  color: var(--fg);
+}
+
+/*
+ * Type.
+ *
+ * Literata carries everything a reader reads; Inter carries everything a reader operates.
+ * Each level has its own size, weight and tracking, so hierarchy comes from the type
+ * itself rather than from every heading being the same serif at a different size.
+ */
+@utility type-display-xl {
+  font-family: var(--font-serif);
+  font-size: clamp(3.25rem, 8vw, 7.5rem);
+  font-weight: 360;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+
+@utility type-display-l {
+  font-family: var(--font-serif);
+  font-size: clamp(2.75rem, 5.5vw, 5rem);
+  font-weight: 380;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+@utility type-h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+}
+
+@utility type-h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.625rem, 2.6vw, 2.25rem);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+
+@utility type-h3 {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 450;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+}
+
+/* Descriptions and anything else meant to be read rather than scanned. */
+@utility type-reading {
+  font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.7;
+  max-width: 66ch;
+  text-wrap: pretty;
+  hanging-punctuation: first;
+}
+
+@utility type-label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Section numbers and folio marks. Tabular so "01" and "11" share a width. */
+@utility type-folio {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+@utility type-caption {
+  font-family: var(--font-serif);
+  font-size: 0.9375rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* The page frame: one max width and one set of gutters, shared by header, content and
+   footer so their edges line up. */
+@utility page-frame {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
 }
 
 @theme inline {
@@ -67,28 +230,34 @@
   --font-sans: var(--font-sans);
 }
 
-* { box-sizing: border-box; }
+/*
+ * Element defaults live in the base layer so any utility wins over them. Unlayered, the
+ * h2 rule beat `type-label` and set the footer's small-caps labels in the display serif.
+ */
+@layer base {
+  * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; }
 
-body {
-  background: var(--ivory);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  /* rem-based so the reader's browser font-size setting is respected */
-  font-size: 1rem;
-  line-height: 1.6;
-  margin: 0;
-  min-height: 100dvh;
-  -webkit-font-smoothing: antialiased;
-}
+  body {
+    background: var(--ivory);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    /* rem-based so the reader's browser font-size setting is respected */
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
 
-h1, h2, h3 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  margin: 0;
+  h1, h2, h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    margin: 0;
+  }
 }
 
 /*
@@ -97,9 +266,31 @@ h1, h2, h3 {
  * following every mouse click.
  */
 :focus-visible {
-  outline: 2px solid var(--forest);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/*
+ * Paper grain.
+ *
+ * An inline SVG noise tile, so it costs no request. At 3.5% it reads as the texture of a
+ * page rather than as an effect. Promoted to its own layer so scrolling does not repaint
+ * it, and removed where it would only get in the way: forced colours and print.
+ */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  transform: translateZ(0);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.09 0 0 0 0 0.08 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (forced-colors: active), print {
+  body::after { display: none; }
 }
 
 ::selection { background: var(--paper); }
@@ -149,8 +340,21 @@ h1, h2, h3 {
 
 /* The focus ring belongs on the cover, not on the whole link box. */
 .book-card:focus-visible .book-card-cover {
-  outline: 2px solid var(--forest);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
+}
+
+/* Scroll reveal: see components/motion/Reveal.tsx. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--motion-enter) var(--ease-settle),
+              transform var(--motion-enter) var(--ease-settle);
+}
+
+[data-reveal][data-shown] {
+  opacity: 1;
+  transform: none;
 }
 
 /*
@@ -161,6 +365,8 @@ h1, h2, h3 {
   /* Entrance animations are removed entirely rather than merely shortened, so
      nothing starts at opacity 0 and risks never arriving. */
   .hero-enter, .hero-plane { animation: none !important; opacity: 1 !important; }
+  /* Opacity only: content still arrives, it just does not travel. */
+  [data-reveal] { transform: none !important; }
   /* The lift is decoration; focus and hover remain visible through the outline. */
   .book-card:hover .book-card-cover,
   .book-card:focus-visible .book-card-cover { transform: none !important; }

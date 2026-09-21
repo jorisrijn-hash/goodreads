@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { BookCover } from "@/components/BookCover";
 import { SaveControl } from "@/components/SaveControl";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PublicShell } from "@/components/PublicShell";
 import type { BookDetail, LibraryEntry } from "@/lib/api";
 import { fetchPrivate, fetchPublic, fetchPublicResult } from "@/lib/server-api";
 import { WakingPage } from "@/components/WakingPage";
@@ -150,12 +150,6 @@ export default async function BookPage({
   return user ? (
     <AppShell user={user}>{content}</AppShell>
   ) : (
-    <div className="min-h-dvh">
-      <SiteHeader />
-      <main className="mx-auto max-w-[1100px] px-[var(--space-5)] py-[var(--space-10)]
-                       sm:px-[var(--space-8)]">
-        {content}
-      </main>
-    </div>
+    <PublicShell>{content}</PublicShell>
   );
 }

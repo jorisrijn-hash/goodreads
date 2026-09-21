@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { DemoButton } from "@/components/DemoButton";
 import { HeroComposition } from "@/components/HeroComposition";
 import { PaperComposition } from "@/components/PaperComposition";
-import { SiteHeader } from "@/components/SiteHeader";
+import { PublicShell } from "@/components/PublicShell";
 import { getCurrentUser } from "@/lib/session";
 import type { BookPage } from "@/lib/api";
 import { fetchPublic } from "@/lib/server-api";
@@ -25,15 +25,11 @@ export default async function LandingPage() {
   const featured = await fetchPublic<BookPage>("/api/v1/books?genre=classics&size=4", 3600);
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <SiteHeader />
-
-      <main className="flex flex-1 items-center">
+    <PublicShell bare>
         <div
-          className="mx-auto grid w-full max-w-[1320px] items-center gap-[var(--space-12)]
-                     px-[var(--space-5)] py-[var(--space-12)] sm:px-[var(--space-8)]
-                     lg:grid-cols-[minmax(0,52fr)_minmax(0,48fr)] lg:gap-[var(--space-16)]
-                     lg:px-[var(--space-12)] lg:py-[var(--space-16)]"
+          className="page-frame grid items-center gap-[var(--space-12)] py-[var(--space-12)]
+                     lg:min-h-[calc(100dvh-68px)] lg:grid-cols-[minmax(0,52fr)_minmax(0,48fr)]
+                     lg:gap-[var(--space-16)] lg:py-[var(--space-16)]"
         >
           <div className="hero-enter">
             <p className="text-[0.6875rem] uppercase tracking-[0.2em] text-[var(--ink-60)]">
@@ -114,7 +110,6 @@ export default async function LandingPage() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+    </PublicShell>
   );
 }

@@ -61,12 +61,13 @@ export function AvatarMenu({ user }: { user: ApiUser }) {
         aria-haspopup="menu"
         className="flex min-h-[44px] min-w-[44px] items-center gap-[var(--space-2)]
                    rounded-[var(--radius-input)] px-[var(--space-2)]
-                   transition-colors duration-[var(--motion-fast)] hover:bg-[var(--paper)]"
+                   transition-colors duration-[var(--motion-fast)] hover:bg-[var(--wash)]"
       >
+        {/* Inverts with the surface: ink on ivory, ivory on forest. */}
         <span
           aria-hidden="true"
           className="flex h-8 w-8 items-center justify-center rounded-full
-                     bg-[var(--forest)] text-sm font-medium text-[var(--ivory)]"
+                     bg-[var(--fg)] text-sm font-medium text-[var(--surface)]"
         >
           {initial}
         </span>
@@ -76,6 +77,8 @@ export function AvatarMenu({ user }: { user: ApiUser }) {
       {open && (
         <div
           role="menu"
+          // The menu is its own light surface whatever the header is painted on.
+          data-surface="ivory"
           className="absolute right-0 z-10 mt-[var(--space-2)] w-56
                      rounded-[var(--radius-card)] border border-[var(--border-strong)]
                      bg-[var(--ivory)] py-[var(--space-2)] shadow-sm"

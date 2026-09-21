@@ -10,6 +10,8 @@ import "./globals.css";
 const literata = Literata({
   variable: "--font-literata",
   subsets: ["latin"],
+  // Italic is used deliberately — authors, captions — not synthesised by the browser.
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -30,6 +32,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${literata.variable} ${inter.variable}`}>
+      <head>
+        {/* Reveal starts at opacity 0 and waits for JavaScript; without it, show everything. */}
+        <noscript>
+          <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
+      </head>
       <body>{children}</body>
     </html>
   );
