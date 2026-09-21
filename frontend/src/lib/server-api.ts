@@ -18,8 +18,13 @@ const API_ORIGIN = process.env.API_ORIGIN ?? "http://localhost:8080";
  * that waits the whole time is a blank screen; a page that treats a slow first response
  * as "unavailable" tells a reader the product is broken when it is merely starting. So
  * the server waits briefly and hands the rest of the wait to the browser, which polls.
+ *
+ * Briefly means well inside a serverless function's own execution limit: at 8 s, a cold
+ * start measured the waiting page arriving at 9.4 s, and a second one (on a freshly
+ * deployed function) produced no page at all within 30 s. A warm API answers in well
+ * under a second, so this bound only ever applies to one that is asleep.
  */
-const REQUEST_TIMEOUT_MS = 8000;
+const REQUEST_TIMEOUT_MS = 4000;
 
 /**
  * The three things a read can mean. Collapsing them into `null` is how a sleeping backend
