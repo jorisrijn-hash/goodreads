@@ -170,6 +170,26 @@ class AuthHttpLifecycleTest {
     }
 
     @Test
+    @DisplayName("concurrent demo visitors do not sign each other out")
+    void demoAccountAllowsConcurrentSessions() {
+        primeCsrf();
+        send(HttpMethod.POST, "/api/v1/auth/demo-session", null);
+        List<String> firstVisitor = new ArrayList<>(cookies);
+
+        cookies.clear();
+        primeCsrf();
+        assertThat(send(HttpMethod.POST, "/api/v1/auth/demo-session", null).getStatusCode())
+                .isEqualTo(HttpStatus.OK);
+        assertThat(send(HttpMethod.GET, "/api/v1/me", null).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        cookies.clear();
+        cookies.addAll(firstVisitor);
+        assertThat(send(HttpMethod.GET, "/api/v1/me", null).getStatusCode())
+                .as("the first visitor's session must survive a second demo login")
+                .isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
     void demoSessionWorksOverHttp() {
         primeCsrf();
         ResponseEntity<String> response = send(HttpMethod.POST, "/api/v1/auth/demo-session", null);

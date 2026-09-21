@@ -67,10 +67,13 @@ class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository())
                         .csrfTokenRequestHandler(csrfHandler))
+                // No concurrent-session limit. One was configured, but its registry lived
+                // in memory, so it was never enforced against the JDBC session store and
+                // reset on every restart. The shared demo account needs many concurrent
+                // visitors anyway: if a single-session rule is ever added for real
+                // accounts, it must be backed by the session store and exempt the demo.
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                        // One reader, one session. A second login elsewhere ends the first.
-                        .maximumSessions(1))
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 // The default request cache stores every rejected request in a new session
                 // so it can be replayed after login. Nothing here replays it — the
                 // frontend carries returnTo itself — so all it did was write a 30-day
