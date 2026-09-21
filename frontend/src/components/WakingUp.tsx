@@ -36,9 +36,13 @@ export function WakingUp({ what = "the library" }: { what?: string }) {
             credentials: "include",
             signal: AbortSignal.timeout(15_000),
           });
-          if (response.ok) {
-            if (!cancelled) router.refresh();
-            return;
+          if (response.ok && !cancelled) {
+            // The API answering is not the same as the page being ready: a service
+            // that has just woken can answer this before it can serve the catalogue in
+            // time, and the refreshed page comes back as this same waiting state. So
+            // keep going — the loop only ends when real content replaces this
+            // component (which cancels it) or the window runs out.
+            router.refresh();
           }
         } catch {
           // Still starting. Keep waiting.
@@ -60,7 +64,9 @@ export function WakingUp({ what = "the library" }: { what?: string }) {
   if (gaveUp) {
     return (
       <div role="alert" className="border-l-2 border-[var(--burgundy)] py-[var(--space-2)] pl-[var(--space-5)]">
-        <h2 className="font-serif text-[1.375rem] text-[var(--ink)]">{what} is not responding</h2>
+        <h2 className="font-serif text-[1.375rem] text-[var(--ink)]">
+          {what.charAt(0).toUpperCase() + what.slice(1)} is not responding
+        </h2>
         <p className="mt-[var(--space-2)] max-w-[52ch] leading-relaxed text-[var(--ink-70)]">
           The service has not answered for two minutes, which is longer than a normal start.
         </p>
