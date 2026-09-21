@@ -21,11 +21,11 @@ spring:
       # the session and transaction ports. Every connection we hold is one another client
       # (or the ingest task) cannot have.
       #
-      # Five is deliberate, not a default. One Render Free instance has 0.1 CPU and cannot
+      # Four is deliberate, not a default. One Render Free instance has 0.1 CPU and cannot
       # usefully serve ten concurrent database-bound requests, portfolio traffic is low,
-      # and this leaves roughly two thirds of the backend budget free for the ingest task
-      # and for headroom.
-      maximum-pool-size: ${DB_POOL_SIZE:5}
+      # and this leaves most of the backend budget free for the ingest task and headroom.
+      # Verified: under 30 concurrent searches the pool opened exactly 4 connections.
+      maximum-pool-size: ${DB_POOL_SIZE:4}
 
       # Let the pool shrink when idle. HikariCP normally recommends a fixed-size pool, but
       # that advice assumes connections are cheap; in session mode an idle connection

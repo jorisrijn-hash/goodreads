@@ -22,10 +22,10 @@ USER reading
 
 COPY --from=build --chown=reading:reading /build/target/reading-api-*.jar app.jar
 
-# Cover derivatives live here. On a platform with an ephemeral filesystem this MUST be a
-# mounted volume, or every deploy silently drops 27,330 files and every cover 404s.
-# Overridden by COVER_DIR; see docs/DEPLOYMENT.md.
-VOLUME ["/app/data/covers"]
+# No volume, deliberately. Covers are served from Supabase Storage in production, not
+# from this container, so there is nothing here worth persisting. Declaring one would
+# create an anonymous volume and imply a requirement that no longer exists — which also
+# means this runs on hosts that offer no persistent disk at all, such as Render Free.
 
 EXPOSE 8080
 

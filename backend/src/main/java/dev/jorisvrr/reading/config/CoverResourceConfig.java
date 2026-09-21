@@ -7,6 +7,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -18,12 +19,23 @@ import java.time.Duration;
  * of book covers.
  *
  * <p>Filenames are content-addressed by Open Library cover id and never change, so these
- * are immutable and cacheable for a year. When this moves to object storage the URLs keep
- * the same shape (`/covers/<shard>/<id>-<width>.jpg`) and only the host changes.
+ * are immutable and cacheable for a year.
+ *
+ * <p><b>Local development only.</b> In production the frontend rewrites `/covers/**`
+ * straight to Supabase Storage, so image bytes never pass through this application — a
+ * backend hop in front of every image on a page full of covers would be pure cost. The
+ * handler is therefore registered only when the cover directory actually exists, so a
+ * deployment with no local covers does not advertise a route that can only ever 404.
+ *
+ * <p>The public path is identical either way (`/covers/<shard>/<id>-<width>.jpg`), which
+ * is what lets the storage provider change without touching code or database values.
  */
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 class CoverResourceConfig implements WebMvcConfigurer {
+
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(CoverResourceConfig.class);
 
     private final String coverDirectory;
 
@@ -33,9 +45,15 @@ class CoverResourceConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String location = Path.of(coverDirectory).toAbsolutePath().normalize().toUri().toString();
+        Path directory = Path.of(coverDirectory).toAbsolutePath().normalize();
+        if (!Files.isDirectory(directory)) {
+            log.info("No cover directory at {} — not serving /covers/**. "
+                    + "Expected in production, where covers come from object storage.", directory);
+            return;
+        }
+        log.info("Serving /covers/** from {}", directory);
         registry.addResourceHandler("/covers/**")
-                .addResourceLocations(location)
+                .addResourceLocations(directory.toUri().toString())
                 .setCacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable());
     }
 }

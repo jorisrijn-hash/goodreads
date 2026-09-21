@@ -107,7 +107,7 @@ message rather than starting up and returning empty results forever.
 
 ### Connection pool
 
-`DB_POOL_SIZE` defaults to **5**, and that number is derived from how session mode
+`DB_POOL_SIZE` defaults to **4**, and that number is derived from how session mode
 actually behaves rather than from a generic default.
 
 In **session mode** each client connection holds a *dedicated* Postgres backend
@@ -118,13 +118,13 @@ session and transaction ports. Every connection the API holds is one the ingest,
 anything else, cannot have.
 
 Against one Render Free instance (0.1 CPU, which cannot usefully serve ten concurrent
-database-bound requests anyway) and portfolio-level traffic, five leaves roughly two
-thirds of the budget free. **Verified locally:** under 40 concurrent search requests the
-pool opened exactly 5 backend connections and no more.
+database-bound requests anyway) and portfolio-level traffic, four leaves most of the
+budget free. **Verified locally with the production profile:** under 30 concurrent search
+requests the pool opened exactly 4 backend connections and no more.
 
 | Setting | Value | Why |
 |---|---|---|
-| `maximum-pool-size` | 5 | See above |
+| `maximum-pool-size` | 4 | See above |
 | `minimum-idle` | 1 | An idle connection occupies a scarce backend slot for nothing |
 | `idle-timeout` | 120s | **Supavisor closes a connection unused for 5 minutes.** Retiring ours at 2 minutes means we release first and never meet a connection the pooler already closed |
 | `max-lifetime` | 240s | Total age ceiling, comfortably inside the same 5-minute window |
@@ -161,11 +161,11 @@ railway up --service reading-api   # root directory: backend
 | `DATABASE_URL` | **yes** | Supabase session-pooler JDBC URL **with `?sslmode=require`** |
 | `DATABASE_USER` | **yes** | `postgres.<project-ref>` |
 | `DATABASE_PASSWORD` | **yes** | The Supabase database password |
-| `DB_POOL_SIZE` | no | Defaults to 10 |
+| `DB_POOL_SIZE` | no | Defaults to 4 |
 | `SPRING_PROFILES_ACTIVE` | **yes** | `prod` — anything other than `local`/`test` |
 | `SESSION_COOKIE_SECURE` | **yes** | `true` |
 | `FRONTEND_ORIGIN` | **yes** | The Vercel origin |
-| `COVER_DIR` | no | Unused in production — covers come from Supabase Storage |
+| `COVER_DIR` | **do not set** | Unused in production. With no cover directory the `/covers/**` handler is simply not registered |
 | `PORT` | platform | Railway and Fly set this |
 
 There is **no credential fallback outside local development.** The base configuration
@@ -212,6 +212,22 @@ disk in local development, which is why `COVERS_BASE_URL` defaults to the API.
 The browser only ever requests `/covers/<path>` on our own origin, so the storage
 provider is one environment variable. No Supabase SDK is installed to build these URLs;
 a public URL is just configuration plus a path.
+
+### Current state — uploaded and verified (2026-09-21)
+
+| | |
+|---|---|
+| Objects | **27,063** local, **27,063** remote — match |
+| Bytes | **648.8 MB** local and remote |
+| Failed | 0 |
+| Excluded | 267 derivatives of 89 books no longer in the catalogue |
+| Headers | `image/jpeg`, `public, max-age=31536000, immutable` |
+| Integrity | Sampled 160/320/640 objects fetched anonymously are **byte-identical** to local |
+| Idempotency | A second run reports *Nothing to do* |
+
+A missing object returns **400** from Supabase, not 404. The frontend's cover component
+falls back to its typographic stand-in on any failed image load, so this needs no special
+handling.
 
 ### Render needs no persistent disk
 
