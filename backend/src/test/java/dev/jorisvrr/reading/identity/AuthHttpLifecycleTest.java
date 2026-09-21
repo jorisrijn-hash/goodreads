@@ -27,6 +27,7 @@ class AuthHttpLifecycleTest {
 
     @LocalServerPort int port;
     @Autowired UserRepository users;
+    @Autowired org.springframework.jdbc.core.simple.JdbcClient db;
 
     private static final String PASSWORD = "a-long-enough-password";
 
@@ -145,6 +146,27 @@ class AuthHttpLifecycleTest {
 
         assertThat(send(HttpMethod.GET, "/api/v1/me", null).getStatusCode())
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @DisplayName("an anonymous request to a protected endpoint creates no session")
+    void rejectedRequestsCreateNoSession() {
+        long before = sessionRows();
+
+        for (String path : List.of("/api/v1/me", "/api/v1/me/library", "/api/v1/me/library/summary")) {
+            ResponseEntity<String> response = send(HttpMethod.GET, path, null);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            assertThat(response.getHeaders().getOrDefault(HttpHeaders.SET_COOKIE, List.of()))
+                    .noneMatch(c -> c.startsWith("GRSESSION="));
+        }
+
+        assertThat(sessionRows())
+                .as("each anonymous hit used to leave a 30-day session row behind")
+                .isEqualTo(before);
+    }
+
+    private long sessionRows() {
+        return db.sql("SELECT count(*) FROM spring_session").query(Long.class).single();
     }
 
     @Test

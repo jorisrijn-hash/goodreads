@@ -71,6 +71,12 @@ class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         // One reader, one session. A second login elsewhere ends the first.
                         .maximumSessions(1))
+                // The default request cache stores every rejected request in a new session
+                // so it can be replayed after login. Nothing here replays it — the
+                // frontend carries returnTo itself — so all it did was write a 30-day
+                // session row to the database for each anonymous hit on /api/v1/me.
+                // Found in production: rows that only ever held SAVED_REQUEST.
+                .requestCache(cache -> cache.disable())
                 .exceptionHandling(ex -> ex
                         // An API answers 401; it does not redirect a fetch() to a login page.
                         .authenticationEntryPoint(
