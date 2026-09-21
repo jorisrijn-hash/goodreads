@@ -124,6 +124,9 @@ export type BookPage = {
 
 export type Genre = { slug: string; name: string; bookCount: number };
 
+/** GET /api/v1/catalogue/stats — the size of the catalogue, nothing else. */
+export type CatalogueStats = { books: number; authors: number; genres: number };
+
 export type ReadingStatus = "WANT_TO_READ" | "CURRENTLY_READING" | "READ" | "DNF";
 
 export type SaveReason =

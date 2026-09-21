@@ -222,6 +222,25 @@ public class CatalogueRepository {
     public record GenreCount(String slug, String name, long bookCount) {
     }
 
+    /**
+     * The size of the catalogue, in one round trip.
+     *
+     * Authors and genres are counted the way the product presents them: an author is
+     * one credited on at least one book, and a genre is one with at least one book —
+     * the same rule {@link #genres()} applies, so the two can never disagree.
+     */
+    public CatalogueStats stats() {
+        return db.sql("""
+                SELECT (SELECT count(*) FROM book) AS books,
+                       (SELECT count(*) FROM author a
+                        WHERE EXISTS (SELECT 1 FROM book_author ba WHERE ba.author_id = a.id)) AS authors,
+                       (SELECT count(DISTINCT genre_id) FROM book_genre) AS genres
+                """).query(CatalogueStats.class).single();
+    }
+
+    public record CatalogueStats(long books, long authors, long genres) {
+    }
+
     private static BookRow mapBook(ResultSet rs, int rowNum) throws SQLException {
         return new BookRow(
                 rs.getLong("id"),

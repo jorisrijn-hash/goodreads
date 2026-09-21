@@ -193,6 +193,7 @@ Public — browsing and searching need no account.
 | `GET /api/v1/books` | Discovery and search in one surface: without `q` it browses, with `q` it searches |
 | `GET /api/v1/books/{slug}` | Book detail |
 | `GET /api/v1/genres` | The controlled taxonomy, with counts |
+| `GET /api/v1/catalogue/stats` | Catalogue size: books, authors, genres. Held in memory for 10 minutes, cacheable for an hour |
 | `GET /covers/{shard}/{id}-{160\|320\|640}.jpg` | Cover derivatives, served by us |
 
 Parameters: `q`, `genre`, `minPages`, `maxPages`, `sort`, `page`, `size`. The set is

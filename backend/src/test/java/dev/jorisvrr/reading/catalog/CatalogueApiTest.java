@@ -282,5 +282,39 @@ class CatalogueApiTest {
     void catalogueNeedsNoAuthentication() throws Exception {
         mvc.perform(get("/api/v1/books")).andExpect(status().isOk());
         mvc.perform(get("/api/v1/genres")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/catalogue/stats")).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("catalogue stats are the real counts, and nothing else")
+    void catalogueStatsMatchTheCatalogue() throws Exception {
+        needsCatalogue();
+        // Counted independently of the repository's own query, so a wrong definition
+        // there cannot pass by agreeing with itself.
+        long books = db.sql("SELECT count(*) FROM book").query(Long.class).single();
+        long authors = db.sql("SELECT count(DISTINCT author_id) FROM book_author").query(Long.class).single();
+        String genresJson = mvc.perform(get("/api/v1/genres"))
+                .andReturn().getResponse().getContentAsString();
+        int genresListed = com.jayway.jsonpath.JsonPath.<java.util.List<?>>read(genresJson, "$").size();
+
+        mvc.perform(get("/api/v1/catalogue/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.books").value(books))
+                .andExpect(jsonPath("$.authors").value(authors))
+                // The same number the genre browse shows, so the two cannot disagree.
+                .andExpect(jsonPath("$.genres").value(genresListed))
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(header().string("Cache-Control",
+                        org.hamcrest.Matchers.allOf(
+                                org.hamcrest.Matchers.containsString("public"),
+                                org.hamcrest.Matchers.containsString("max-age=3600"))));
+    }
+
+    @Test
+    @DisplayName("catalogue stats are read-only")
+    void catalogueStatsRejectWrites() throws Exception {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/api/v1/catalogue/stats"))
+                .andExpect(status().is4xxClientError());
     }
 }

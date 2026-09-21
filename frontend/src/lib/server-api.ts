@@ -84,3 +84,11 @@ export async function fetchPrivate<T>(path: string): Promise<T | null> {
   const result = await fetchPrivateResult<T>(path);
   return result.kind === "ok" ? result.data : null;
 }
+
+/**
+ * The catalogue's size, for pages that state it. Cached for an hour, matching the API's
+ * own Cache-Control: the numbers only change when the offline ingest runs.
+ */
+export function fetchCatalogueStats() {
+  return fetchPublic<import("./api").CatalogueStats>("/api/v1/catalogue/stats", 3600);
+}

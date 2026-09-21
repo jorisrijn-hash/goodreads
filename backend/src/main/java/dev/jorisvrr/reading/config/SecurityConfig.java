@@ -94,6 +94,7 @@ class SecurityConfig {
                         // The catalogue is public: browsing and searching need no account.
                         .requestMatchers(HttpMethod.GET, "/api/v1/books/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/genres").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/catalogue/stats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/covers/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/session").permitAll()
