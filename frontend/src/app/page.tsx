@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DemoButton } from "@/components/DemoButton";
 import { HeroComposition } from "@/components/HeroComposition";
+import { PaperComposition } from "@/components/PaperComposition";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCurrentUser } from "@/lib/session";
 import type { BookPage } from "@/lib/api";
@@ -99,13 +100,19 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          {/* Hidden on small screens, where the headline and actions are the only
-              things that matter. */}
-          {featured && featured.items.length > 0 && (
-            <div className="hero-enter hero-enter-delayed hidden lg:block">
+          {/*
+            Real covers when the catalogue is reachable; blank paper when it is not.
+            The fallback keeps the hero from becoming an empty field without inventing
+            a single cover, title or author.
+            Hidden on small screens, where the headline and actions are all that matter.
+          */}
+          <div className="hero-enter hero-enter-delayed hidden lg:block">
+            {featured && featured.items.length > 0 ? (
               <HeroComposition books={featured.items} />
-            </div>
-          )}
+            ) : (
+              <PaperComposition />
+            )}
+          </div>
         </div>
       </main>
     </div>
