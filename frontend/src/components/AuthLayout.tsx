@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BrandLockup } from "./Brand";
 
 /**
  * The authentication shell.
@@ -18,7 +19,8 @@ export function AuthLayout({
   title: string;
   intro?: string;
   children: ReactNode;
-  footer: ReactNode;
+  /** Anything else under the form. The credential disclaimer is always shown. */
+  footer?: ReactNode;
 }) {
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[1fr_minmax(420px,560px)]">
@@ -30,14 +32,9 @@ export function AuthLayout({
         className="hidden bg-[var(--paper)] px-[var(--space-12)] py-[var(--space-16)] md:flex
                    md:flex-col md:justify-between"
       >
-        <Link
-          href="/"
-          className="font-serif text-xl tracking-tight text-[var(--ink)] no-underline"
-        >
-          goodreads
-          <span className="ml-2 align-middle text-xs uppercase tracking-[0.12em] text-[var(--ink-60)]">
-            redesign
-          </span>
+        {/* Never the wordmark alone beside a password field: the "g" and the label. */}
+        <Link href="/" className="self-start no-underline" aria-label="goodreads — independent redesign, home">
+          <BrandLockup mark="g" />
         </Link>
 
         <blockquote className="max-w-[34ch]">
@@ -59,12 +56,8 @@ export function AuthLayout({
       <main className="flex min-h-dvh flex-col justify-center px-[var(--space-4)] py-[var(--space-12)] sm:px-[var(--space-8)]">
         <div className="mx-auto w-full max-w-[400px]">
           {/* Only shown where the editorial panel is not. */}
-          <Link
-            href="/"
-            className="mb-[var(--space-8)] inline-block font-serif text-lg tracking-tight
-                       text-[var(--ink)] no-underline md:hidden"
-          >
-            goodreads
+          <Link href="/" className="mb-[var(--space-8)] inline-block no-underline md:hidden" aria-label="goodreads — independent redesign, home">
+            <BrandLockup mark="g" />
           </Link>
 
           <h1 className="text-[clamp(1.75rem,5vw,2.25rem)]">{title}</h1>
@@ -74,9 +67,20 @@ export function AuthLayout({
 
           <div className="mt-[var(--space-8)]">{children}</div>
 
-          <div className="mt-[var(--space-8)] text-sm text-[var(--ink-70)]">
-            {footer}
-          </div>
+          {/* Directly beside the credentials, not only in a footer somewhere. */}
+          <p
+            role="note"
+            className="mt-[var(--space-6)] border-l-2 border-[var(--burgundy)] pl-[var(--space-4)] text-[0.875rem] leading-relaxed text-[var(--ink-70)]"
+          >
+            Independent redesign — not affiliated with Goodreads or Amazon. Use credentials
+            created for this demo, not your Goodreads password.
+          </p>
+
+          {footer && (
+            <div className="mt-[var(--space-8)] text-sm text-[var(--ink-70)]">
+              {footer}
+            </div>
+          )}
         </div>
       </main>
     </div>

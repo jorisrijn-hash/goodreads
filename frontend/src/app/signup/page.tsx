@@ -12,11 +12,6 @@ export default async function SignupPage() {
     <AuthLayout
       title="Start your reading life."
       intro="Three fields. No questionnaire."
-      footer={
-        <p>
-          An independent case study. Please do not reuse a password from anywhere else.
-        </p>
-      }
     >
       <SignupForm />
     </AuthLayout>

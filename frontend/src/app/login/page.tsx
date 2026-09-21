@@ -14,12 +14,6 @@ export default async function LoginPage() {
     <AuthLayout
       title="Welcome back."
       intro="Pick up where your reading left off."
-      footer={
-        <p>
-          This is an independent redesign and case study, not the real Goodreads.
-          Accounts here are unrelated to any Goodreads account.
-        </p>
-      }
     >
       {/* useSearchParams needs a Suspense boundary to keep the route prerenderable. */}
       <Suspense fallback={null}>

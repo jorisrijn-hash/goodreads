@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ApiUser } from "@/lib/api";
 import { AvatarMenu } from "./AvatarMenu";
+import { BrandLockup } from "./Brand";
 import { NavLink } from "./NavLink";
 
 /**
@@ -22,18 +23,10 @@ export function SiteHeader({
 }) {
   return (
     <header data-surface={tone} className="relative z-20 border-b border-[var(--rule)]">
-      <div className="page-frame flex h-[68px] items-center justify-between gap-[var(--space-4)]">
-        <Link
-          href={user ? "/home" : "/"}
-          className="flex items-baseline gap-[var(--space-3)] no-underline"
-        >
-          <span className="font-serif text-[1.375rem] leading-none tracking-[-0.015em] text-[var(--fg)]">
-            goodreads
-          </span>
-          {/* Said once, quietly, and only where there is room for it. */}
-          <span className="type-label hidden border-l border-[var(--rule)] pl-[var(--space-3)] text-[var(--fg-subtle)] lg:inline">
-            Independent redesign
-          </span>
+      <div className="page-frame flex h-[68px] items-center justify-between gap-[var(--space-3)]">
+        <Link href={user ? "/home" : "/"} className="shrink-0 no-underline" aria-label="goodreads — independent redesign, home">
+          {/* The supplied wordmark, always with the redesign label beside it. */}
+          <BrandLockup tone={tone === "forest" ? "ivory" : "ink"} compactBelow="sm" labelOnCompact={!user} />
         </Link>
 
         <nav aria-label="Main">
