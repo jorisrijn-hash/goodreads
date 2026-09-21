@@ -21,6 +21,15 @@ const PHOTOS = [
     grade: { hue: -14, saturation: 0.78, brightness: 1.02 },
   },
   {
+    // The same photograph, cropped wide for the desktop hero, where it runs behind the
+    // whole composition and fades into the page under the copy.
+    id: "wall-wide",
+    unsplash: "95baBTvQ5gI",
+    crop: { left: 0, top: 1150, width: 2400, height: 1500 },
+    widths: [1000, 1800],
+    grade: { hue: -14, saturation: 0.78, brightness: 1.02 },
+  },
+  {
     id: "old-library",
     unsplash: "TIS8AnSiFI4",
     crop: { left: 0, top: 0, width: 2400, height: 3200 },

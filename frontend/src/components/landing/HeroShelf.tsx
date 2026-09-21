@@ -35,29 +35,39 @@ export function HeroShelf({
   ledge,
   startDelay = 0.5,
   interactive = true,
+  priority = true,
+  media,
 }: {
   books: ShelfBook[];
   sizes: string;
-  ledge: { left: string; right: string; bottom: string };
+  /** Where the books stand. `line` is the height of the surface above the stage's bottom;
+   *  the surface itself (plinth, ledge) is drawn by the page, not here. */
+  ledge: { bottom: string };
   /** Seconds before the first book rises: after the text has settled. */
   startDelay?: number;
   interactive?: boolean;
+  /** Load the central books eagerly — only for a shelf that is visible on arrival. */
+  priority?: boolean;
+  /** Media query the shelf is shown at; covers are not fetched elsewhere. */
+  media?: string;
 }) {
   return (
     <MotionProvider>
-      <Stage books={books} sizes={sizes} ledge={ledge} startDelay={startDelay} interactive={interactive} />
+      <Stage books={books} sizes={sizes} ledge={ledge} startDelay={startDelay} interactive={interactive} priority={priority} media={media} />
     </MotionProvider>
   );
 }
 
 function Stage({
-  books, sizes, ledge, startDelay, interactive,
+  books, sizes, ledge, startDelay, interactive, priority, media,
 }: {
   books: ShelfBook[];
   sizes: string;
-  ledge: { left: string; right: string; bottom: string };
+  ledge: { bottom: string };
   startDelay: number;
   interactive: boolean;
+  priority: boolean;
+  media?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -90,7 +100,6 @@ function Stage({
 
   return (
     <div ref={ref} className="book-stage absolute inset-0">
-      <div className="ledge" style={{ left: ledge.left, right: ledge.right, bottom: `calc(${ledge.bottom} - 18px)` }} />
       {books.map(({ book, ratio, placement }, index) => (
         <ShelfItem
           key={book.slug}
@@ -104,7 +113,8 @@ function Stage({
           duration={DURATION.settle + (index % 3) * 0.05}
           x={x}
           y={y}
-          priority={index >= 2 && index <= 4}
+          priority={priority && index >= 2 && index <= 4}
+          media={media}
         />
       ))}
     </div>
@@ -112,7 +122,7 @@ function Stage({
 }
 
 function ShelfItem({
-  book, ratio, placement, sizes, ledgeBottom, delay, duration, x, y, priority,
+  book, ratio, placement, sizes, ledgeBottom, delay, duration, x, y, priority, media,
 }: {
   book: BookDetail;
   ratio: number;
@@ -124,6 +134,7 @@ function ShelfItem({
   x: MotionValue<number>;
   y: MotionValue<number>;
   priority: boolean;
+  media?: string;
 }) {
   const shiftX = useTransform(x, (v) => v * PARALLAX_MAX * placement.depth);
   const shiftY = useTransform(y, (v) => v * (PARALLAX_MAX / 2) * placement.depth);
@@ -157,6 +168,7 @@ function ShelfItem({
           turn={placement.turn}
           priority={priority}
           sizes={sizes}
+          media={media}
         />
       </m.div>
     </m.div>

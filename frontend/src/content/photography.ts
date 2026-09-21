@@ -36,6 +36,15 @@ export const PHOTOGRAPHS: Photograph[] = [
     licence: "Unsplash License",
   },
   {
+    id: "wall-wide",
+    widths: [1000, 1800],
+    ratio: 1.6,
+    alt: "Afternoon sunlight and the shadows of leaves falling across a warm plaster wall",
+    photographer: "Sreeraj S",
+    sourceUrl: "https://unsplash.com/photos/95baBTvQ5gI",
+    licence: "Unsplash License",
+  },
+  {
     id: "old-library",
     widths: [640, 1100],
     ratio: 0.75,

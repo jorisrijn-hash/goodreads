@@ -1,17 +1,18 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import type { BookPage, CatalogueStats, Genre } from "@/lib/api";
-import { BookCard } from "../BookCard";
+import { BookObject } from "../BookObject";
 import { Reveal } from "../motion/Reveal";
-import { SearchInput } from "../SearchInput";
-import { SectionHeader } from "../SectionHeader";
+import { Photograph } from "../Photograph";
+import { SectionLabel } from "../SectionHeader";
 
 /**
- * 02 — Discover, on forest.
+ * 02 — Discover: a product moment, not a feature description.
  *
- * The product is the picture: a working search field, the real genre list with its real
- * counts, and beside them a real search response — a misspelled author, corrected, the
- * way the catalogue actually answers it.
+ * An oversized search field floats over a dimmed photograph of a library. It is the real
+ * search — a plain GET form, so it works before any script loads — prefilled with a
+ * misspelled author. Beneath it, the catalogue's real answer to that query unfolds as
+ * three books, with the real "close match" notice. The genres run along the foot as a
+ * rail. As the section scrolls in, it opens from a slightly inset panel to full width.
  */
 export function DiscoverSection({
   stats,
@@ -24,73 +25,102 @@ export function DiscoverSection({
   typo: BookPage | null;
   typoQuery: string;
 }) {
-  return (
-    <section data-surface="forest" aria-labelledby="discover-heading" className="relative">
-      <div className="page-frame grid grid-cols-[minmax(0,1fr)] gap-y-[var(--space-12)] py-[var(--space-16)] lg:grid-cols-12 lg:gap-x-[var(--space-8)] lg:py-[7.5rem]">
-        <Reveal className="lg:col-span-5">
-          <SectionHeader number="02" label="Discover">
-            <span id="discover-heading">Find the book, even when you misspell it.</span>
-          </SectionHeader>
-          <p className="mt-[var(--space-6)] max-w-[44ch] text-[1.0625rem] leading-[1.65] text-[var(--fg-muted)]">
-            Search {stats ? stats.books.toLocaleString("en") : "the"} books by title, author
-            or ISBN. When a search has a typo, it finds the closest match and says that it did.
-          </p>
-          <div className="mt-[var(--space-8)] max-w-[34rem]">
-            <Suspense fallback={null}>
-              <SearchInput tone="dark" />
-            </Suspense>
-          </div>
+  const results = typo?.items.slice(0, 3) ?? [];
+  const turns = [9, -2, -11];
 
-          {genres && genres.length > 0 && (
-            <nav aria-label="Browse by genre" className="mt-[var(--space-10)] max-w-[34rem]">
-              <h3 className="type-label text-[var(--fg-subtle)]">Browse by genre</h3>
-              <ul className="mt-[var(--space-4)] grid list-none grid-cols-2 gap-x-[var(--space-8)] p-0">
-                {genres.slice(0, 10).map((genre) => (
-                  <li key={genre.slug} className="border-t border-[var(--rule)]">
-                    <Link
-                      href={`/discover?genre=${genre.slug}`}
-                      className="flex min-h-[44px] items-center justify-between gap-[var(--space-3)]
-                                 text-[0.9375rem] text-[var(--fg)] no-underline
-                                 transition-colors duration-[var(--motion-fast)] hover:text-[var(--fg-muted)]"
-                    >
+  return (
+    <section data-surface="forest" aria-labelledby="discover-heading" className="forest-reveal relative z-10 overflow-hidden">
+      <Photograph
+        id="old-library"
+        sizes="100vw"
+        className="discover-photo pointer-events-none absolute inset-0"
+        imgClassName="h-full w-full object-cover object-[50%_35%]"
+      />
+
+      <div className="page-frame relative pb-[7rem] pt-[calc(var(--space-16)+3rem)] lg:pb-[8rem] lg:pt-[9rem]">
+        <Reveal className="mx-auto max-w-[52rem] text-center">
+          <SectionLabel number="02" label="Discover" centered />
+          <h2 id="discover-heading" className="type-display-l mx-auto mt-[var(--space-6)] max-w-[15ch] text-balance">
+            Find the book, even when you misspell it.
+          </h2>
+          <p className="mx-auto mt-[var(--space-5)] max-w-[44ch] text-[1.0625rem] leading-[1.6] text-[var(--fg-muted)]">
+            Search {stats ? `${stats.books.toLocaleString("en")} books` : "the catalogue"} by
+            title, author or ISBN. Typos included — and it tells you when it corrected one.
+          </p>
+        </Reveal>
+
+        <Reveal delay={0.08} className="mx-auto mt-[var(--space-12)] w-full max-w-[56rem]">
+          <form role="search" action="/discover" method="get" className="hero-search">
+            <label htmlFor="landing-search" className="sr-only">Search books, authors or ISBN</label>
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0 text-[var(--fg-subtle)]">
+              <circle cx="11" cy="11" r="6.5" />
+              <path d="m16 16 4.5 4.5" />
+            </svg>
+            <input id="landing-search" name="q" type="search" defaultValue={typoQuery} placeholder="Title, author or ISBN" autoComplete="off" />
+            <button type="submit" className="action action--light">
+              Search <span aria-hidden="true" className="action__arrow">→</span>
+            </button>
+          </form>
+
+          {typo && (
+            <p className="mt-[var(--space-5)] text-center text-[0.875rem] text-[var(--fg-muted)]">
+              <span className="text-[var(--fg)]">{typo.total} {typo.total === 1 ? "book" : "books"}</span>
+              {typo.correctedFrom && (
+                <>
+                  <span aria-hidden="true" className="mx-[var(--space-3)] text-[var(--fg-subtle)]">·</span>
+                  Showing results for a close match to “{typo.correctedFrom}”
+                </>
+              )}
+            </p>
+          )}
+        </Reveal>
+
+        {results.length > 0 && (
+          <Reveal className="unfold mt-[var(--space-10)]">
+            <ul className="mx-auto flex max-w-[52rem] list-none items-end justify-center gap-[clamp(0.75rem,3vw,3rem)] p-0">
+              {results.map((book, i) => (
+                <li key={book.slug} className="unfold__item book-stage flex flex-col items-center" style={{ ["--i" as string]: i }}>
+                  <BookObject
+                    slug={book.slug}
+                    title={book.title}
+                    authors={book.authors}
+                    coverKey={book.coverKey}
+                    pageCount={book.pageCount}
+                    width={i === 1 ? "clamp(6.5rem, 20vw, 13rem)" : "clamp(5.5rem, 17vw, 11rem)"}
+                    turn={turns[i]}
+                    sizes="13rem"
+                  />
+                  {/* The metadata on paper, as the result list shows it. */}
+                  <p data-surface="paper" className="mt-[var(--space-6)] rounded-[3px] px-[var(--space-3)] py-[var(--space-2)] text-center shadow-[0_12px_24px_-16px_rgba(0,0,0,0.6)]">
+                    <span className="block font-serif text-[0.9375rem] leading-tight">{book.title}</span>
+                    <span className="block text-[0.75rem] text-[var(--ink-60)]">{book.authors[0]}</span>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        )}
+
+        {genres && genres.length > 0 && (
+          <nav aria-label="Browse by genre" className="genre-rail mt-[var(--space-16)] border-t border-[var(--rule)] pt-[var(--space-5)]">
+            <div className="flex flex-col gap-[var(--space-3)] sm:flex-row sm:items-baseline sm:gap-[var(--space-8)]">
+              <h3 className="type-label shrink-0 text-[var(--fg-subtle)]">Browse by genre</h3>
+              {/* min-w-0: a flex item will not shrink below its content otherwise, and the rail
+                  would widen the page instead of scrolling within itself. */}
+              <ul className="genre-rail__list flex min-w-0 flex-1 list-none gap-[var(--space-8)] overflow-x-auto p-0 pb-[var(--space-2)]">
+                {genres.map((genre) => (
+                  <li key={genre.slug} className="shrink-0">
+                    <Link href={`/discover?genre=${genre.slug}`} className="link-rule whitespace-nowrap text-[0.9375rem] text-[var(--fg)]">
                       {genre.name}
-                      <span className="text-[0.8125rem] text-[var(--fg-subtle)] [font-variant-numeric:tabular-nums]">
+                      <span className="ml-[var(--space-2)] text-[0.8125rem] text-[var(--fg-subtle)] [font-variant-numeric:tabular-nums]">
                         {genre.bookCount.toLocaleString("en")}
                       </span>
                     </Link>
                   </li>
                 ))}
               </ul>
-            </nav>
-          )}
-        </Reveal>
-
-        {typo && typo.items.length > 0 && (
-          <Reveal delay={0.12} className="lg:col-span-6 lg:col-start-7 lg:self-center">
-            <figure data-surface="ivory" className="rounded-[var(--radius-card)] p-[var(--space-6)] shadow-[0_40px_80px_-40px_rgba(0,0,0,0.6)] sm:p-[var(--space-8)]">
-              {/* A depiction of the search field, not a second one: the real field is on
-                  the left. */}
-              <div aria-hidden="true" className="flex min-h-[48px] items-center rounded-[var(--radius-input)] border border-[var(--border-strong)] bg-white/60 px-[var(--space-4)] text-[var(--ink)]">
-                {typoQuery}
-              </div>
-              <p className="mt-[var(--space-5)] text-[0.875rem] text-[var(--ink-70)]">
-                {typo.total} {typo.total === 1 ? "book" : "books"}
-                {typo.correctedFrom && (
-                  <span className="ml-[var(--space-3)] text-[var(--ink-60)]">
-                    Showing results for a close match to <span className="text-[var(--ink)]">“{typo.correctedFrom}”</span>
-                  </span>
-                )}
-              </p>
-              <ul className="mt-[var(--space-5)] grid list-none grid-cols-3 gap-[var(--space-5)] p-0">
-                {typo.items.slice(0, 3).map((book) => (
-                  <li key={book.slug}><BookCard book={book} /></li>
-                ))}
-              </ul>
-              <figcaption className="mt-[var(--space-6)] border-t border-[var(--rule)] pt-[var(--space-4)] text-[0.8125rem] text-[var(--ink-60)]">
-                The catalogue&rsquo;s own answer to “{typoQuery}”, fetched live.
-              </figcaption>
-            </figure>
-          </Reveal>
+            </div>
+          </nav>
         )}
       </div>
     </section>

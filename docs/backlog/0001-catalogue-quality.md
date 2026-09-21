@@ -17,7 +17,7 @@ Measured in production (9,021 books):
 | Study guides | 21 | *SparkNotes for 1984*; *Haruki Murakami* by Mark Mussari |
 | Omnibus / collected editions | 15 | *Works (Hitch Hiker's Guide to the Galaxy / …)*, *Novels (Pride and Prejudice / Sense and …)* |
 | Titles with more than one edition | 39 titles, 83 rows | three separate *The Great Gatsby* records, one of them *The Great Gatsby / The Last Tycoon* |
-| Language anomalies | not yet counted | *Et la joie de vivre* (French) tagged `eng` |
+| Language anomalies | not yet counted | *Et la joie de vivre* (French) tagged `eng`; *Never Let Me Go*, *Galatea* and *The Little Friend* stored as Spanish editions |
 | Unusable covers | not yet counted | *The last tycoon*: a blank cloth binding; *Rites of the Starling*: a 3D product render |
 
 Queries used for the counts:

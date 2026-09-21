@@ -10,9 +10,18 @@ import "./globals.css";
 const literata = Literata({
   variable: "--font-literata",
   subsets: ["latin"],
-  // Italic is used deliberately — authors, captions — not synthesised by the browser.
-  style: ["normal", "italic"],
   display: "swap",
+});
+
+// Italic is used deliberately (captions), not synthesised by the browser — but only
+// below the fold, so it is not preloaded: preloading it competed with the landing
+// hero for bandwidth on a slow connection.
+const literataItalic = Literata({
+  variable: "--font-literata-italic",
+  subsets: ["latin"],
+  style: "italic",
+  display: "swap",
+  preload: false,
 });
 
 const inter = Inter({
@@ -31,11 +40,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${literata.variable} ${inter.variable}`}>
+    <html lang="en" className={`${literata.variable} ${literataItalic.variable} ${inter.variable}`}>
       <head>
         {/* Entrances start hidden and some wait for JavaScript; without it, show everything. */}
         <noscript>
-          <style>{`[data-reveal],[data-motion-initial],.seq,.seq-line>span{opacity:1!important;transform:none!important;animation:none!important}`}</style>
+          <style>{`[data-reveal],[data-motion-initial],.seq,.seq-line>span,.unfold__item,.lib-item{opacity:1!important;transform:none!important;animation:none!important}.draw-rule{transform:none!important}`}</style>
         </noscript>
       </head>
       <body>{children}</body>

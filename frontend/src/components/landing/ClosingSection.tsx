@@ -1,7 +1,9 @@
 import Link from "next/link";
+import type { BookDetail } from "@/lib/api";
+import { BookObject } from "../BookObject";
 import { DemoButton } from "../DemoButton";
 import { Reveal } from "../motion/Reveal";
-import { SectionHeader } from "../SectionHeader";
+import { SectionLabel } from "../SectionHeader";
 
 const QUESTIONS = [
   {
@@ -22,46 +24,73 @@ const QUESTIONS = [
   },
 ];
 
-/** 05 — the way in, and the plain answers, back on ivory. */
-export function ClosingSection() {
+/**
+ * 05 — the way in, then plain answers.
+ *
+ * Centred and large, the one other place the display serif is used at full size, over a
+ * short shelf of the same selected books that open the page — the page ends where it
+ * began. The FAQ below opens with its height where the browser can animate it.
+ */
+export function ClosingSection({ books }: { books: BookDetail[] }) {
+  const turns = [48, 22, -4, -24, -46];
   return (
-    <section data-surface="ivory" aria-labelledby="closing-heading">
-      <div className="page-frame grid grid-cols-[minmax(0,1fr)] gap-y-[var(--space-12)] py-[var(--space-16)] lg:grid-cols-12 lg:gap-x-[var(--space-8)] lg:py-[7.5rem]">
-        <Reveal className="lg:col-span-5">
-          <SectionHeader number="05" label="Start">
-            <span id="closing-heading">Try it with the demo account.</span>
-          </SectionHeader>
-          <p className="mt-[var(--space-6)] max-w-[40ch] text-[1.0625rem] leading-[1.65] text-[var(--fg-muted)]">
+    <section data-surface="ivory" aria-labelledby="closing-heading" className="relative">
+      <div className="page-frame pb-[var(--space-16)] pt-[var(--space-16)] lg:pb-[7rem] lg:pt-[8rem]">
+        <Reveal className="mx-auto max-w-[48rem] text-center">
+          <SectionLabel number="05" label="Start" centered />
+          <h2 id="closing-heading" className="type-display-l mx-auto mt-[var(--space-6)] max-w-[14ch] text-balance">
+            Try it with the demo account.
+          </h2>
+          <p className="mx-auto mt-[var(--space-5)] max-w-[40ch] text-[1.0625rem] leading-[1.6] text-[var(--fg-muted)]">
             One click, no sign-up. Or create an account for a library of your own.
           </p>
-          <div className="mt-[var(--space-8)] flex flex-wrap items-start gap-[var(--space-3)]">
+          <div className="mt-[var(--space-8)] flex flex-wrap items-start justify-center gap-[var(--space-3)]">
             <DemoButton label="Explore the demo account" size="large" />
-            <Link
-              href="/signup"
-              className="inline-flex min-h-[52px] items-center justify-center whitespace-nowrap
-                         rounded-[var(--radius-input)] bg-[var(--forest)] px-[var(--space-8)]
-                         text-base font-medium text-[var(--ivory)] no-underline
-                         transition-colors duration-[var(--motion-fast)] hover:bg-[var(--forest-hover)]"
-            >
-              Create an account
+            <Link href="/signup" className="action action--primary">
+              Create an account <span aria-hidden="true" className="action__arrow">→</span>
             </Link>
           </div>
         </Reveal>
 
-        <Reveal delay={0.08} className="lg:col-span-6 lg:col-start-7">
-          <h3 className="type-label text-[var(--fg-subtle)]">Questions</h3>
-          <div className="mt-[var(--space-4)] border-b border-[var(--rule)]">
+        {books.length > 0 && (
+          <Reveal delay={0.1} className="relative mx-auto mt-[var(--space-16)] max-w-[44rem]">
+            <ul className="relative z-[2] m-0 flex list-none items-end justify-center gap-[clamp(0.25rem,2vw,1.5rem)] p-0">
+              {books.slice(0, 5).map((book, i) => (
+                <li key={book.slug} className="book-stage">
+                  <BookObject
+                    slug={book.slug}
+                    title={book.title}
+                    authors={book.authors}
+                    coverKey={book.coverKey}
+                    pageCount={book.pageCount}
+                    width={i === 2 ? "clamp(3.75rem, 14vw, 8.5rem)" : "clamp(2.5rem, 11vw, 6.75rem)"}
+                    turn={turns[i]}
+                    sizes="8.5rem"
+                  />
+                </li>
+              ))}
+            </ul>
+            <div aria-hidden="true" className="plinth plinth--small" />
+          </Reveal>
+        )}
+
+        <div className="mt-[var(--space-16)] grid grid-cols-[minmax(0,1fr)] gap-y-[var(--space-6)] border-t border-[var(--rule)] pt-[var(--space-10)] lg:grid-cols-12 lg:gap-x-[var(--space-8)]">
+          <div className="lg:col-span-4">
+            <h3 className="type-label text-[var(--fg-subtle)]">Questions</h3>
+            <p className="mt-[var(--space-3)] max-w-[28ch] text-[var(--fg-muted)]">Short answers about what this is and where it comes from.</p>
+          </div>
+          <div className="lg:col-span-7 lg:col-start-6">
             {QUESTIONS.map(({ q, a }) => (
-              <details key={q} className="faq group border-t border-[var(--rule)]">
-                <summary className="flex min-h-[64px] cursor-pointer list-none items-center justify-between gap-[var(--space-4)] font-serif text-[1.25rem] text-[var(--fg)]">
+              <details key={q} className="faq group border-b border-[var(--rule)] first:border-t">
+                <summary className="flex min-h-[64px] cursor-pointer list-none items-center justify-between gap-[var(--space-4)] font-serif text-[1.25rem] text-[var(--fg)] [&::-webkit-details-marker]:hidden">
                   {q}
-                  <span aria-hidden="true" className="text-[var(--fg-subtle)] transition-transform duration-[var(--motion-base)] group-open:rotate-45">+</span>
+                  <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--rule-strong)] text-[var(--fg-subtle)] transition-transform duration-[220ms] group-open:rotate-45">+</span>
                 </summary>
                 <p className="max-w-[58ch] pb-[var(--space-6)] leading-[1.65] text-[var(--fg-muted)]">{a}</p>
               </details>
             ))}
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );

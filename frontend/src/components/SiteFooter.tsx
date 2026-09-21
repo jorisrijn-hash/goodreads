@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PHOTOGRAPHS } from "@/content/photography";
+import { BrandLockup } from "./Brand";
 
 /**
  * The colophon.
@@ -13,7 +14,7 @@ export function SiteFooter() {
     <footer data-surface="forest" className="mt-auto">
       <div className="page-frame grid gap-y-[var(--space-10)] py-[var(--space-16)] lg:grid-cols-12 lg:gap-x-[var(--space-8)]">
         <div className="lg:col-span-5">
-          <p className="font-serif text-[2rem] leading-none tracking-[-0.02em]">goodreads</p>
+          <BrandLockup tone="ivory" height={34} lazy />
           <p className="mt-[var(--space-5)] max-w-[40ch] text-[0.9375rem] leading-relaxed text-[var(--fg-muted)]">
             An independent redesign and engineering case study. Not affiliated with
             Goodreads or Amazon, and no Goodreads data is used.
@@ -42,7 +43,8 @@ export function SiteFooter() {
             {PHOTOGRAPHS.length > 0 && (
               <div>
                 <dt className="text-[var(--fg-subtle)]">Photography</dt>
-                {PHOTOGRAPHS.map((photo) => (
+                {/* One credit per photograph, however many crops of it are used. */}
+                {PHOTOGRAPHS.filter((p, i, all) => all.findIndex((q) => q.sourceUrl === p.sourceUrl) === i).map((photo) => (
                   <dd key={photo.id} className="m-0">
                     <FooterLink href={photo.sourceUrl}>{photo.photographer}</FooterLink>
                     <span className="text-[var(--fg-muted)]"> — {photo.licence}</span>

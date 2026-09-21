@@ -38,8 +38,16 @@ export const EXAMPLE_LIBRARY = [
   { slug: "dune-ol893414w", status: "CURRENTLY_READING" },
   { slug: "the-secret-history-ol4321141w", status: "WANT_TO_READ" },
   { slug: "klara-and-the-sun-ol20883297w", status: "WANT_TO_READ" },
-  { slug: "beloved-ol50548w", status: "READ" },
+  { slug: "project-hail-mary-ol21745884w", status: "READ" },
 ] as const;
 
-/** A misspelled query that the real search corrects to several real books. */
-export const TYPO_EXAMPLE = "madeline miler";
+/**
+ * A misspelled query that the real search corrects to several real books. Chosen, like
+ * the books above, for what it shows: "madeline miler" is also corrected correctly, but
+ * its answer includes a Spanish edition (docs/backlog/0001-catalogue-quality.md), and the
+ * landing page should show the catalogue at its clearest rather than hide the record.
+ */
+export const TYPO_EXAMPLE = "toni morison";
+
+/** The misspelled author the how-it-works scene searches for; the real API answers it. */
+export const HOW_IT_WORKS_QUERY = "frank herbrt";

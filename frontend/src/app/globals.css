@@ -201,7 +201,7 @@
 }
 
 @utility type-caption {
-  font-family: var(--font-serif);
+  font-family: var(--font-literata-italic), var(--font-serif);
   font-size: 0.9375rem;
   font-style: italic;
   line-height: 1.5;
@@ -452,7 +452,14 @@ body::after {
 /* Lifts off the surface for a pointer or keyboard; the ring sits on the cover. */
 .book-object:hover .book-object__body,
 .book-object:focus-visible .book-object__body {
-  transform: translateY(-6px) rotateY(var(--turn));
+  transform: translateY(-6px) rotateY(var(--turn)) rotateZ(-0.6deg);
+}
+
+.book-object:hover .book-object__cover {
+  box-shadow:
+    0 1px 1px rgba(25, 24, 21, 0.18),
+    0 18px 26px -12px rgba(25, 24, 21, 0.5),
+    22px 34px 54px -26px rgba(25, 24, 21, 0.6);
 }
 
 .book-object:focus-visible .book-object__cover {
@@ -462,7 +469,8 @@ body::after {
 
 /* In an overlapping arrangement, the book being pointed at or focused comes to the front;
    otherwise a keyboard user's focus ring can sit hidden behind a neighbour. */
-[data-motion-initial]:has(.book-object:is(:hover, :focus-visible)) {
+[data-motion-initial]:has(.book-object:is(:hover, :focus-visible)),
+.lib-item:has(.book-object:is(:hover, :focus-visible)) {
   z-index: 50 !important;
 }
 
@@ -480,7 +488,8 @@ body::after {
   /* Forced colours drop backgrounds, which leaves a filled button as bare text. Any
      filled link or button gets a system-coloured border instead, wherever it is. */
   :is(a, button)[class*="bg-[var(--forest)]"],
-  :is(a, button)[class*="bg-[var(--ivory)]"] {
+  :is(a, button)[class*="bg-[var(--ivory)]"],
+  .action {
     border: 1px solid ButtonText;
   }
   .book-object__pages, .book-object__spine, .book-object__body::after, .ledge { display: none; }
@@ -518,6 +527,436 @@ body::after {
   to   { transform: translateY(0); }
 }
 
+/*
+ * The landing hero's still life.
+ *
+ * The wall photograph fades out by mask, so the page shows through it rather than a
+ * gradient being painted over it. The plinth is a slab of stone: a lit top edge and a
+ * front face whose lower part (--plinth-drop) hangs below the hero, over the start of
+ * the next section.
+ */
+.hero {
+  --plinth-top: 5.5rem;   /* from the section's bottom to the plinth's top surface */
+  --plinth-drop: 2rem;    /* how far the front face hangs into the next section */
+  /* The scene is placed against the page frame, not the viewport, so on a very wide
+     screen it stays beside the copy instead of drifting into it. */
+  --frame-w: min(100%, var(--page-max));
+  --frame-left: calc((100% - var(--frame-w)) / 2);
+}
+
+.hero-scene-wall  { left: calc(var(--frame-left) + var(--frame-w) * 0.24); }
+.hero-scene-plinth { left: calc(var(--frame-left) + var(--frame-w) * 0.31); }
+.hero-scene-stage { left: calc(var(--frame-left) + var(--frame-w) * 0.33); }
+.hero-scene-label { left: calc(var(--frame-left) + var(--frame-w) * 0.31 + var(--space-8)); }
+
+.hero-wall {
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, #000 34%),
+    linear-gradient(to bottom, transparent 0%, #000 14%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent 0%, #000 34%),
+    linear-gradient(to bottom, transparent 0%, #000 14%);
+  mask-composite: intersect;
+}
+
+.hero-wall--mobile {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 28%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 28%);
+}
+
+.plinth {
+  height: calc(var(--plinth-top) + var(--plinth-drop));
+  bottom: calc(var(--plinth-drop) * -1) !important;
+  z-index: 1;
+  background:
+    /* the lit top edge */
+    linear-gradient(180deg, #f3eee4 0, #e7dfd1 10px, #d9cfbd 11px, #d9cfbd 12px, transparent 12px),
+    /* the front face, darkening toward its foot */
+    linear-gradient(180deg, #e1d8c8 12px, #d3c8b4 100%);
+  box-shadow: 0 30px 50px -30px rgba(25, 24, 21, 0.55);
+}
+
+.plinth--small {
+  --plinth-top: 1.5rem;
+  --plinth-drop: 0rem;
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: -1.5rem !important;
+}
+
+.plinth-label {
+  bottom: calc(var(--plinth-top) - 12px - 2.6rem);
+  z-index: 2;
+}
+
+/*
+ * Primary actions: a filled button whose arrow moves on hover. Quick and short — the
+ * label stays put, only the arrow acknowledges the pointer.
+ */
+.action {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  white-space: nowrap;
+  border-radius: var(--radius-input);
+  padding: 0 var(--space-8);
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+
+.action--primary { background: var(--forest); color: var(--ivory); }
+.action--primary:hover { background: var(--forest-hover); box-shadow: 0 10px 24px -14px rgba(25, 24, 21, 0.6); }
+.action--light { background: var(--ivory); color: var(--forest); }
+.action--light:hover { background: #fff; }
+
+.action__arrow {
+  display: inline-block;
+  transition: transform 180ms var(--ease-settle);
+}
+
+.action:hover .action__arrow,
+.action:focus-visible .action__arrow { transform: translateX(3px); }
+
+/* A rule that draws in under a link, rather than a browser underline. */
+.link-rule {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 220ms var(--ease-settle);
+}
+
+.link-rule:hover,
+.link-rule:focus-visible { background-size: 100% 1px; }
+
+/*
+ * Discover on the landing page.
+ *
+ * The section opens from a slightly inset panel to full width as it scrolls in — pure
+ * CSS scroll-driven animation, only where supported and only with motion allowed.
+ * Elsewhere it is simply full width. The radius stays small: a page turning, not a card.
+ */
+@keyframes forest-open {
+  from { clip-path: inset(0 2.5% round 20px); }
+  to   { clip-path: inset(0 0 round 0); }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .forest-reveal {
+      animation: forest-open linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+
+/* The library behind the search: present, but far back. */
+.discover-photo img {
+  opacity: 0.2;
+  filter: grayscale(0.35) contrast(1.05);
+}
+
+.discover-photo {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+}
+
+/* The oversized search field: translucent over the photograph, lifting on focus. */
+.hero-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 76px;
+  padding: 10px 10px 10px var(--space-6);
+  border: 1px solid rgba(244, 240, 231, 0.2);
+  border-radius: 14px;
+  background: rgba(244, 240, 231, 0.07);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 24px 60px -30px rgba(0, 0, 0, 0.6);
+  transition: border-color 180ms var(--ease), background-color 180ms var(--ease), box-shadow 180ms var(--ease), transform 180ms var(--ease);
+}
+
+.hero-search:focus-within {
+  border-color: rgba(244, 240, 231, 0.55);
+  background: rgba(244, 240, 231, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 34px 70px -30px rgba(0, 0, 0, 0.7);
+}
+
+.hero-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: var(--ivory);
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  outline: none;
+}
+
+.hero-search input::placeholder { color: #a6aaa1; }
+.hero-search:has(input:focus-visible) { outline: 2px solid var(--ivory); outline-offset: 3px; }
+
+@media (max-width: 639px) {
+  .hero-search { min-height: 64px; padding-left: var(--space-4); }
+  .hero-search .action { padding: 0 var(--space-4); }
+}
+
+/* Results unfold from beneath the field: they start tucked up under it. */
+.unfold .unfold__item {
+  opacity: 0;
+  transform: translateY(-48px) scale(0.96);
+  transition: opacity 560ms var(--ease-settle), transform 640ms var(--ease-settle);
+  transition-delay: calc(160ms + var(--i, 0) * 90ms);
+}
+
+.unfold[data-shown] .unfold__item {
+  opacity: 1;
+  transform: none;
+}
+
+/* The genre rail fades out at its right edge where it continues off-screen. */
+.genre-rail__list {
+  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+  mask-image: linear-gradient(to right, #000 85%, transparent);
+  scrollbar-width: none;
+}
+
+/* A section label's rule draws itself in when the section is revealed. */
+[data-reveal] .draw-rule {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 560ms var(--ease-settle) 120ms;
+}
+
+[data-reveal][data-shown] .draw-rule { transform: scaleX(1); }
+
+/*
+ * The example library: books fan out from a stack behind the front book.
+ */
+.library-scene { transform: none !important; } /* the scene itself does not travel; its books do */
+
+.library-scene .lib-item {
+  opacity: 0;
+  transform: var(--from);
+  transition: opacity 480ms var(--ease-settle), transform 720ms var(--ease-settle);
+  transition-delay: calc(120ms + var(--i, 0) * 70ms);
+}
+
+.library-scene[data-shown] .lib-item {
+  opacity: 1;
+  transform: none;
+}
+
+/* A status, pinned to the book it describes. */
+.status-tag {
+  position: absolute;
+  left: 8%;
+  bottom: -14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: var(--ivory);
+  color: var(--ink-70);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px -10px rgba(25, 24, 21, 0.5);
+}
+
+.status-tag--active {
+  border-color: var(--forest);
+  color: var(--forest);
+}
+
+.status-tag--active::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--forest);
+}
+
+/*
+ * How it works: a pinned scene that changes as the steps scroll past.
+ *
+ * All three scenes are stacked; the active one is shown. Within a scene, the moment it
+ * demonstrates happens after a short beat (the button settling into "saved", the book
+ * sliding onto the shelf, the status moving), so each step reads as an action.
+ */
+.scene-stage {
+  position: relative;
+  width: 100%;
+  max-width: 34rem;
+  aspect-ratio: 5 / 4.4;
+}
+
+.scene-stage--inline { aspect-ratio: auto; }
+
+.scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+  transition: opacity 420ms var(--ease-settle), transform 560ms var(--ease-settle);
+  pointer-events: none;
+}
+
+.scene-stage--inline .scene { position: static; }
+
+.scene[data-active] { opacity: 1; transform: none; }
+
+.scene-card {
+  width: 100%;
+  padding: var(--space-8);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: var(--ivory);
+  color: var(--ink);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 40px 80px -40px rgba(0, 0, 0, 0.65),
+    0 12px 24px -16px rgba(0, 0, 0, 0.4);
+}
+
+.scene-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink-60);
+  font-size: 1rem;
+}
+
+.scene-field span:first-of-type { color: var(--ink); }
+.scene-caret { width: 1px; height: 20px; margin-left: -8px; background: var(--ink); }
+
+.scene-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2);
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 360ms var(--ease-settle), transform 420ms var(--ease-settle), background-color 300ms var(--ease);
+  transition-delay: calc(220ms + var(--i, 0) * 80ms);
+}
+
+.scene[data-active] .scene-row { opacity: 1; transform: none; }
+.scene[data-active] .scene-row[data-first] { background: var(--paper); transition-delay: calc(220ms), calc(220ms), 700ms; }
+
+.scene-save {
+  display: inline-grid;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.scene-save > span {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-input);
+  transition: opacity 240ms var(--ease);
+}
+
+.scene-save__idle { border: 1px solid var(--border-strong); color: var(--ink); }
+.scene-save__done { background: var(--forest); color: var(--ivory); opacity: 0; }
+.scene[data-active] .scene-save__done { opacity: 1; transition-delay: 500ms; }
+.scene[data-active] .scene-save__idle { opacity: 0; transition-delay: 500ms; }
+
+.scene-note, .scene-status { opacity: 0; transition: opacity 320ms var(--ease) 700ms; }
+.scene[data-active] .scene-note,
+.scene[data-active] .scene-status { opacity: 1; }
+
+.scene-arrive {
+  opacity: 0;
+  transform: translateX(-28px);
+  transition: opacity 360ms var(--ease-settle) 800ms, transform 560ms var(--ease-settle) 800ms;
+}
+
+.scene[data-active] .scene-arrive { opacity: 1; transform: none; }
+
+.scene-segments {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.8125rem;
+}
+
+.scene-segments__item {
+  padding: var(--space-3) var(--space-1);
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--ink-60);
+  transition: color 240ms var(--ease) 500ms;
+}
+
+.scene-segments__item[data-index="0"] { color: var(--ink); }
+.scene[data-active] .scene-segments__item[data-index="0"] { color: var(--ink-60); }
+.scene[data-active] .scene-segments__item[data-index="1"] { color: var(--ink); font-weight: 500; }
+
+.scene-segments__thumb {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 25%;
+  height: 2px;
+  background: var(--forest);
+  transition: transform 520ms var(--ease-settle) 450ms;
+}
+
+.scene[data-active] .scene-segments__thumb { transform: translateX(100%); }
+
+/* On a narrow phone four labels cannot share one line; let them wrap within their cell. */
+@media (max-width: 479px) {
+  .scene-segments__item { white-space: normal; line-height: 1.25; }
+  .scene-card { padding: var(--space-5); }
+}
+
+/* The steps beside the scene: the current one in full, the others receding. */
+@media (min-width: 1024px) {
+  .step { opacity: 0.38; transition: opacity 360ms var(--ease); }
+  .step[data-active] { opacity: 1; }
+}
+
+.step__number { color: var(--fg-muted); }
+
+/* FAQ answers open with their height, not a jump — where the browser can animate it. */
+:root { interpolate-size: allow-keywords; }
+
+.faq::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  transition: block-size 220ms var(--ease), content-visibility 220ms allow-discrete;
+}
+
+.faq[open]::details-content { block-size: auto; }
+
 /* Scroll reveal: see components/motion/Reveal.tsx. */
 [data-reveal] {
   opacity: 0;
@@ -541,6 +980,10 @@ body::after {
   .seq, .seq-line > span { animation: none !important; opacity: 1 !important; transform: none !important; }
   /* Opacity only: content still arrives, it just does not travel. */
   [data-reveal] { transform: none !important; }
+  .unfold .unfold__item { transform: none !important; }
+  .library-scene .lib-item { transform: none !important; }
+  .scene, .scene-row, .scene-arrive { transform: none !important; }
+  [data-reveal] .draw-rule { transform: none !important; }
   .book-object:hover .book-object__body,
   .book-object:focus-visible .book-object__body { transform: rotateY(var(--turn)) !important; }
   /* The lift is decoration; focus and hover remain visible through the outline. */
@@ -551,6 +994,7 @@ body::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

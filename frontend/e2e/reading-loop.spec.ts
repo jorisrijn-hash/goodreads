@@ -37,7 +37,8 @@ test.describe("discover", () => {
     await expect(page.getByRole("heading", { name: "Short reads" })).toBeVisible();
 
     // Covers come from our own storage, never hotlinked.
-    const cover = page.locator("img").first();
+    // Scoped to cover images: the header's brand mark is the page's first image.
+    const cover = page.locator("img[src^='/covers/']").first();
     await expect(cover).toBeVisible();
     await expect(cover).toHaveAttribute("src", /\/covers\/.+-\d+\.jpg$/);
   });
