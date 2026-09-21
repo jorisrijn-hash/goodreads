@@ -327,179 +327,86 @@ body::after {
 }
 
 /*
- * A physical book (components/BookObject.tsx).
- *
- * The cover is the front board; the page block hangs off its fore-edge, turned 90° into
- * the page, so rotating the whole body on its spine shows the pages the way a real book
- * on a shelf does. Thickness is a fraction of the width, from the real page count.
+ * Surface texture. The page grain (body::after) is shared; paper and burgundy add a
+ * finer print grain of their own so the surfaces feel different in the hand: ivory is
+ * clean stock, paper a warmer, denser sheet, burgundy printed ink. Forest stays matte.
  */
-.book-stage {
-  perspective: 1200px;
-  perspective-origin: 50% 35%;
+[data-surface="paper"],
+[data-surface="burgundy"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
 }
 
-.book-object {
-  --w: 12rem;
+/*
+ * A real cover, printed (components/CoverPrint.tsx). Presence comes from the shadow and
+ * the surface, not from pretending to be three-dimensional.
+ */
+.cover-print {
+  --w: 10rem;
   --ratio: 0.667;
-  --thick: 0.18;
-  --turn: 0deg;
+  --rot: 0deg;
   position: relative;
   display: block;
   width: var(--w);
   aspect-ratio: var(--ratio);
-  transform-style: preserve-3d;
-  text-decoration: none;
+  transform: rotate(var(--rot));
+  transition: transform 240ms var(--ease-settle);
   outline: none;
 }
 
-.book-object__body {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  transform: rotateY(var(--turn));
-  transition: transform var(--motion-enter) var(--ease-settle);
-}
-
-.book-object__cover {
-  position: absolute;
-  inset: 0;
+.cover-print img,
+.cover-print__blank {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 1px 3px 3px 1px;
+  border-radius: 1px;
   background: var(--paper);
-  backface-visibility: hidden;
-  /* Contact, then the soft fall-off of a book standing in light from the left. */
+  /* hairline edge, contact, then the soft fall-off of a book lying on paper */
   box-shadow:
-    0 1px 1px rgba(25, 24, 21, 0.18),
-    0 12px 18px -10px rgba(25, 24, 21, 0.45),
-    18px 26px 44px -24px rgba(25, 24, 21, 0.55);
+    0 0 0 1px rgba(25, 24, 21, 0.06),
+    0 1px 1.5px rgba(25, 24, 21, 0.16),
+    0 8px 14px -8px rgba(25, 24, 21, 0.3),
+    0 26px 40px -26px rgba(25, 24, 21, 0.5);
+  transition: box-shadow 240ms var(--ease-settle);
 }
 
-.book-object__cover--blank {
-  display: flex;
-  align-items: flex-end;
-  padding: 10%;
-  font-family: var(--font-serif);
-  font-size: 0.875rem;
-  color: var(--ink-70);
-}
+.cover-print__blank { display: flex; align-items: flex-end; padding: 10%; font-family: var(--font-serif); color: var(--ink-70); }
 
-/* The binding crease: a dark fold, a highlight, then the board. */
-.book-object__body::after {
+/* The light a printed jacket catches: barely there. */
+.cover-print::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  border-radius: 1px 3px 3px 1px;
-  background: linear-gradient(90deg,
-    rgba(0, 0, 0, 0.28) 0%,
-    rgba(255, 255, 255, 0.16) 1.6%,
-    rgba(0, 0, 0, 0.14) 3%,
-    rgba(0, 0, 0, 0) 7%,
-    rgba(255, 255, 255, 0.04) 60%,
-    rgba(0, 0, 0, 0.06) 100%);
+  background: linear-gradient(112deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 32%, rgba(0, 0, 0, 0) 68%, rgba(0, 0, 0, 0.05));
 }
 
-.book-object__pages {
-  position: absolute;
-  top: 1.2%;
-  bottom: 1.2%;
-  left: 100%;
-  width: calc(var(--w) * var(--thick));
-  transform-origin: left center;
-  transform: rotateY(90deg);
-  /* A side facing away must not show through the book. */
-  backface-visibility: hidden;
-  background:
-    linear-gradient(90deg, rgba(25, 24, 21, 0.22), rgba(25, 24, 21, 0) 30%),
-    repeating-linear-gradient(0deg, #efe7d6 0 1px, #e2d8c4 1px 2px);
+.cover-print:hover,
+.cover-print:focus-visible {
+  transform: translateY(-5px) rotate(calc(var(--rot) - 0.6deg));
 }
 
-.book-object__spine {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 100%;
-  width: calc(var(--w) * var(--thick));
-  overflow: hidden;
-  transform-origin: right center;
-  transform: rotateY(-90deg);
-  backface-visibility: hidden;
-  border-radius: 2px 0 0 2px;
-}
-
-.book-object__spine img {
-  position: absolute;
-  inset: 0 auto 0 0;
-  height: 100%;
-  width: var(--w);
-  max-width: none;
-  object-fit: cover;
-  object-position: left center;
-  /* In the shade of the turn, with the roundness of a bound spine. */
-  filter: brightness(0.78) saturate(0.95);
-}
-
-.book-object__spine::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(0,0,0,0.28), rgba(255,255,255,0.1) 45%, rgba(0,0,0,0.25));
-}
-
-/* Lifts off the surface for a pointer or keyboard; the ring sits on the cover. */
-.book-object:hover .book-object__body,
-.book-object:focus-visible .book-object__body {
-  transform: translateY(-6px) rotateY(var(--turn)) rotateZ(-0.6deg);
-}
-
-.book-object:hover .book-object__cover {
+.cover-print:hover img,
+.cover-print:focus-visible img {
   box-shadow:
-    0 1px 1px rgba(25, 24, 21, 0.18),
-    0 18px 26px -12px rgba(25, 24, 21, 0.5),
-    22px 34px 54px -26px rgba(25, 24, 21, 0.6);
+    0 0 0 1px rgba(25, 24, 21, 0.06),
+    0 2px 3px rgba(25, 24, 21, 0.14),
+    0 14px 22px -10px rgba(25, 24, 21, 0.34),
+    0 36px 52px -30px rgba(25, 24, 21, 0.55);
 }
 
-.book-object:focus-visible .book-object__cover {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 3px;
-}
+.cover-print:focus-visible img { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 
-/* In an overlapping arrangement, the book being pointed at or focused comes to the front;
-   otherwise a keyboard user's focus ring can sit hidden behind a neighbour. */
-[data-motion-initial]:has(.book-object:is(:hover, :focus-visible)),
-.lib-item:has(.book-object:is(:hover, :focus-visible)) {
-  z-index: 50 !important;
-}
+.collage-enter { animation: hero-settle var(--motion-enter) var(--ease-settle) both; }
 
-/* The ledge books stand on: a slab of pale stone, lit from above. */
-.ledge {
-  position: absolute;
-  height: 18px;
-  background: linear-gradient(180deg, #efe9dd 0%, #e2d9c9 35%, #cfc4b0 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 18px 30px -14px rgba(25, 24, 21, 0.45);
-}
-
-@media (forced-colors: active) {
-  /* Forced colours drop backgrounds, which leaves a filled button as bare text. Any
-     filled link or button gets a system-coloured border instead, wherever it is. */
-  :is(a, button)[class*="bg-[var(--forest)]"],
-  :is(a, button)[class*="bg-[var(--ivory)]"],
-  .action {
-    border: 1px solid ButtonText;
-  }
-  .book-object__pages, .book-object__spine, .book-object__body::after, .ledge { display: none; }
-  .book-object:focus-visible .book-object__cover { outline-color: Highlight; }
-}
+/* Overlapping arrangements: the book being pointed at or focused comes to the front. */
+.collage-item:has(.cover-print:is(:hover, :focus-visible)) { z-index: 50 !important; }
 
 /*
  * The landing hero's text sequence. CSS rather than Motion on purpose: it starts on the
- * first paint, without waiting for JavaScript, so the headline — the page's largest
- * text — is never held back by a script download. --i orders the steps.
+ * first paint, without waiting for JavaScript, so the headline (the page's largest text)
+ * is never held back by a script download. --i orders the steps.
  */
 .seq {
   animation: hero-settle var(--motion-enter) var(--ease-settle) both;
@@ -510,8 +417,7 @@ body::after {
 .seq-line {
   display: block;
   overflow: hidden;
-  /* Room for descenders inside the mask: at 0.06em the tail of "y" was cut off. The
-     negative margin gives the space back so the line spacing is unchanged. */
+  /* Room for descenders inside the mask; the negative margin keeps the leading. */
   padding-bottom: 0.2em;
   margin-bottom: -0.2em;
 }
@@ -528,71 +434,7 @@ body::after {
 }
 
 /*
- * The landing hero's still life.
- *
- * The wall photograph fades out by mask, so the page shows through it rather than a
- * gradient being painted over it. The plinth is a slab of stone: a lit top edge and a
- * front face whose lower part (--plinth-drop) hangs below the hero, over the start of
- * the next section.
- */
-.hero {
-  --plinth-top: 5.5rem;   /* from the section's bottom to the plinth's top surface */
-  --plinth-drop: 2rem;    /* how far the front face hangs into the next section */
-  /* The scene is placed against the page frame, not the viewport, so on a very wide
-     screen it stays beside the copy instead of drifting into it. */
-  --frame-w: min(100%, var(--page-max));
-  --frame-left: calc((100% - var(--frame-w)) / 2);
-}
-
-.hero-scene-wall  { left: calc(var(--frame-left) + var(--frame-w) * 0.24); }
-.hero-scene-plinth { left: calc(var(--frame-left) + var(--frame-w) * 0.31); }
-.hero-scene-stage { left: calc(var(--frame-left) + var(--frame-w) * 0.33); }
-.hero-scene-label { left: calc(var(--frame-left) + var(--frame-w) * 0.31 + var(--space-8)); }
-
-.hero-wall {
-  -webkit-mask-image:
-    linear-gradient(to right, transparent 0%, #000 34%),
-    linear-gradient(to bottom, transparent 0%, #000 14%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent 0%, #000 34%),
-    linear-gradient(to bottom, transparent 0%, #000 14%);
-  mask-composite: intersect;
-}
-
-.hero-wall--mobile {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 28%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 28%);
-}
-
-.plinth {
-  height: calc(var(--plinth-top) + var(--plinth-drop));
-  bottom: calc(var(--plinth-drop) * -1) !important;
-  z-index: 1;
-  background:
-    /* the lit top edge */
-    linear-gradient(180deg, #f3eee4 0, #e7dfd1 10px, #d9cfbd 11px, #d9cfbd 12px, transparent 12px),
-    /* the front face, darkening toward its foot */
-    linear-gradient(180deg, #e1d8c8 12px, #d3c8b4 100%);
-  box-shadow: 0 30px 50px -30px rgba(25, 24, 21, 0.55);
-}
-
-.plinth--small {
-  --plinth-top: 1.5rem;
-  --plinth-drop: 0rem;
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  bottom: -1.5rem !important;
-}
-
-.plinth-label {
-  bottom: calc(var(--plinth-top) - 12px - 2.6rem);
-  z-index: 2;
-}
-
-/*
- * Primary actions: a filled button whose arrow moves on hover. Quick and short — the
+ * Primary actions: a filled button whose arrow moves on hover. Quick and short: the
  * label stays put, only the arrow acknowledges the pointer.
  */
 .action {
@@ -636,12 +478,32 @@ body::after {
 .link-rule:hover,
 .link-rule:focus-visible { background-size: 100% 1px; }
 
+/* A section label's rule draws itself in when the section is revealed. */
+[data-reveal] .draw-rule {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 560ms var(--ease-settle) 120ms;
+}
+
+[data-reveal][data-shown] .draw-rule { transform: scaleX(1); }
+
 /*
- * Discover on the landing page.
- *
- * The section opens from a slightly inset panel to full width as it scrolls in — pure
- * CSS scroll-driven animation, only where supported and only with motion allowed.
- * Elsewhere it is simply full width. The radius stays small: a page turning, not a card.
+ * 01 Hero: a hand-placed collage of real covers. The collage is placed against the page
+ * frame, not the viewport, so on a wide screen it stays beside the copy.
+ */
+.hero {
+  --frame-w: min(100%, var(--page-max));
+  --frame-left: calc((100% - var(--frame-w)) / 2);
+}
+
+.hero-collage {
+  left: calc(var(--frame-left) + var(--frame-w) * 0.5);
+  right: 0;
+}
+
+/*
+ * 02 Discover. The section opens from a slightly inset panel to full width as it
+ * scrolls in: pure CSS, only where supported and only with motion allowed.
  */
 @keyframes forest-open {
   from { clip-path: inset(0 2.5% round 20px); }
@@ -658,38 +520,26 @@ body::after {
   }
 }
 
-/* The library behind the search: present, but far back. */
-.discover-photo img {
-  opacity: 0.2;
-  filter: grayscale(0.35) contrast(1.05);
-}
+.discover-strip img { filter: brightness(0.72) saturate(0.85); }
 
-.discover-photo {
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-}
-
-/* The oversized search field: translucent over the photograph, lifting on focus. */
+/* The oversized search: a hard-edged field set into the page, not floating over it. */
 .hero-search {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  min-height: 76px;
+  min-height: 80px;
   padding: 10px 10px 10px var(--space-6);
-  border: 1px solid rgba(244, 240, 231, 0.2);
-  border-radius: 14px;
-  background: rgba(244, 240, 231, 0.07);
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
-  backdrop-filter: blur(14px) saturate(1.1);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 24px 60px -30px rgba(0, 0, 0, 0.6);
-  transition: border-color 180ms var(--ease), background-color 180ms var(--ease), box-shadow 180ms var(--ease), transform 180ms var(--ease);
+  border: 1px solid rgba(244, 240, 231, 0.34);
+  border-radius: 4px;
+  background: rgba(20, 30, 25, 0.55);
+  box-shadow: 0 30px 60px -40px rgba(0, 0, 0, 0.8);
+  transition: border-color 180ms var(--ease), background-color 180ms var(--ease), transform 180ms var(--ease);
 }
 
 .hero-search:focus-within {
-  border-color: rgba(244, 240, 231, 0.55);
-  background: rgba(244, 240, 231, 0.1);
+  border-color: rgba(244, 240, 231, 0.7);
+  background: rgba(20, 30, 25, 0.7);
   transform: translateY(-2px);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 34px 70px -30px rgba(0, 0, 0, 0.7);
 }
 
 .hero-search input {
@@ -698,255 +548,213 @@ body::after {
   background: transparent;
   border: 0;
   color: var(--ivory);
-  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  font-size: clamp(1.125rem, 2vw, 1.625rem);
   outline: none;
 }
 
 .hero-search input::placeholder { color: #a6aaa1; }
 .hero-search:has(input:focus-visible) { outline: 2px solid var(--ivory); outline-offset: 3px; }
+.hero-search .action { border-radius: 2px; }
 
 @media (max-width: 639px) {
   .hero-search { min-height: 64px; padding-left: var(--space-4); }
   .hero-search .action { padding: 0 var(--space-4); }
 }
 
-/* Results unfold from beneath the field: they start tucked up under it. */
+/* Results settle in from just above, one after another. */
 .unfold .unfold__item {
   opacity: 0;
-  transform: translateY(-48px) scale(0.96);
+  transform: translateY(-28px);
   transition: opacity 560ms var(--ease-settle), transform 640ms var(--ease-settle);
-  transition-delay: calc(160ms + var(--i, 0) * 90ms);
+  transition-delay: calc(140ms + var(--i, 0) * 90ms);
 }
 
-.unfold[data-shown] .unfold__item {
-  opacity: 1;
-  transform: none;
-}
+.unfold[data-shown] .unfold__item { opacity: 1; transform: none; }
 
-/* The genre rail fades out at its right edge where it continues off-screen. */
-.genre-rail__list {
-  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
-  mask-image: linear-gradient(to right, #000 85%, transparent);
+/* The genre strip: hairline cells, counts aligned. */
+.genre-strip {
   scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, #000 88%, transparent);
+  mask-image: linear-gradient(to right, #000 88%, transparent);
 }
-
-/* A section label's rule draws itself in when the section is revealed. */
-[data-reveal] .draw-rule {
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 560ms var(--ease-settle) 120ms;
-}
-
-[data-reveal][data-shown] .draw-rule { transform: scaleX(1); }
 
 /*
- * The example library: books fan out from a stack behind the front book.
+ * 03 Library: a dense cluster of real covers settling onto a paper block.
  */
-.library-scene { transform: none !important; } /* the scene itself does not travel; its books do */
+.library-cluster { transform: none !important; }
 
-.library-scene .lib-item {
+.library-cluster .collage-item {
   opacity: 0;
-  transform: var(--from);
-  transition: opacity 480ms var(--ease-settle), transform 720ms var(--ease-settle);
-  transition-delay: calc(120ms + var(--i, 0) * 70ms);
+  transform: translateY(24px);
+  transition: opacity 480ms var(--ease-settle), transform 700ms var(--ease-settle);
+  transition-delay: calc(100ms + var(--i, 0) * 70ms);
 }
 
-.library-scene[data-shown] .lib-item {
-  opacity: 1;
-  transform: none;
-}
+.library-cluster[data-shown] .collage-item { opacity: 1; transform: none; }
 
-/* A status, pinned to the book it describes. */
 .status-tag {
   position: absolute;
-  left: 8%;
-  bottom: -14px;
+  left: -6px;
+  bottom: 10%;
   z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border: 1px solid var(--rule-strong);
-  border-radius: 999px;
-  background: var(--ivory);
-  color: var(--ink-70);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  box-shadow: 0 6px 16px -10px rgba(25, 24, 21, 0.5);
-}
-
-.status-tag--active {
-  border-color: var(--forest);
-  color: var(--forest);
-}
-
-.status-tag--active::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--forest);
-}
-
-/*
- * How it works: a pinned scene that changes as the steps scroll past.
- *
- * All three scenes are stacked; the active one is shown. Within a scene, the moment it
- * demonstrates happens after a short beat (the button settling into "saved", the book
- * sliding onto the shelf, the status moving), so each step reads as an action.
- */
-.scene-stage {
-  position: relative;
-  width: 100%;
-  max-width: 34rem;
-  aspect-ratio: 5 / 4.4;
-}
-
-.scene-stage--inline { aspect-ratio: auto; }
-
-.scene {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  opacity: 0;
-  transform: translateY(18px) scale(0.985);
-  transition: opacity 420ms var(--ease-settle), transform 560ms var(--ease-settle);
-  pointer-events: none;
-}
-
-.scene-stage--inline .scene { position: static; }
-
-.scene[data-active] { opacity: 1; transform: none; }
-
-.scene-card {
-  width: 100%;
-  padding: var(--space-8);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 18px;
+  padding: 3px 7px;
+  border: 1px solid rgba(25, 24, 21, 0.28);
   background: var(--ivory);
   color: var(--ink);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 40px 80px -40px rgba(0, 0, 0, 0.65),
-    0 12px 24px -16px rgba(0, 0, 0, 0.4);
-}
-
-.scene-field {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 48px;
-  padding: 0 var(--space-4);
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--ink-60);
-  font-size: 1rem;
-}
-
-.scene-field span:first-of-type { color: var(--ink); }
-.scene-caret { width: 1px; height: 20px; margin-left: -8px; background: var(--ink); }
-
-.scene-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-2);
-  border-radius: 8px;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 360ms var(--ease-settle), transform 420ms var(--ease-settle), background-color 300ms var(--ease);
-  transition-delay: calc(220ms + var(--i, 0) * 80ms);
-}
-
-.scene[data-active] .scene-row { opacity: 1; transform: none; }
-.scene[data-active] .scene-row[data-first] { background: var(--paper); transition-delay: calc(220ms), calc(220ms), 700ms; }
-
-.scene-save {
-  display: inline-grid;
-  font-size: 0.9375rem;
+  font-size: 0.625rem;
   font-weight: 500;
-}
-
-.scene-save > span {
-  grid-area: 1 / 1;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 var(--space-5);
-  border-radius: var(--radius-input);
-  transition: opacity 240ms var(--ease);
-}
-
-.scene-save__idle { border: 1px solid var(--border-strong); color: var(--ink); }
-.scene-save__done { background: var(--forest); color: var(--ivory); opacity: 0; }
-.scene[data-active] .scene-save__done { opacity: 1; transition-delay: 500ms; }
-.scene[data-active] .scene-save__idle { opacity: 0; transition-delay: 500ms; }
-
-.scene-note, .scene-status { opacity: 0; transition: opacity 320ms var(--ease) 700ms; }
-.scene[data-active] .scene-note,
-.scene[data-active] .scene-status { opacity: 1; }
-
-.scene-arrive {
-  opacity: 0;
-  transform: translateX(-28px);
-  transition: opacity 360ms var(--ease-settle) 800ms, transform 560ms var(--ease-settle) 800ms;
-}
-
-.scene[data-active] .scene-arrive { opacity: 1; transform: none; }
-
-.scene-segments {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  border-bottom: 1px solid var(--rule);
-  font-size: 0.8125rem;
-}
-
-.scene-segments__item {
-  padding: var(--space-3) var(--space-1);
-  text-align: center;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   white-space: nowrap;
-  font-size: 0.75rem;
-  color: var(--ink-60);
-  transition: color 240ms var(--ease) 500ms;
 }
 
-.scene-segments__item[data-index="0"] { color: var(--ink); }
-.scene[data-active] .scene-segments__item[data-index="0"] { color: var(--ink-60); }
-.scene[data-active] .scene-segments__item[data-index="1"] { color: var(--ink); font-weight: 500; }
+.status-tag--active { border-color: var(--forest); background: var(--forest); color: var(--ivory); }
+.status-tag--right { left: auto; right: -6px; }
 
-.scene-segments__thumb {
+/*
+ * 04 How it works: one canvas that changes state.
+ *
+ * The canvas is a single composition; data-state (0, 1, 2) on an ancestor moves its
+ * persistent parts (the Dune cover, its title) and brings the others in or out, so the
+ * reader watches one interface change rather than a slideshow of three. Positions are
+ * in container units (cqw, cqh) so the same states hold at any canvas size.
+ */
+.demo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  overflow: hidden;
+  border: 1px solid rgba(25, 24, 21, 0.14);
+  border-radius: 3px;
+  color: var(--ink);
+  box-shadow: 0 50px 90px -50px rgba(0, 0, 0, 0.7), 0 16px 30px -20px rgba(0, 0, 0, 0.45);
+}
+
+.demo * { transition-timing-function: var(--ease-settle); }
+
+.demo__part {
   position: absolute;
-  left: 0;
-  bottom: -1px;
-  width: 25%;
-  height: 2px;
-  background: var(--forest);
-  transition: transform 520ms var(--ease-settle) 450ms;
+  transition-property: transform, opacity;
+  transition-duration: 640ms;
 }
 
-.scene[data-active] .scene-segments__thumb { transform: translateX(100%); }
+/* view tabs along the top */
+.demo__tabs { left: 0; right: 0; top: 0; height: 44px; display: flex; gap: 0; border-bottom: 1px solid rgba(25, 24, 21, 0.16); }
+.demo__tab { position: relative; display: flex; align-items: center; padding: 0 5cqw; font-size: 0.625rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-60); transition: color 300ms; }
+.demo__tab::after { content: ""; position: absolute; left: 5cqw; right: 5cqw; bottom: -1px; height: 2px; background: var(--ink); transform: scaleX(0); transition: transform 420ms var(--ease-settle); }
+[data-state="0"] .demo__tab[data-tab="0"],
+[data-state="1"] .demo__tab[data-tab="1"],
+[data-state="2"] .demo__tab[data-tab="2"] { color: var(--ink); }
+[data-state="0"] .demo__tab[data-tab="0"]::after,
+[data-state="1"] .demo__tab[data-tab="1"]::after,
+[data-state="2"] .demo__tab[data-tab="2"]::after { transform: scaleX(1); }
 
-/* On a narrow phone four labels cannot share one line; let them wrap within their cell. */
-@media (max-width: 479px) {
-  .scene-segments__item { white-space: normal; line-height: 1.25; }
-  .scene-card { padding: var(--space-5); }
+/* the search field: dominant, then it retreats upward */
+.demo__search { left: 6cqw; right: 6cqw; top: calc(44px + 6cqh); transform-origin: left top; }
+[data-state="1"] .demo__search,
+[data-state="2"] .demo__search { transform: translateY(-2cqh) scale(0.72); opacity: 0.55; }
+
+.demo__field { display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 18px; border: 1px solid var(--border-strong); border-radius: 3px; background: #fbf9f4; font-size: 1.25rem; }
+.demo__field svg { color: var(--ink-60); }
+.demo__caret { width: 1px; height: 26px; margin-left: -8px; background: var(--ink); }
+.demo__note { margin-top: 12px; font-size: 0.8125rem; color: var(--ink-60); transition: opacity 300ms; }
+[data-state="1"] .demo__note, [data-state="2"] .demo__note { opacity: 0; }
+
+/* the results below the search: present only while searching */
+.demo__results { left: 6cqw; right: 6cqw; top: calc(44px + 6cqh + 110px); }
+.demo__row { display: flex; align-items: center; gap: 16px; height: 76px; padding-left: calc(12cqw + 16px); border-top: 1px solid rgba(25, 24, 21, 0.12); font-size: 0.8125rem; color: var(--ink-60); transition: opacity 360ms, transform 480ms; }
+.demo__row b { display: block; font-family: var(--font-serif); font-size: 1.0625rem; font-weight: 400; color: var(--ink); }
+.demo__row img { width: 40px; height: 60px; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+.demo__row--first { background: rgba(25, 24, 21, 0.05); }
+[data-state="1"] .demo__row, [data-state="2"] .demo__row { opacity: 0; transform: translateY(12px); }
+[data-state="1"] .demo__row--first, [data-state="2"] .demo__row--first { opacity: 0; transform: none; }
+
+/*
+ * Dune: the one element that is always present. It starts as the small cover in the
+ * first result row and grows into the book it becomes.
+ */
+.demo__cover {
+  left: 6cqw;
+  top: 0;
+  width: 30cqw;
+  aspect-ratio: 0.634;
+  transform-origin: left top;
+  transform: translate(calc(1.5cqw), calc(44px + 6cqh + 110px + 8px)) scale(0.2);
+  z-index: 3;
+}
+.demo__cover img { width: 100%; height: 100%; object-fit: cover; box-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 24px 40px -24px rgba(0,0,0,0.55); }
+[data-state="1"] .demo__cover { transform: translate(0, calc(44px + 20cqh)) scale(0.8); }
+[data-state="2"] .demo__cover { transform: translate(0, calc(44px + 17cqh)) scale(0.46); }
+
+/* its title block follows it */
+.demo__title { left: 6cqw; top: 0; width: 50cqw; transform-origin: left top; transform: translate(calc(14cqw), calc(44px + 6cqh + 110px + 14px)) scale(0.62); }
+.demo__title strong { display: block; font-family: var(--font-serif); font-size: 2.5rem; font-weight: 400; line-height: 1; }
+.demo__title > span { display: block; margin-top: 8px; font-size: 1.125rem; color: var(--ink-60); }
+.demo__meta { margin-top: 18px; display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 4px 26px; font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-60); opacity: 0; transition: opacity 360ms 200ms; }
+.demo__meta em { display: block; font-style: normal; font-size: 0.9375rem; letter-spacing: 0; text-transform: none; color: var(--ink); }
+[data-state="1"] .demo__title { transform: translate(calc(30cqw), calc(44px + 20cqh)) scale(1); }
+[data-state="2"] .demo__title { transform: translate(calc(19cqw), calc(44px + 17cqh)) scale(0.82); }
+[data-state="1"] .demo__meta, [data-state="2"] .demo__meta { opacity: 1; }
+
+/* the save control: appears with the book, settles into its saved state */
+.demo__save { left: calc(6cqw + 30cqw); top: calc(44px + 20cqh + 190px); opacity: 0; transform: translateY(12px); display: inline-grid; font-size: 0.9375rem; font-weight: 500; }
+.demo__save > span { grid-area: 1 / 1; display: inline-flex; align-items: center; min-height: 46px; padding: 0 20px; border-radius: 2px; transition: opacity 240ms; }
+.demo__save-idle { border: 1px solid var(--border-strong); }
+.demo__save-done { background: var(--forest); color: var(--ivory); opacity: 0; }
+[data-state="1"] .demo__save { opacity: 1; transform: none; transition-delay: 160ms; }
+[data-state="1"] .demo__save-done { opacity: 1; transition-delay: 700ms; }
+[data-state="1"] .demo__save-idle { opacity: 0; transition-delay: 700ms; }
+
+/* the status control: dominant in the last state */
+.demo__status { left: 6cqw; right: 6cqw; top: calc(44px + 45cqh); opacity: 0; transform: translateY(24px); }
+[data-state="2"] .demo__status { opacity: 1; transform: none; transition-delay: 120ms; }
+.demo__status-label { font-size: 0.625rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-60); }
+.demo__segments { position: relative; margin-top: 12px; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid rgba(25, 24, 21, 0.2); }
+.demo__segments span { padding: 16px 6px; text-align: center; font-size: 0.8125rem; white-space: nowrap; color: var(--ink-60); position: relative; z-index: 1; transition: color 300ms 520ms; }
+.demo__segments span + span { border-left: 1px solid rgba(25, 24, 21, 0.14); }
+.demo__segments i { position: absolute; left: 0; top: 0; bottom: 0; width: 25%; background: var(--forest); transition: transform 560ms var(--ease-settle) 420ms; }
+.demo__segments span:nth-of-type(1) { color: var(--ivory); }
+[data-state="2"] .demo__segments i { transform: translateX(100%); }
+[data-state="2"] .demo__segments span:nth-of-type(1) { color: var(--ink-60); }
+[data-state="2"] .demo__segments span:nth-of-type(2) { color: var(--ivory); }
+.demo__status-line { margin-top: 12px; font-size: 0.875rem; color: var(--ink-60); }
+
+/* the library strip: the book arriving on the shelf */
+.demo__library { left: 6cqw; right: 6cqw; bottom: 5cqh; opacity: 0; transform: translateY(24px); border-top: 1px solid rgba(25, 24, 21, 0.2); padding-top: 12px; }
+[data-state="1"] .demo__library, [data-state="2"] .demo__library { opacity: 1; transform: none; transition-delay: 240ms; }
+.demo__library-row { margin-top: 10px; display: flex; align-items: flex-end; gap: 12px; }
+.demo__library-row img { width: 46px; height: 70px; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
+.demo__slot { position: relative; opacity: 0; transform: translateX(-26px); transition: opacity 360ms, transform 560ms; }
+[data-state="1"] .demo__slot, [data-state="2"] .demo__slot { opacity: 1; transform: none; transition-delay: 820ms; }
+.demo__slot-tag { position: absolute; left: 54px; bottom: 0; font-size: 0.5625rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; color: var(--ink-60); }
+.demo__slot-tag b { font-weight: 500; }
+.demo__slot-tag .when-2 { display: none; color: var(--forest); }
+[data-state="2"] .demo__slot-tag .when-1 { display: none; }
+[data-state="2"] .demo__slot-tag .when-2 { display: inline; }
+
+/* phones: a smaller canvas, the same states */
+@media (max-width: 1023.98px) {
+  .demo { height: 34rem; }
+  .demo__field { height: 50px; font-size: 1.0625rem; }
+  .demo__title strong { font-size: 2rem; }
+  .demo__segments span { white-space: normal; font-size: 0.75rem; line-height: 1.2; padding: 12px 4px; }
+  /* No room to the right of the last cover: the tag wraps rather than being clipped. */
+  .demo__slot-tag { white-space: normal; width: 5.5rem; line-height: 1.3; }
 }
 
-/* The steps beside the scene: the current one in full, the others receding. */
+/* The steps beside the canvas, and the rail that fills as they pass. */
+.steps-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--rule); }
+.steps-rail::after { content: ""; position: absolute; inset: 0; background: var(--fg); transform-origin: top; transform: scaleY(var(--progress, 0)); transition: transform 560ms var(--ease-settle); }
+
 @media (min-width: 1024px) {
-  .step { opacity: 0.38; transition: opacity 360ms var(--ease); }
+  .step { opacity: 0.34; transition: opacity 360ms var(--ease); }
   .step[data-active] { opacity: 1; }
 }
 
-.step__number { color: var(--fg-muted); }
-
-/* FAQ answers open with their height, not a jump — where the browser can animate it. */
+/*
+ * FAQ answers open with their height, not a jump, where the browser can animate it.
+ */
 :root { interpolate-size: allow-keywords; }
 
 .faq::details-content {
@@ -956,6 +764,18 @@ body::after {
 }
 
 .faq[open]::details-content { block-size: auto; }
+
+@media (forced-colors: active) {
+  /* Forced colours drop backgrounds, which leaves a filled button as bare text. Any
+     filled link or button gets a system-coloured border instead, wherever it is. */
+  :is(a, button)[class*="bg-[var(--forest)]"],
+  :is(a, button)[class*="bg-[var(--ivory)]"],
+  .action {
+    border: 1px solid ButtonText;
+  }
+  .cover-print::after { display: none; }
+  .cover-print:focus-visible img { outline-color: Highlight; }
+}
 
 /* Scroll reveal: see components/motion/Reveal.tsx. */
 [data-reveal] {
@@ -977,15 +797,12 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   /* Entrance animations are removed entirely rather than merely shortened, so
      nothing starts at opacity 0 and risks never arriving. */
-  .seq, .seq-line > span { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .seq, .seq-line > span, .collage-enter { animation: none !important; opacity: 1 !important; transform: none !important; }
   /* Opacity only: content still arrives, it just does not travel. */
   [data-reveal] { transform: none !important; }
-  .unfold .unfold__item { transform: none !important; }
-  .library-scene .lib-item { transform: none !important; }
-  .scene, .scene-row, .scene-arrive { transform: none !important; }
+  .unfold .unfold__item, .library-cluster .collage-item { transform: none !important; }
   [data-reveal] .draw-rule { transform: none !important; }
-  .book-object:hover .book-object__body,
-  .book-object:focus-visible .book-object__body { transform: rotateY(var(--turn)) !important; }
+  .cover-print:hover, .cover-print:focus-visible { transform: rotate(var(--rot)) !important; }
   /* The lift is decoration; focus and hover remain visible through the outline. */
   .book-card:hover .book-card-cover,
   .book-card:focus-visible .book-card-cover { transform: none !important; }

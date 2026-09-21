@@ -11,29 +11,19 @@ import { mkdir, readFile, writeFile, access } from "node:fs/promises";
 import sharp from "sharp";
 
 const PHOTOS = [
+  // Two fragments of one photograph, used like an art book spreads a single image:
+  // the timber vault as a tall strip beside Discover, the shelves beside the close.
   {
-    id: "wall-light",
-    unsplash: "95baBTvQ5gI",
-    // The lower two-thirds, where the leaf shadows fall; the landing hero shows it wide.
-    crop: { left: 0, top: 800, width: 2400, height: 2400 },
-    widths: [800, 1400],
-    // The original reads olive; nudged toward the warm stone of the palette.
-    grade: { hue: -14, saturation: 0.78, brightness: 1.02 },
-  },
-  {
-    // The same photograph, cropped wide for the desktop hero, where it runs behind the
-    // whole composition and fades into the page under the copy.
-    id: "wall-wide",
-    unsplash: "95baBTvQ5gI",
-    crop: { left: 0, top: 1150, width: 2400, height: 1500 },
-    widths: [1000, 1800],
-    grade: { hue: -14, saturation: 0.78, brightness: 1.02 },
-  },
-  {
-    id: "old-library",
+    id: "library-vault",
     unsplash: "TIS8AnSiFI4",
-    crop: { left: 0, top: 0, width: 2400, height: 3200 },
-    widths: [640, 1100],
+    crop: { left: 640, top: 0, width: 1120, height: 3200 },
+    widths: [420, 760],
+  },
+  {
+    id: "library-shelves",
+    unsplash: "TIS8AnSiFI4",
+    crop: { left: 1080, top: 1500, width: 1320, height: 1700 },
+    widths: [560, 1000],
   },
 ];
 

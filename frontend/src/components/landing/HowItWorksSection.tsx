@@ -3,12 +3,14 @@ import { SectionLabel } from "../SectionHeader";
 import { StepSequence } from "./StepSequence";
 
 /**
- * 04 — How it works, demonstrated rather than described.
+ * 04 How it works: one interface, changing state as you scroll.
  *
- * Only today's loop: discover, save, track status. As the reader scrolls past each step,
- * a pinned scene shows it happening to a real book — Dune — drawn in the product's own
- * UI language. The scenes are illustrations: spans, not controls. Nothing here calls the
- * API when you scroll; the only data is fetched once, read-only, when the page renders.
+ * Only today's loop: discover, save, track status. The canvas is a single drawing of the
+ * product in which the same parts move. Dune starts as a small cover in a corrected
+ * search result, grows into the book, is saved to the library strip, and has its status
+ * moved, without ever being swapped for another element. Everything in it is a drawing:
+ * spans and images, no controls. Scrolling calls no API; the data was fetched once,
+ * read-only, when the page was rendered.
  */
 export function HowItWorksSection({
   dune,
@@ -16,114 +18,118 @@ export function HowItWorksSection({
   shelf,
 }: {
   dune: BookDetail | null;
-  /** The real response to a misspelled author search. */
   herbert: BookPage | null;
-  /** Two other catalogue books to stand beside it in the library strip. */
   shelf: BookDetail[];
 }) {
   const steps = [
-    { number: "01", title: "Discover", body: "Browse by genre, or search by title, author or ISBN. A misspelling still finds the book." },
-    { number: "02", title: "Save", body: "One tap adds it to your library as Want to Read. No form in the way." },
-    { number: "03", title: "Track status", body: "Move it to Currently Reading, Read or Did Not Finish as that changes." },
+    { number: "01", label: "Discover", title: "Find the book, whatever you type.", body: "Browse by genre, or search by title, author or ISBN. A misspelling still finds it, and the result says so.", meta: ["Title", "Author", "ISBN"] },
+    { number: "02", label: "Save", title: "One tap, and it is yours.", body: "Save a book as Want to Read. There is no form in the way; reasons and notes can come later.", meta: ["Want to Read", "Library"] },
+    { number: "03", label: "Track status", title: "Move it as your reading moves.", body: "Currently Reading, Read, Did Not Finish. The library keeps each book where it stands.", meta: ["4 states", "Private"] },
   ];
 
-  const cover = (book: { coverKey: string | null } | null, className: string) =>
-    book?.coverKey ? (
+  const img = (coverKey: string | null | undefined, width: 160 | 320) =>
+    coverKey ? (
       // eslint-disable-next-line @next/next/no-img-element -- stored cover derivative
-      <img src={coverUrl(book.coverKey, 160) ?? undefined} alt="" loading="lazy" decoding="async" className={className} />
-    ) : (
-      <span className={`${className} block bg-[var(--paper)]`} />
-    );
+      <img src={coverUrl(coverKey, width) ?? undefined} alt="" loading="lazy" decoding="async" />
+    ) : null;
 
-  const scenes = [
-    // 01 — a misspelled search, corrected to the real results.
-    <div key="discover" className="scene-card">
-      <div className="scene-field">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
-        <span>frank herbrt</span>
-        <span className="scene-caret" />
+  const others = (herbert?.items ?? []).filter((b) => b.slug !== dune?.slug).slice(0, 2);
+
+  const canvas = (
+    <div data-surface="paper" className="demo">
+      <div className="demo__part demo__tabs">
+        {["Search", "Book", "Library"].map((t, i) => (
+          <span key={t} className="demo__tab" data-tab={i}>{t}</span>
+        ))}
       </div>
-      {herbert?.correctedFrom && (
-        <p className="mt-[var(--space-4)] text-[0.8125rem] text-[var(--ink-60)]">Showing results for a close match to “{herbert.correctedFrom}”</p>
-      )}
-      <div className="mt-[var(--space-4)] grid gap-[var(--space-3)]">
-        {(herbert?.items ?? []).slice(0, 3).map((book, i) => (
-          <div key={book.slug} className="scene-row" style={{ ["--i" as string]: i }} data-first={i === 0 ? "" : undefined}>
-            {cover(book, "h-[64px] w-[42px] rounded-[2px] object-cover shadow-sm")}
-            <span>
-              <span className="block font-serif text-[1rem] text-[var(--ink)]">{book.title}</span>
-              <span className="block text-[0.8125rem] text-[var(--ink-60)]">{book.authors[0]}{book.publishedYear ? ` · ${book.publishedYear}` : ""}</span>
-            </span>
+
+      <div className="demo__part demo__search">
+        <div className="demo__field">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+          <span>frank herbrt</span>
+          <span className="demo__caret" />
+        </div>
+        {herbert?.correctedFrom && (
+          <p className="demo__note">Showing results for a close match to “{herbert.correctedFrom}”</p>
+        )}
+      </div>
+
+      <div className="demo__part demo__results">
+        {/* Dune's row is only its highlight: the cover and title drawn over it are the
+            persistent ones, which is what lets them travel into the next states. */}
+        <div className="demo__row demo__row--first" />
+        {others.map((b) => (
+          <div key={b.slug} className="demo__row" style={{ paddingLeft: 0 }}>
+            {img(b.coverKey, 160)}
+            <span><b>{b.title}</b>{b.authors[0]}{b.publishedYear ? `, ${b.publishedYear}` : ""}</span>
           </div>
         ))}
       </div>
-    </div>,
 
-    // 02 — saved: the button settles into its saved state, the book slides onto the shelf.
-    <div key="save" className="scene-card">
-      <div className="flex gap-[var(--space-5)]">
-        {cover(dune, "h-[132px] w-[86px] rounded-[2px] object-cover shadow-md")}
-        <div>
-          <p className="font-serif text-[1.5rem] leading-tight text-[var(--ink)]">{dune?.title ?? "Dune"}</p>
-          <p className="text-[0.875rem] text-[var(--ink-60)]">{dune?.authors[0]}</p>
-          <span className="scene-save mt-[var(--space-4)]">
-            <span className="scene-save__idle">Want to Read</span>
-            <span className="scene-save__done">✓ Want to Read</span>
+      {/* The persistent parts: Dune's cover and its title. */}
+      <div className="demo__part demo__cover">{img(dune?.coverKey, 320)}</div>
+      <div className="demo__part demo__title">
+        <strong>{dune?.title ?? "Dune"}</strong>
+        <span>{dune?.authors[0]}</span>
+        <div className="demo__meta">
+          <span>First published<em>{dune?.publishedYear ?? ""}</em></span>
+          <span>Length<em>{dune?.pageCount ? `${dune.pageCount} pages` : ""}</em></span>
+          <span>ISBN<em>{dune?.isbn13 ?? ""}</em></span>
+        </div>
+      </div>
+
+      <div className="demo__part demo__save">
+        <span className="demo__save-idle">Want to Read</span>
+        <span className="demo__save-done">✓ Want to Read</span>
+      </div>
+
+      <div className="demo__part demo__status">
+        <p className="demo__status-label">Reading status</p>
+        <div className="demo__segments">
+          <i />
+          {["Want to Read", "Currently Reading", "Read", "Did Not Finish"].map((s) => <span key={s}>{s}</span>)}
+        </div>
+        <p className="demo__status-line">In your library as Currently Reading</p>
+      </div>
+
+      <div className="demo__part demo__library">
+        <p className="demo__status-label">My Library</p>
+        <div className="demo__library-row">
+          {shelf.map((b) => <span key={b.slug}>{img(b.coverKey, 160)}</span>)}
+          <span className="demo__slot">
+            {img(dune?.coverKey, 160)}
+            <span className="demo__slot-tag"><span className="when-1">Want to Read</span><span className="when-2">Currently Reading</span></span>
           </span>
-          <p className="scene-note mt-[var(--space-2)] text-[0.8125rem] text-[var(--ink-60)]">In your library as Want to Read</p>
         </div>
       </div>
-      <div className="mt-[var(--space-6)] border-t border-[var(--rule)] pt-[var(--space-4)]">
-        <p className="type-label text-[var(--ink-60)]">My Library</p>
-        <div className="mt-[var(--space-3)] flex items-end gap-[var(--space-3)]">
-          {shelf.map((book) => <span key={book.slug}>{cover(book, "h-[78px] w-[52px] rounded-[2px] object-cover opacity-80")}</span>)}
-          <span className="scene-arrive">{cover(dune, "h-[78px] w-[52px] rounded-[2px] object-cover shadow-md")}</span>
-        </div>
-      </div>
-    </div>,
-
-    // 03 — the status control moves from Want to Read to Currently Reading.
-    <div key="track" className="scene-card">
-      <div className="flex items-center gap-[var(--space-4)]">
-        {cover(dune, "h-[72px] w-[48px] rounded-[2px] object-cover shadow-sm")}
-        <div>
-          <p className="font-serif text-[1.25rem] leading-tight text-[var(--ink)]">{dune?.title ?? "Dune"}</p>
-          <p className="text-[0.8125rem] text-[var(--ink-60)]">{dune?.authors[0]}</p>
-        </div>
-      </div>
-      <div className="scene-segments mt-[var(--space-6)]">
-        <span className="scene-segments__thumb" />
-        {["Want to Read", "Currently Reading", "Read", "Did Not Finish"].map((s, i) => (
-          <span key={s} className="scene-segments__item" data-index={i}>{s}</span>
-        ))}
-      </div>
-      <p className="scene-status mt-[var(--space-4)] text-[0.875rem] text-[var(--ink-60)]">
-        In your library as <span className="text-[var(--ink)]">Currently Reading</span>
-      </p>
-    </div>,
-  ];
+    </div>
+  );
 
   return (
     <section data-surface="burgundy" aria-labelledby="how-heading" className="relative">
-      <div className="page-frame py-[var(--space-16)] lg:py-[8rem]">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-x-[var(--space-8)]">
-          <div className="lg:col-span-5 lg:col-start-8">
+      <div className="page-frame pb-[var(--space-16)] pt-[var(--space-16)] lg:pb-[6rem] lg:pt-[7rem]">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-x-[var(--space-10)]">
+          <div className="lg:col-span-5 lg:col-start-8 lg:pl-[var(--space-10)]">
             <SectionLabel number="04" label="How it works" />
-            <h2 id="how-heading" className="type-h2 mt-[var(--space-5)] max-w-[20ch]">
+            <h2 id="how-heading" className="type-h2 mt-[var(--space-5)] max-w-[18ch]">
               Three steps, all of them working today.
             </h2>
           </div>
         </div>
 
         <StepSequence
-          scenes={scenes}
+          canvas={canvas}
           steps={steps.map((step) => (
             <div key={step.number}>
-              <span aria-hidden="true" className="step__number block font-serif text-[clamp(4.5rem,9vw,8rem)] font-[330] leading-[0.9] tracking-[-0.04em]">
+              <span aria-hidden="true" className="block font-serif text-[clamp(3.5rem,6vw,5.5rem)] font-[330] leading-none tracking-[-0.04em] text-[var(--fg-muted)]">
                 {step.number}
               </span>
-              <h3 className="type-h2 mt-[var(--space-4)]">{step.title}</h3>
-              <p className="mt-[var(--space-3)] max-w-[36ch] text-[1.0625rem] leading-[1.6] text-[var(--fg-muted)]">{step.body}</p>
+              <p className="type-label mt-[var(--space-5)] text-[var(--fg-subtle)]">{step.label}</p>
+              <h3 className="type-h2 mt-[var(--space-2)] max-w-[16ch]">{step.title}</h3>
+              <p className="mt-[var(--space-3)] max-w-[36ch] font-serif text-[1.0625rem] leading-[1.6] text-[var(--fg-muted)]">{step.body}</p>
+              <p className="type-label mt-[var(--space-5)] flex flex-wrap gap-x-[var(--space-4)] border-t border-[var(--rule)] pt-[var(--space-3)] text-[var(--fg-subtle)]">
+                {step.meta.map((m) => <span key={m}>{m}</span>)}
+              </p>
             </div>
           ))}
         />

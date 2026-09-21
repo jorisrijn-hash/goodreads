@@ -37,7 +37,7 @@ export function SiteFooter() {
               <dt className="text-[var(--fg-subtle)]">Catalogue and covers</dt>
               <dd className="m-0">
                 <FooterLink href="https://openlibrary.org">Open Library</FooterLink>
-                <span className="text-[var(--fg-muted)]"> — data CC0</span>
+                <span className="text-[var(--fg-muted)]"> (data CC0)</span>
               </dd>
             </div>
             {PHOTOGRAPHS.length > 0 && (
@@ -47,7 +47,7 @@ export function SiteFooter() {
                 {PHOTOGRAPHS.filter((p, i, all) => all.findIndex((q) => q.sourceUrl === p.sourceUrl) === i).map((photo) => (
                   <dd key={photo.id} className="m-0">
                     <FooterLink href={photo.sourceUrl}>{photo.photographer}</FooterLink>
-                    <span className="text-[var(--fg-muted)]"> — {photo.licence}</span>
+                    <span className="text-[var(--fg-muted)]"> ({photo.licence})</span>
                   </dd>
                 ))}
               </div>

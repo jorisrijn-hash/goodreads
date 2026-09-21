@@ -1,18 +1,18 @@
 import Link from "next/link";
+import { photograph } from "@/content/photography";
 import type { BookPage, CatalogueStats, Genre } from "@/lib/api";
-import { BookObject } from "../BookObject";
+import { CoverPrint } from "../CoverPrint";
 import { Reveal } from "../motion/Reveal";
 import { Photograph } from "../Photograph";
 import { SectionLabel } from "../SectionHeader";
 
 /**
- * 02 — Discover: a product moment, not a feature description.
+ * 02 Discover: the search field is the object.
  *
- * An oversized search field floats over a dimmed photograph of a library. It is the real
- * search — a plain GET form, so it works before any script loads — prefilled with a
- * misspelled author. Beneath it, the catalogue's real answer to that query unfolds as
- * three books, with the real "close match" notice. The genres run along the foot as a
- * rail. As the section scrolls in, it opens from a slightly inset panel to full width.
+ * Matte forest, with the library as a tall crop down the right edge rather than a
+ * backdrop; the search field runs across onto it. It is the real search, a plain GET
+ * form, prefilled with a misspelling. The catalogue's actual answer is set beneath it
+ * as numbered covers with their titles in type, and the genres run along the foot.
  */
 export function DiscoverSection({
   stats,
@@ -26,30 +26,35 @@ export function DiscoverSection({
   typoQuery: string;
 }) {
   const results = typo?.items.slice(0, 3) ?? [];
-  const turns = [9, -2, -11];
+  const photo = photograph("library-vault");
 
   return (
     <section data-surface="forest" aria-labelledby="discover-heading" className="forest-reveal relative z-10 overflow-hidden">
-      <Photograph
-        id="old-library"
-        sizes="100vw"
-        className="discover-photo pointer-events-none absolute inset-0"
-        imgClassName="h-full w-full object-cover object-[50%_35%]"
-      />
+      {/* The library, as a strip of architecture down the right edge. */}
+      <figure className="discover-strip absolute bottom-0 right-0 top-0 m-0 hidden w-[27%] lg:block">
+        <Photograph id="library-vault" sizes="27vw" className="block h-full" imgClassName="h-full w-full object-cover object-[50%_30%]" />
+        <figcaption className="type-caption absolute bottom-[var(--space-8)] left-[-1.75rem] origin-bottom-left -rotate-90 whitespace-nowrap text-[0.8125rem] text-[var(--fg-subtle)]">
+          {photo.caption}
+        </figcaption>
+      </figure>
 
-      <div className="page-frame relative pb-[7rem] pt-[calc(var(--space-16)+3rem)] lg:pb-[8rem] lg:pt-[9rem]">
-        <Reveal className="mx-auto max-w-[52rem] text-center">
-          <SectionLabel number="02" label="Discover" centered />
-          <h2 id="discover-heading" className="type-display-l mx-auto mt-[var(--space-6)] max-w-[15ch] text-balance">
-            Find the book, even when you misspell it.
-          </h2>
-          <p className="mx-auto mt-[var(--space-5)] max-w-[44ch] text-[1.0625rem] leading-[1.6] text-[var(--fg-muted)]">
-            Search {stats ? `${stats.books.toLocaleString("en")} books` : "the catalogue"} by
-            title, author or ISBN. Typos included — and it tells you when it corrected one.
-          </p>
-        </Reveal>
+      <div className="page-frame relative pb-[var(--space-16)] pt-[calc(var(--space-16)+1rem)] lg:pb-[8rem] lg:pt-[8rem]">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-x-[var(--space-8)]">
+          <Reveal className="lg:col-span-6">
+            <SectionLabel number="02" label="Discover" />
+            <h2 id="discover-heading" className="type-display-l mt-[var(--space-6)] max-w-[13ch]">
+              Find the book, even when you misspell it.
+            </h2>
+          </Reveal>
+          <Reveal delay={0.06} className="mt-[var(--space-6)] lg:col-span-3 lg:col-start-7 lg:mt-0 lg:self-end">
+            <p className="max-w-[30ch] font-serif text-[1.0625rem] leading-[1.6] text-[var(--fg-muted)]">
+              Search {stats ? `${stats.books.toLocaleString("en")} books` : "the catalogue"} by
+              title, author or ISBN. Typos included, and it tells you when it corrected one.
+            </p>
+          </Reveal>
+        </div>
 
-        <Reveal delay={0.08} className="mx-auto mt-[var(--space-12)] w-full max-w-[56rem]">
+        <Reveal delay={0.1} className="relative z-10 mt-[var(--space-12)] lg:w-[calc(83%+var(--gutter))]">
           <form role="search" action="/discover" method="get" className="hero-search">
             <label htmlFor="landing-search" className="sr-only">Search books, authors or ISBN</label>
             <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0 text-[var(--fg-subtle)]">
@@ -63,63 +68,50 @@ export function DiscoverSection({
           </form>
 
           {typo && (
-            <p className="mt-[var(--space-5)] text-center text-[0.875rem] text-[var(--fg-muted)]">
-              <span className="text-[var(--fg)]">{typo.total} {typo.total === 1 ? "book" : "books"}</span>
-              {typo.correctedFrom && (
-                <>
-                  <span aria-hidden="true" className="mx-[var(--space-3)] text-[var(--fg-subtle)]">·</span>
-                  Showing results for a close match to “{typo.correctedFrom}”
-                </>
-              )}
+            <p className="mt-[var(--space-4)] flex flex-wrap items-baseline gap-x-[var(--space-4)] border-b border-[var(--rule)] pb-[var(--space-4)] text-[0.8125rem] text-[var(--fg-muted)] lg:w-[80%]">
+              <span className="type-label text-[var(--fg)]">{typo.total} {typo.total === 1 ? "book" : "books"}</span>
+              {typo.correctedFrom && <span>Showing results for a close match to “{typo.correctedFrom}”</span>}
             </p>
           )}
         </Reveal>
 
         {results.length > 0 && (
           <Reveal className="unfold mt-[var(--space-10)]">
-            <ul className="mx-auto flex max-w-[52rem] list-none items-end justify-center gap-[clamp(0.75rem,3vw,3rem)] p-0">
+            <ol className="m-0 flex list-none flex-wrap items-start gap-x-[clamp(1rem,4vw,3.5rem)] gap-y-[var(--space-8)] p-0 lg:w-[70%]">
               {results.map((book, i) => (
-                <li key={book.slug} className="unfold__item book-stage flex flex-col items-center" style={{ ["--i" as string]: i }}>
-                  <BookObject
+                <li key={book.slug} className="unfold__item w-[clamp(6.5rem,24vw,13rem)]" style={{ ["--i" as string]: i }}>
+                  <CoverPrint
                     slug={book.slug}
                     title={book.title}
                     authors={book.authors}
                     coverKey={book.coverKey}
-                    pageCount={book.pageCount}
-                    width={i === 1 ? "clamp(6.5rem, 20vw, 13rem)" : "clamp(5.5rem, 17vw, 11rem)"}
-                    turn={turns[i]}
+                    width="100%"
                     sizes="13rem"
                   />
-                  {/* The metadata on paper, as the result list shows it. */}
-                  <p data-surface="paper" className="mt-[var(--space-6)] rounded-[3px] px-[var(--space-3)] py-[var(--space-2)] text-center shadow-[0_12px_24px_-16px_rgba(0,0,0,0.6)]">
-                    <span className="block font-serif text-[0.9375rem] leading-tight">{book.title}</span>
-                    <span className="block text-[0.75rem] text-[var(--ink-60)]">{book.authors[0]}</span>
+                  <p className="mt-[var(--space-4)] border-t border-[var(--rule)] pt-[var(--space-3)]">
+                    <span className="type-folio block text-[var(--fg-subtle)]">0{i + 1}</span>
+                    <span className="mt-[var(--space-1)] block font-serif text-[1.125rem] leading-tight">{book.title}</span>
+                    <span className="type-label mt-[var(--space-1)] block text-[var(--fg-subtle)]">{book.authors[0]}</span>
                   </p>
                 </li>
               ))}
-            </ul>
+            </ol>
           </Reveal>
         )}
 
         {genres && genres.length > 0 && (
-          <nav aria-label="Browse by genre" className="genre-rail mt-[var(--space-16)] border-t border-[var(--rule)] pt-[var(--space-5)]">
-            <div className="flex flex-col gap-[var(--space-3)] sm:flex-row sm:items-baseline sm:gap-[var(--space-8)]">
-              <h3 className="type-label shrink-0 text-[var(--fg-subtle)]">Browse by genre</h3>
-              {/* min-w-0: a flex item will not shrink below its content otherwise, and the rail
-                  would widen the page instead of scrolling within itself. */}
-              <ul className="genre-rail__list flex min-w-0 flex-1 list-none gap-[var(--space-8)] overflow-x-auto p-0 pb-[var(--space-2)]">
-                {genres.map((genre) => (
-                  <li key={genre.slug} className="shrink-0">
-                    <Link href={`/discover?genre=${genre.slug}`} className="link-rule whitespace-nowrap text-[0.9375rem] text-[var(--fg)]">
-                      {genre.name}
-                      <span className="ml-[var(--space-2)] text-[0.8125rem] text-[var(--fg-subtle)] [font-variant-numeric:tabular-nums]">
-                        {genre.bookCount.toLocaleString("en")}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <nav aria-label="Browse by genre" className="relative z-10 mt-[var(--space-16)] lg:w-[68%]">
+            <h3 className="type-label text-[var(--fg-subtle)]">Browse by genre</h3>
+            <ul className="genre-strip mt-[var(--space-3)] flex list-none overflow-x-auto border-y border-[var(--rule-strong)] p-0">
+              {genres.map((genre) => (
+                <li key={genre.slug} className="shrink-0 border-r border-[var(--rule)]">
+                  <Link href={`/discover?genre=${genre.slug}`} className="flex min-h-[48px] items-center gap-[var(--space-4)] px-[var(--space-4)] text-[0.8125rem] text-[var(--fg)] no-underline transition-colors duration-[var(--motion-fast)] hover:bg-[var(--wash)]">
+                    {genre.name}
+                    <span className="text-[var(--fg-subtle)] [font-variant-numeric:tabular-nums]">{genre.bookCount.toLocaleString("en")}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </nav>
         )}
       </div>

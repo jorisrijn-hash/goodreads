@@ -1,125 +1,93 @@
 import Link from "next/link";
 import type { CatalogueStats } from "@/lib/api";
 import { DemoButton } from "../DemoButton";
-import { Photograph } from "../Photograph";
-import { HeroShelf, type ShelfBook } from "./HeroShelf";
+import { CoverCollage, type CollageBook } from "./CoverCollage";
 
 /**
- * 01 — the hero: a still life, not a split screen.
+ * 01 The hero: typography and real covers on paper, nothing else.
  *
- * The warm wall runs behind most of the page and dissolves into it under the copy (a
- * mask, not a painted gradient). The books stand on a stone plinth that runs off the
- * right edge and whose front face drops over the top of the next section, so the page
- * continues rather than ending in a straight line.
+ * Everything on the left hangs from one vertical edge. On the right, the selected covers
+ * lie as a loose mosaic that runs off the edge of the page, resting on a single hairline,
+ * with a small caption in the margin saying what they are.
  */
 export function LandingHero({
   books,
   mobileBooks,
   stats,
 }: {
-  books: ShelfBook[];
-  mobileBooks: ShelfBook[];
+  books: CollageBook[];
+  mobileBooks: CollageBook[];
   stats: CatalogueStats | null;
 }) {
   return (
     <section data-surface="ivory" aria-labelledby="hero-heading" className="hero relative z-20 [overflow-x:clip]">
-      <div className="page-frame relative z-10 grid grid-cols-[minmax(0,1fr)] lg:min-h-[calc(100svh-68px)] lg:grid-cols-12 lg:items-center lg:pb-[var(--plinth-top)]">
-        <div className="pb-[var(--space-10)] pt-[var(--space-12)] lg:col-span-5 lg:pb-[var(--space-10)] lg:pt-[var(--space-8)]">
+      <div className="page-frame relative z-10 grid grid-cols-[minmax(0,1fr)] lg:min-h-[min(calc(100svh-68px),56rem)] lg:grid-cols-12 lg:items-center">
+        <div className="pb-[var(--space-10)] pt-[var(--space-12)] lg:col-span-6 lg:py-[var(--space-16)]">
           <p className="seq type-label text-[var(--fg-subtle)]" style={{ ["--i" as string]: 0 }}>
             A reading tracker, redesigned
           </p>
 
-          {/* Authored breaks, with the middle line set in: the statement reads as three
-              beats rather than a paragraph that happens to be large. */}
           <h1
             id="hero-heading"
-            className="mt-[var(--space-6)] font-serif text-[clamp(3rem,5.3vw,5.25rem)] font-[360] leading-[0.98] tracking-[-0.035em]"
+            className="mt-[var(--space-6)] font-serif text-[clamp(2.5rem,4.1vw,4.25rem)] font-[360] leading-[1.02] tracking-[-0.03em]"
           >
-            {["A better home", "for your", "reading life."].map((line, i) => (
-              <span key={line} className={`seq-line ${i === 1 ? "pl-[0.6em]" : ""}`} style={{ ["--i" as string]: i }}>
+            {["A better home", "for your reading life."].map((line, i) => (
+              <span key={line} className="seq-line" style={{ ["--i" as string]: i }}>
                 <span>{line}</span>
               </span>
             ))}
           </h1>
 
           <p
-            className="seq mt-[var(--space-8)] max-w-[34ch] text-[1.0625rem] leading-[1.65] text-[var(--fg-muted)] sm:text-[1.125rem]"
-            style={{ ["--i" as string]: 4 }}
+            className="seq mt-[var(--space-8)] max-w-[34ch] font-serif text-[1.1875rem] leading-[1.6] text-[var(--fg-muted)]"
+            style={{ ["--i" as string]: 3 }}
           >
             Discover books worth reading, save the ones you want, and keep track of where
-            each one stands — all in one place.
+            each one stands, all in one place.
           </p>
 
-          <div className="seq mt-[var(--space-8)] flex flex-wrap items-start gap-[var(--space-3)]" style={{ ["--i" as string]: 5 }}>
+          <div className="seq mt-[var(--space-8)] flex flex-wrap items-start gap-[var(--space-3)]" style={{ ["--i" as string]: 4 }}>
             <Link href="/signup" className="action action--primary">
               Create an account <span aria-hidden="true" className="action__arrow">→</span>
             </Link>
             <DemoButton label="Explore demo" size="large" />
           </div>
 
-          {/* Quiet facts, one line: the size of what you would be searching. */}
           {stats && (
-            <p className="seq mt-[var(--space-10)] flex flex-wrap items-baseline gap-x-[var(--space-5)] gap-y-[var(--space-1)] text-[0.8125rem] text-[var(--fg-subtle)]" style={{ ["--i" as string]: 8 }}>
-              {([["books", stats.books], ["authors", stats.authors], ["genres", stats.genres]] as const).map(([label, value]) => (
-                <span key={label}>
-                  <span className="font-serif text-[1.125rem] text-[var(--fg)] [font-variant-numeric:lining-nums_tabular-nums]">{value.toLocaleString("en")}</span>{" "}
-                  {label}
-                </span>
+            <dl className="seq mt-[var(--space-12)] flex max-w-[34rem] flex-wrap gap-x-[var(--space-8)] gap-y-[var(--space-2)] border-t border-[var(--rule)] pt-[var(--space-4)]" style={{ ["--i" as string]: 6 }}>
+              {([["Books", stats.books], ["Authors", stats.authors], ["Genres", stats.genres]] as const).map(([label, value]) => (
+                <div key={label} className="flex items-baseline gap-[var(--space-2)]">
+                  <dd className="m-0 text-[0.9375rem] font-medium text-[var(--fg)] [font-variant-numeric:tabular-nums]">{value.toLocaleString("en")}</dd>
+                  <dt className="type-label text-[var(--fg-subtle)]">{label}</dt>
+                </div>
               ))}
-              <span>from Open Library</span>
-            </p>
+            </dl>
           )}
         </div>
       </div>
 
-      {/* Desktop scene: after the copy in the document, so the copy's actions come first
-          in keyboard order; positioned behind and beside it. */}
+      {/* Desktop mosaic: after the copy in the document, so the copy's actions come
+          first in keyboard order. */}
       {books.length > 0 && (
-        <div className="pointer-events-none absolute inset-0 hidden lg:block">
-          <Photograph
-            id="wall-wide"
-            decorative
-            priority
-            media="(min-width: 1024px)"
-            sizes="75vw"
-            className="hero-wall hero-scene-wall absolute bottom-[var(--plinth-top)] right-0 top-0"
-            imgClassName="h-full w-full object-cover object-[60%_40%]"
-          />
-          <div className="plinth hero-scene-plinth absolute right-0" />
-          <div
-            className="hero-scene-stage pointer-events-auto absolute z-20 bottom-[var(--plinth-top)] right-[-3vw] top-[18%] [container-type:inline-size]"
-          >
-            <HeroShelf books={books} sizes="16rem" ledge={{ bottom: "0%" }} media="(min-width: 1024px)" />
-          </div>
-          {/* Set into the stone, like a museum label. */}
-          <p className="plinth-label hero-scene-label absolute text-[var(--ink-70)]">
-            <span className="type-label text-[var(--ink)]">Selected</span>
-            <span className="mx-[var(--space-3)] inline-block h-px w-6 translate-y-[-3px] bg-[var(--ink-60)]" aria-hidden="true" />
-            <span className="text-[0.8125rem]">{books.length} books from the catalogue</span>
+        <div className="hero-collage absolute bottom-[10%] top-[9%] z-20 hidden lg:block">
+          <CoverCollage books={books} sizes="15rem" media="(min-width: 1024px)" />
+          <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 h-px bg-[var(--rule-strong)] opacity-60" />
+          <p className="absolute left-0 top-[calc(100%+12px)] flex items-baseline gap-[var(--space-3)] text-[var(--fg-subtle)]">
+            <span className="type-label text-[var(--fg)]">Selected / 0{books.length}</span>
+            <span className="type-caption text-[0.875rem]">Chosen from the catalogue for the page.</span>
           </p>
         </div>
       )}
 
-      {/* Phones: the books come after the words, standing on the same stone. */}
+      {/* Phones: after the words, never instead of them. */}
       {mobileBooks.length > 0 && (
-        <figure className="relative m-0 h-[21rem] lg:hidden">
-          <Photograph
-            id="wall-light"
-            decorative
-            sizes="100vw"
-            media="(max-width: 1023.98px)"
-            className="hero-wall hero-wall--mobile absolute inset-x-0 bottom-[var(--plinth-top)] top-0"
-            imgClassName="h-full w-full object-cover object-[50%_30%]"
-          />
-          <div className="plinth absolute inset-x-0" />
-          <div className="absolute inset-x-0 bottom-[var(--plinth-top)] top-0">
-            <HeroShelf books={mobileBooks} sizes="40vw" ledge={{ bottom: "0%" }} startDelay={0.6} interactive={false} priority={false} media="(max-width: 1023.98px)" />
+        <div className="page-frame pb-[var(--space-12)] lg:hidden">
+          <div className="relative h-[20rem] sm:h-[26rem]">
+            <CoverCollage books={mobileBooks} sizes="40vw" interactive={false} priority={false} startDelay={0.5} media="(max-width: 1023.98px)" />
+            <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 h-px bg-[var(--rule-strong)] opacity-60" />
           </div>
-          <figcaption className="plinth-label absolute left-[var(--gutter)] text-[var(--ink-70)]">
-            <span className="type-label text-[var(--ink)]">Selected</span>
-            <span className="ml-[var(--space-3)] text-[0.8125rem]">from the catalogue</span>
-          </figcaption>
-        </figure>
+          <p className="mt-[var(--space-3)] type-label text-[var(--fg)]">Selected / 0{mobileBooks.length}</p>
+        </div>
       )}
     </section>
   );

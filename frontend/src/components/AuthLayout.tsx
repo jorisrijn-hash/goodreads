@@ -33,7 +33,7 @@ export function AuthLayout({
                    md:flex-col md:justify-between"
       >
         {/* Never the wordmark alone beside a password field: the "g" and the label. */}
-        <Link href="/" className="self-start no-underline" aria-label="goodreads — independent redesign, home">
+        <Link href="/" className="self-start no-underline" aria-label="goodreads, independent redesign, home">
           <BrandLockup mark="g" />
         </Link>
 
@@ -56,7 +56,7 @@ export function AuthLayout({
       <main className="flex min-h-dvh flex-col justify-center px-[var(--space-4)] py-[var(--space-12)] sm:px-[var(--space-8)]">
         <div className="mx-auto w-full max-w-[400px]">
           {/* Only shown where the editorial panel is not. */}
-          <Link href="/" className="mb-[var(--space-8)] inline-block no-underline md:hidden" aria-label="goodreads — independent redesign, home">
+          <Link href="/" className="mb-[var(--space-8)] inline-block no-underline md:hidden" aria-label="goodreads, independent redesign, home">
             <BrandLockup mark="g" />
           </Link>
 

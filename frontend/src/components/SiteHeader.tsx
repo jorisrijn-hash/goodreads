@@ -24,7 +24,7 @@ export function SiteHeader({
   return (
     <header data-surface={tone} className="relative z-20 border-b border-[var(--rule)]">
       <div className="page-frame flex h-[68px] items-center justify-between gap-[var(--space-3)]">
-        <Link href={user ? "/home" : "/"} className="shrink-0 no-underline" aria-label="goodreads — independent redesign, home">
+        <Link href={user ? "/home" : "/"} className="shrink-0 no-underline" aria-label="goodreads, independent redesign, home">
           {/* The supplied wordmark, always with the redesign label beside it. */}
           <BrandLockup tone={tone === "forest" ? "ivory" : "ink"} compactBelow="sm" labelOnCompact={!user} />
         </Link>

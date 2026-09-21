@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
 import { ClosingSection } from "@/components/landing/ClosingSection";
 import { DiscoverSection } from "@/components/landing/DiscoverSection";
-import type { Placement, ShelfBook } from "@/components/landing/HeroShelf";
+import type { CollageBook, CollagePlacement } from "@/components/landing/CoverCollage";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LibrarySection } from "@/components/landing/LibrarySection";
-import { EXAMPLE_LIBRARY, HERO_BOOKS, HERO_BOOKS_MOBILE, HOW_IT_WORKS_QUERY, TYPO_EXAMPLE } from "@/content/selected";
+import { CLOSING_SHELF, COVER_RATIO, EXAMPLE_LIBRARY, HERO_BOOKS, HERO_BOOKS_MOBILE, HOW_IT_WORKS_QUERY, LANDING_SLUGS, TYPO_EXAMPLE } from "@/content/selected";
 import type { BookDetail, BookPage, Genre } from "@/lib/api";
 import { fetchCatalogueStats, fetchPublic } from "@/lib/server-api";
 import { getCurrentUser } from "@/lib/session";
@@ -14,35 +14,28 @@ import { getCurrentUser } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 /*
- * Where each selected book stands on the desktop plinth, left to right, as fractions of
- * a stage that runs from a third of the way across the page to just past its right edge.
- * Widths are capped in rem because the stored covers are about 320px wide: much past
- * 16rem they would be visibly upscaled on a high-density screen. The ends of the row turn
- * to show spines and fore-edges; Circe faces the reader.
+ * The desktop mosaic, back to front, as positions in the collage box (which runs from
+ * just under half-way across the page frame to the right edge of the window). Covers
+ * are capped in rem: the stored files are about 320px wide and would soften much past
+ * 15rem on a high-density screen. Piranesi runs off the edge; Klara reaches toward the
+ * copy; The Creative Act, whose file is small, stays small.
  */
-const DESKTOP: Placement[] = [
-  { left: "1%", width: "min(13cqw, 9.5rem)", turn: 64, depth: 0.3, z: 1 },
-  { left: "8%", width: "min(15cqw, 11rem)", turn: 52, depth: 0.4, z: 2 },
-  { left: "17.5%", width: "min(18cqw, 13rem)", turn: 30, depth: 0.6, z: 3 },
-  { left: "35%", width: "min(22cqw, 16rem)", turn: -3, depth: 1, z: 5 },
-  { left: "56%", width: "min(18cqw, 13.5rem)", turn: -22, depth: 0.6, z: 4 },
-  { left: "73%", width: "min(15cqw, 11.5rem)", turn: -42, depth: 0.4, z: 3 },
-  // The Creative Act: small, standing forward on the plinth's front edge.
-  { left: "27.5%", width: "min(9cqw, 6.5rem)", turn: 12, depth: 1, z: 6, bottom: "-18px" },
-];
+const DESKTOP: Record<string, CollagePlacement> = {
+  "piranesi-ol20893680w": { left: "84%", top: "28%", width: "min(20cqw, 11rem)", rotate: 1.5, z: 1, depth: 0.35 },
+  "normal-people-ol20150260w": { left: "52%", top: "6%", width: "min(18cqw, 10rem)", rotate: 2, z: 2, depth: 0.45 },
+  "klara-and-the-sun-ol20883297w": { left: "0%", top: "48%", width: "min(17cqw, 9.5rem)", rotate: -1.5, z: 3, depth: 0.55 },
+  "project-hail-mary-ol21745884w": { left: "56%", top: "52%", width: "min(21cqw, 11.5rem)", rotate: -2, z: 5, depth: 0.7 },
+  "circe-ol18012166w": { left: "22%", top: "20%", width: "min(27cqw, 15rem)", rotate: -0.8, z: 4, depth: 1 },
+  "the-creative-act-ol27955361w": { left: "9%", top: "12%", width: "min(11cqw, 6rem)", rotate: -2.5, z: 2, depth: 0.5 },
+};
 
-const MOBILE: Placement[] = [
-  { left: "9%", width: "min(28vw, 7.5rem)", turn: 30, depth: 0, z: 1 },
-  { left: "35%", width: "min(33vw, 9rem)", turn: -2, depth: 0, z: 3 },
-  { left: "63%", width: "min(28vw, 7.5rem)", turn: -30, depth: 0, z: 2 },
-];
+const MOBILE: Record<string, CollagePlacement> = {
+  "klara-and-the-sun-ol20883297w": { left: "0%", top: "30%", width: "min(26vw, 8rem)", rotate: -2, z: 2, depth: 0 },
+  "normal-people-ol20150260w": { left: "62%", top: "0%", width: "min(26vw, 8rem)", rotate: 2, z: 1, depth: 0 },
+  "circe-ol18012166w": { left: "25%", top: "6%", width: "min(38vw, 11rem)", rotate: -1, z: 3, depth: 0 },
+  "project-hail-mary-ol21745884w": { left: "68%", top: "40%", width: "min(28vw, 8.5rem)", rotate: -2.5, z: 4, depth: 0 },
+};
 
-/**
- * The landing page: five chapters, alternating light and dark.
- *
- * Every number and every cover comes from the API. What is chosen by hand is which books
- * appear in the composed scenes — the SELECTED list — and the page says so.
- */
 export default async function LandingPage() {
   if (await getCurrentUser()) redirect("/home");
 
@@ -52,37 +45,35 @@ export default async function LandingPage() {
     fetchPublic<Genre[]>("/api/v1/genres", 21600),
     fetchPublic<BookPage>(`/api/v1/books?q=${encodeURIComponent(TYPO_EXAMPLE)}&size=3`, 3600),
     fetchPublic<BookPage>(`/api/v1/books?q=${encodeURIComponent(HOW_IT_WORKS_QUERY)}&size=3`, 3600),
-    ...HERO_BOOKS.map((b) => book(b.slug)),
+    ...LANDING_SLUGS.map((slug) => book(slug)),
   ]);
 
   const bySlug = new Map(selected.filter((b): b is BookDetail => b !== null).map((b) => [b.slug, b]));
 
-  // A missing book leaves a gap in the arrangement rather than shifting everyone along.
-  const heroBooks: ShelfBook[] = HERO_BOOKS.flatMap((entry, i) => {
-    const found = bySlug.get(entry.slug);
-    return found ? [{ book: found, ratio: entry.ratio, placement: DESKTOP[i] }] : [];
-  });
-  const mobileBooks: ShelfBook[] = HERO_BOOKS_MOBILE.flatMap((slug, i) => {
-    const found = bySlug.get(slug);
-    const ratio = HERO_BOOKS.find((b) => b.slug === slug)?.ratio ?? 2 / 3;
-    return found ? [{ book: found, ratio, placement: MOBILE[i] }] : [];
-  });
+  const find = (slug: string) => bySlug.get(slug) ?? null;
+  const ratio = (slug: string) => COVER_RATIO[slug] ?? 2 / 3;
+  // A missing book leaves a gap in the arrangement rather than shifting the others.
+  const collage = (slugs: string[], places: Record<string, CollagePlacement>): CollageBook[] =>
+    slugs.flatMap((slug) => {
+      const found = find(slug);
+      return found ? [{ book: found, ratio: ratio(slug), placement: places[slug] }] : [];
+    });
   const library = EXAMPLE_LIBRARY.flatMap(({ slug, status }) => {
-    const found = bySlug.get(slug);
-    return found ? [{ book: { ...found, genres: found.genres.map((g) => g.slug) }, status }] : [];
+    const found = find(slug);
+    return found ? [{ book: found, status, ratio: ratio(slug) }] : [];
   });
 
   return (
     <PublicShell bare>
-      <LandingHero books={heroBooks} mobileBooks={mobileBooks} stats={stats} />
+      <LandingHero books={collage(HERO_BOOKS, DESKTOP)} mobileBooks={collage(HERO_BOOKS_MOBILE, MOBILE)} stats={stats} />
       <DiscoverSection stats={stats} genres={genres} typo={typo} typoQuery={TYPO_EXAMPLE} />
       <LibrarySection entries={library} />
       <HowItWorksSection
-        dune={bySlug.get("dune-ol893414w") ?? null}
+        dune={find("dune-ol893414w")}
         herbert={herbert}
-        shelf={["the-secret-history-ol4321141w", "klara-and-the-sun-ol20883297w"].flatMap((slug) => bySlug.get(slug) ?? [])}
+        shelf={["the-secret-history-ol4321141w", "crying-in-h-mart-ol22448002w", "the-song-of-achilles-ol16509148w"].flatMap((slug) => find(slug) ?? [])}
       />
-      <ClosingSection books={["beloved-ol50548w", "the-secret-history-ol4321141w", "circe-ol18012166w", "dune-ol893414w", "project-hail-mary-ol21745884w"].flatMap((slug) => bySlug.get(slug) ?? [])} />
+      <ClosingSection books={CLOSING_SHELF.flatMap((slug) => { const b = find(slug); return b ? [{ book: b, ratio: ratio(slug) }] : []; })} />
     </PublicShell>
   );
 }
