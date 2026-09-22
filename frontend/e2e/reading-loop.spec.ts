@@ -28,26 +28,99 @@ async function openSecretHistory(page: Page) {
   }
 }
 
+/** Opens the Filter & sort panel if it is not open already (it stays open across links). */
+async function openFilters(page: Page) {
+  const details = page.locator("details.filter-sort");
+  if (!(await details.evaluate((d) => (d as HTMLDetailsElement).open))) await page.getByText(/^Filter & sort$/).click();
+}
+
 test.describe("discover", () => {
-  test("browses real catalogue sections with real covers", async ({ page }) => {
+  test("is one catalogue: genre rail, title, filter line and a grid of real covers", async ({ page }) => {
     await page.goto("/discover");
 
-    await expect(page.getByRole("heading", { name: "Discover" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Recently published" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Short reads" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Discover" })).toBeVisible();
+    const rail = page.getByRole("navigation", { name: "Genres" });
+    await expect(rail.getByRole("link", { name: /^Fantasy/ }).first()).toBeVisible();
+    await expect(page.getByText(/^Filter & sort$/)).toBeVisible();
+    await expect(page.locator(".catalogue-grid > li")).toHaveCount(24);
 
     // Covers come from our own storage, never hotlinked.
-    // Scoped to cover images: the header's brand mark is the page's first image.
-    const cover = page.locator("img[src^='/covers/']").first();
+    const cover = page.locator(".catalogue-grid img[src^='/covers/']").first();
     await expect(cover).toBeVisible();
     await expect(cover).toHaveAttribute("src", /\/covers\/.+-\d+\.jpg$/);
+    // No data we do not hold.
+    await expect(page.getByText(/out of 5|★|\$\d|add to cart/i)).toHaveCount(0);
   });
 
-  test("genre links filter the catalogue", async ({ page }) => {
+  test("genre links filter the catalogue and mark the current genre", async ({ page }) => {
     await page.goto("/discover");
-    await page.getByRole("link", { name: /^Fantasy/ }).first().click();
+    await page.getByRole("navigation", { name: "Genres" }).getByRole("link", { name: /^Fantasy/ }).first().click();
     await page.waitForURL(/genre=fantasy/);
+    await expect(page.getByRole("heading", { level: 1, name: "Fantasy" })).toBeVisible();
+    await expect(page.locator(".rail-item[aria-current='page']")).toHaveCount(1);
     await expect(page.locator("a[href^='/book/']").first()).toBeVisible();
+  });
+
+  test("every genre is reachable from the index", async ({ page }) => {
+    await page.goto("/discover");
+    await page.getByText(/^All \d+ genres$/).click();
+    await page.getByRole("link", { name: /^Poetry/ }).click();
+    await page.waitForURL(/genre=poetry/);
+    await expect(page.getByRole("heading", { level: 1, name: "Poetry" })).toBeVisible();
+  });
+
+  test("length and sort are real, removable, and kept in the URL", async ({ page }) => {
+    await page.goto("/discover?genre=fantasy");
+    await openFilters(page);
+    await page.getByRole("link", { name: "600+ pages" }).click();
+    await page.waitForURL(/minPages=600/);
+    await openFilters(page);
+    await page.getByRole("link", { name: "Oldest" }).click();
+    await page.waitForURL(/sort=OLDEST/);
+    expect(page.url()).toContain("genre=fantasy");
+
+    // Every listed book really is 600 pages or more.
+    const pages = await page.locator(".catalogue-grid p").filter({ hasText: /pages$/ }).allTextContents();
+    expect(pages.length).toBeGreaterThan(0);
+    for (const line of pages) expect(Number(line.match(/([\d,]+) pages/)![1].replace(/,/g, ""))).toBeGreaterThanOrEqual(600);
+
+    await page.getByRole("link", { name: "Remove length 600+ pages" }).click();
+    await page.waitForURL((url) => !url.search.includes("minPages"));
+  });
+
+  test("a sort on its own orders the whole catalogue (it used to show the browse page)", async ({ page }) => {
+    await page.goto("/discover?sort=OLDEST");
+    const years = await page.locator(".catalogue-grid p").filter({ hasText: /^\d{4}/ }).allTextContents();
+    const nums = years.map((y) => Number(y.slice(0, 4)));
+    expect(nums).toEqual([...nums].sort((a, b) => a - b));
+  });
+
+  test("paginates with the filters intact", async ({ page }) => {
+    await page.goto("/discover?genre=fantasy");
+    await expect(page.getByText(/^Page 1 \/ \d+/)).toBeVisible();
+    await page.getByRole("link", { name: "Next" }).click();
+    await page.waitForURL(/page=1/);
+    expect(page.url()).toContain("genre=fantasy");
+    await expect(page.getByText(/^Page 2 \/ \d+/)).toBeVisible();
+  });
+});
+
+test.describe("discover without JavaScript", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("search, filters and pagination all work as plain links and forms", async ({ page }) => {
+    await page.goto("/discover");
+    await expect(page.locator(".catalogue-grid img").first()).toBeVisible();
+    await page.getByLabel("Search books, authors or ISBN").fill("dune");
+    await page.getByRole("button", { name: "Search" }).click();
+    await page.waitForURL(/q=dune/);
+    await expect(page.getByRole("heading", { name: "Dune" }).first()).toBeVisible();
+
+    await page.goto("/discover?genre=fantasy");
+    await openFilters(page);
+    await page.getByRole("link", { name: "Under 200 pages" }).click();
+    await page.waitForURL(/maxPages=199/);
+    await expect(page.locator(".catalogue-grid > li").first()).toBeVisible();
   });
 });
 
