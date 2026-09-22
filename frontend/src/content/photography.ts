@@ -73,3 +73,79 @@ export function photograph(id: string): Photograph {
   if (!found) throw new Error(`Unknown photograph "${id}"; add it to src/content/photography.ts`);
   return found;
 }
+
+// ---------------------------------------------------------------------------- plates --
+//
+// Plates are the photographs placed as layout objects (see components/Plate.tsx). Unlike
+// the entries above, each plate is one source photograph with named crops described by
+// intent: a ratio and a focal point. scripts/prepare-photos.mjs reads this list, cuts
+// each crop from the source, grades it and writes AVIF and WebP at the listed widths
+// (never wider than the crop itself) to /photography/{id}-{crop}-{width}.{avif,webp}.
+//
+// Replacing a plate's photograph, for example with your own, is: put the new file in
+// .photo-cache/, change `source`, `native`, the credit and (if needed) the focal points
+// here, and run the script. No component or layout changes.
+
+export type PhotoCategory =
+  | "tactile"
+  | "still-life"
+  | "human-interaction"
+  | "light-shadow"
+  | "environment"
+  | "product-in-world";
+
+export type PlateSource =
+  /** Fetched through Unsplash's download endpoint, which is also how it asks to be credited. */
+  | { kind: "unsplash"; id: string }
+  /** A file placed in .photo-cache/ (never committed): your own work, or another licence. */
+  | { kind: "file"; file: string };
+
+export type PlateCrop = {
+  /** Width / height. */
+  ratio: number;
+  /** The point (0..1 of the source) that must stay in frame. */
+  focal: { x: number; y: number };
+  /** Output widths; the script skips any wider than the crop itself. */
+  widths: number[];
+};
+
+export type PlateEntry = {
+  id: string;
+  /** What is in the picture, for readers who cannot see it. Plates may still be shown decoratively. */
+  alt: string;
+  category: PhotoCategory;
+  source: PlateSource;
+  /** Size of the source file, so crops can be checked before anything is cut. */
+  native: { width: number; height: number };
+  photographer: string;
+  sourceUrl: string;
+  licence: "Unsplash License" | "Own work" | "Pexels License" | "AI-generated (disclosed)";
+  /** The shared grade (warm afternoon, slightly desaturated) or none. */
+  grade: "world" | "none";
+  crops: Record<string, PlateCrop>;
+};
+
+/** Empty until a photograph is approved; nothing renders a plate that is not listed. */
+export const PLATES: PlateEntry[] = [];
+
+export function plate(id: string): PlateEntry {
+  const found = PLATES.find((p) => p.id === id);
+  if (!found) throw new Error(`Unknown plate "${id}"; add it to PLATES in src/content/photography.ts`);
+  return found;
+}
+
+export function plateFile(id: string, crop: string, width: number, format: "avif" | "webp"): string {
+  return `/photography/${id}-${crop}-${width}.${format}`;
+}
+
+/**
+ * Everyone to credit, once each: the photographs above and the plates. The footer lists
+ * this, so a photograph cannot appear on the site without its credit.
+ */
+export function credits(): { key: string; photographer: string; sourceUrl: string; licence: string }[] {
+  const all = [
+    ...PHOTOGRAPHS.map((p) => ({ key: p.id, photographer: p.photographer, sourceUrl: p.sourceUrl, licence: p.licence as string })),
+    ...PLATES.map((p) => ({ key: p.id, photographer: p.photographer, sourceUrl: p.sourceUrl, licence: p.licence as string })),
+  ];
+  return all.filter((c, i) => all.findIndex((d) => d.photographer === c.photographer) === i);
+}

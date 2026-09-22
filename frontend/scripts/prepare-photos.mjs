@@ -59,7 +59,8 @@ const OUT = "public/photography";
 await mkdir(CACHE, { recursive: true });
 await mkdir(OUT, { recursive: true });
 
-for (const photo of PHOTOS) {
+// `--plates` prepares only the plates below; the photographs above are already committed.
+for (const photo of process.argv.includes("--plates") ? [] : PHOTOS) {
   const original = `${CACHE}/${photo.unsplash}.jpg`;
   try {
     await access(original);
@@ -87,3 +88,49 @@ for (const photo of PHOTOS) {
     console.log(`${photo.id}-${width}: ${width}x${height}  avif ${(avif.length / 1024).toFixed(0)} kB  webp ${(webp.length / 1024).toFixed(0)} kB`);
   }
 }
+
+// ------------------------------------------------------------------------ plates --
+// Plates (src/content/photography.ts, PLATES): one source each, crops described by ratio
+// and focal point. Writes every crop at every listed width that the crop can honestly
+// fill, and records what it wrote in src/content/plate-outputs.json, which the Plate
+// component builds its srcset from. Run with `--plates` to skip the photographs above.
+const { PLATES } = await import("../src/content/photography.ts");
+const { cropRect } = await import("../src/content/photo-crop.ts");
+const outputs = {};
+for (const entry of PLATES) {
+  const original = entry.source.kind === "unsplash" ? `${CACHE}/${entry.source.id}.jpg` : `${CACHE}/${entry.source.file}`;
+  try {
+    await access(original);
+  } catch {
+    if (entry.source.kind !== "unsplash") throw new Error(`${entry.id}: put the source at ${original}`);
+    const response = await fetch(`https://unsplash.com/photos/${entry.source.id}/download?force=true`);
+    if (!response.ok) throw new Error(`download ${entry.source.id}: ${response.status}`);
+    await writeFile(original, Buffer.from(await response.arrayBuffer()));
+  }
+  const buffer = await readFile(original);
+  const meta = await sharp(buffer).rotate().metadata();
+  const native = meta.orientation >= 5 ? { width: meta.height, height: meta.width } : { width: meta.width, height: meta.height };
+  if (native.width !== entry.native.width || native.height !== entry.native.height) {
+    console.warn(`${entry.id}: manifest says ${entry.native.width}x${entry.native.height}, file is ${native.width}x${native.height}`);
+  }
+  outputs[entry.id] = {};
+  for (const [name, crop] of Object.entries(entry.crops)) {
+    const rect = cropRect(native, crop.ratio, crop.focal);
+    let cut = sharp(buffer).rotate().extract(rect);
+    if (entry.grade === "world") cut = cut.modulate({ saturation: WORLD.saturation }).linear(WORLD.warm, [WORLD.lift, WORLD.lift, WORLD.lift * 0.6]);
+    const written = [];
+    for (const width of crop.widths.filter((w) => w <= rect.width)) {
+      const resized = cut.clone().resize({ width }).toColourspace("srgb");
+      const avif = await resized.clone().avif({ quality: 58, effort: 7 }).toBuffer();
+      const webp = await resized.clone().webp({ quality: 78, effort: 6 }).toBuffer();
+      await writeFile(`${OUT}/${entry.id}-${name}-${width}.avif`, avif);
+      await writeFile(`${OUT}/${entry.id}-${name}-${width}.webp`, webp);
+      const { height } = await sharp(avif).metadata();
+      written.push({ width, height, avifBytes: avif.length, webpBytes: webp.length });
+      console.log(`${entry.id}-${name}-${width}: ${width}x${height}  avif ${(avif.length / 1024).toFixed(0)} kB  webp ${(webp.length / 1024).toFixed(0)} kB  (crop ${rect.width}x${rect.height} of ${native.width}x${native.height})`);
+    }
+    if (written.length < crop.widths.length) console.warn(`${entry.id}-${name}: source too small for ${crop.widths.filter((w) => w > rect.width).join(", ")}; skipped rather than enlarged`);
+    outputs[entry.id][name] = { ratio: crop.ratio, files: written };
+  }
+}
+await writeFile("src/content/plate-outputs.json", JSON.stringify(outputs, null, 2) + "\n");

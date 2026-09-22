@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PHOTOGRAPHS } from "@/content/photography";
+import { credits as photoCredits } from "@/content/photography";
 import { BrandLockup } from "./Brand";
 
 /**
@@ -7,7 +7,7 @@ import { BrandLockup } from "./Brand";
  * for every photograph the product shows (one per photographer).
  */
 export function SiteFooter() {
-  const credits = PHOTOGRAPHS.filter((p, i, all) => all.findIndex((q) => q.photographer === p.photographer) === i);
+  const credits = photoCredits();
   return (
     <footer data-surface="ivory" className="mt-auto border-t border-[var(--rule)]">
       <div className="page-frame flex flex-col gap-[var(--space-5)] py-[var(--space-8)] lg:flex-row lg:items-center lg:justify-between">
@@ -26,7 +26,7 @@ export function SiteFooter() {
         <p className="m-0 text-[0.75rem] text-[var(--fg-subtle)]">
           Photography:{" "}
           {credits.map((photo, i) => (
-            <span key={photo.id}>
+            <span key={photo.key}>
               {i > 0 && ", "}
               <a href={photo.sourceUrl} className="link-rule">{photo.photographer}</a> ({photo.licence})
             </span>

@@ -1687,3 +1687,71 @@ summary:hover .link-draw,
   .auth-scene__block, .auth-veil { forced-color-adjust: none; }
   .auth-action__button { border: 2px solid ButtonText; }
 }
+
+/*
+ * Plate: a photograph as a layout object (components/Plate.tsx).
+ * The frame has the crop's shape; bleeds run from the page frame to the window edge.
+ */
+.plate {
+  --plate-bleed: calc(max(0px, (100vw - var(--page-max)) / 2) + var(--gutter));
+  margin: 0;
+}
+.plate__frame { position: relative; overflow: hidden; aspect-ratio: var(--plate-ratio); background: var(--paper); }
+@media (max-width: 767.98px) { .plate__frame { aspect-ratio: var(--plate-ratio-m); } }
+.plate__img { position: absolute; left: 0; width: 100%; top: calc(var(--plate-drift, 0px) * -1); height: calc(100% + var(--plate-drift, 0px) * 2); object-fit: cover; }
+.plate--bleed-left { margin-left: calc(var(--plate-bleed) * -1); }
+.plate--bleed-right { margin-right: calc(var(--plate-bleed) * -1); }
+.plate--full { margin-inline: calc(var(--plate-bleed) * -1); }
+.plate__credit { margin-top: var(--space-2); font-size: 0.75rem; color: var(--fg-subtle); }
+.plate--bleed-left .plate__credit { padding-left: var(--plate-bleed); }
+.plate__credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Reveal: the frame opens from the bottom edge once, when first seen. */
+.plate[data-plate-reveal] .plate__frame { clip-path: inset(22% 0 0 0); transition: clip-path 620ms var(--ease-settle); }
+.plate[data-plate-reveal][data-shown] .plate__frame { clip-path: inset(0 0 0 0); }
+
+/* Parallax: a few pixels across the whole time the plate is on screen. */
+@keyframes plate-drift { from { translate: 0 var(--plate-drift); } to { translate: 0 calc(var(--plate-drift) * -1); } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .plate[data-parallax] .plate__img { animation: plate-drift linear both; animation-timeline: view(); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plate[data-plate-reveal] .plate__frame { clip-path: none; transition: none; }
+}
+
+/*
+ * CoverObject: a cover at its own proportions, never beyond its file's pixels, on an
+ * optional display field (components/CoverObject.tsx). The field is a size container,
+ * so the cover can be a share of its width without ever outgrowing its height.
+ */
+.cover-object {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  isolation: isolate;
+}
+.cover-object[data-align="bottom"] { align-items: flex-end; }
+.cover-object[data-surface-display] { background: #ebe4d7; }
+.cover-object__book {
+  position: relative;
+  display: block;
+  width: min(calc(var(--cover-fill) * 100cqw), calc(86cqh / var(--cover-ar, 1.5)), var(--cover-cap, 100cqw));
+  transition: transform var(--motion-base) var(--ease);
+}
+.cover-object__book img { display: block; width: 100%; height: auto; box-shadow: 0 1px 2px rgba(25, 24, 21, 0.22), 0 18px 30px -18px rgba(25, 24, 21, 0.5); }
+.cover-object__book::after {
+  content: "";
+  position: absolute; left: 5%; right: 5%; bottom: -10px; height: 18px; z-index: -1;
+  background: radial-gradient(closest-side, rgba(25, 24, 21, 0.26), transparent);
+}
+.cover-object__blank {
+  display: flex; flex-direction: column; aspect-ratio: 2 / 3; padding: 12%;
+  background: var(--paper); border: 1px solid var(--rule-strong); color: var(--ink);
+}
+@media (forced-colors: active) { .cover-object[data-surface-display] { border: 1px solid CanvasText; } }
