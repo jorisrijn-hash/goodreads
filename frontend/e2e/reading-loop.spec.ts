@@ -187,9 +187,9 @@ test.describe("the reading loop", () => {
     await page.goto("/library?status=CURRENTLY_READING");
     await expect(page.getByRole("heading", { name: "The Secret History" })).toBeVisible();
 
-    // And on Home, under Continue reading.
+    // And on Home, as the book in progress.
     await page.goto("/home");
-    await expect(page.getByRole("heading", { name: "Continue reading" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Currently reading" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "The Secret History" })).toBeVisible();
 
     // Persists across a refresh — it is in the database, not in component state.
@@ -249,6 +249,28 @@ test.describe("saving while signed out", () => {
     // Clean up so the next run starts fresh.
     await page.getByRole("button", { name: "Change" }).click();
     await page.getByRole("menuitem", { name: "Remove from library" }).click();
+  });
+});
+
+test.describe("home", () => {
+  test("is the reader's own page: real counts, a way in, and no invented progress", async ({ page }) => {
+    await enterDemo(page);
+    await page.goto("/home");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Good (morning|afternoon|evening),/);
+    await expect(page.getByText("Your reading", { exact: true })).toBeVisible();
+
+    // The ledger links to each shelf of the library, with its count in words.
+    const ledger = page.getByRole("region", { name: "Your library" });
+    for (const status of ["WANT_TO_READ", "CURRENTLY_READING", "READ", "DNF"]) {
+      await expect(ledger.locator(`a[href='/library?status=${status}']`)).toHaveAccessibleName(/: \d+ books?$/);
+    }
+    await expect(page.getByRole("list", { name: "Recently published" }).locator("a[href^='/book/']").first()).toBeVisible();
+
+    // Reading progress does not exist yet, so nothing may suggest it.
+    await expect(page.getByRole("progressbar")).toHaveCount(0);
+    await expect(page.getByText(/\d+\s?%|page \d+ of/i)).toHaveCount(0);
+    // Nor may any section claim a recommendation.
+    await expect(page.getByRole("heading", { name: /for you|recommended|you may like/i })).toHaveCount(0);
   });
 });
 

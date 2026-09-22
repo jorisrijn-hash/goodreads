@@ -1237,3 +1237,173 @@ summary:hover .link-draw,
   .rail-item:hover .rail-cover--1 { transform: none; }
   .rail-item:hover .rail-cover--2 { transform: rotate(5deg); }
 }
+
+/*
+ * Home: the reader's own page. Quieter than the landing, less of a catalogue than
+ * Discover: the book in progress lies on a paper surface under one slow leaf shadow, the
+ * ledger beside it, the reader's books below on tiles, the catalogue quieter still.
+ */
+.home {
+  --fg-subtle: #4f4a42;
+  --tile: #ebe4d7;
+  --tile-hover: #e6dece;
+}
+
+.home-greeting {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  font-weight: 360;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+.home-top {
+  display: grid;
+  gap: var(--space-12);
+  margin-top: var(--space-10);
+  overflow-x: clip;
+}
+@media (min-width: 1024px) {
+  .home-top { grid-template-columns: minmax(0, 1fr) minmax(16rem, 19rem); gap: clamp(3rem, 6vw, 6rem); margin-top: var(--space-12); align-items: start; }
+}
+
+.home-feature { display: grid; gap: var(--space-8); align-items: center; }
+@media (min-width: 768px) {
+  .home-feature { grid-template-columns: auto minmax(0, 1fr); gap: clamp(2.5rem, 5vw, 4.5rem); }
+  .home-feature--empty { grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); align-items: end; }
+}
+
+/* The desk: paper behind the left part of the book, the book overlapping its edge. */
+.home-feature__stage {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 26rem);
+  padding: var(--space-10) 0 var(--space-10) var(--space-10);
+}
+@media (min-width: 768px) { .home-feature__stage { width: clamp(15rem, 27vw, 24rem); } }
+.home-feature__paper {
+  position: absolute;
+  inset: 0 34% 0 0;
+  z-index: -2;
+  background: var(--paper);
+}
+.home-feature__leaf { left: 4%; top: -6%; z-index: -1; --so: 0.1; --sd: 34s; }
+.home-feature__settle { animation: home-settle 900ms var(--ease-settle) both; }
+@keyframes home-settle { from { transform: translateY(12px); } to { transform: none; } }
+
+/* Pointer depth: a few pixels and at most 0.6 degrees (--px/--py from PointerDepth). */
+.home-feature__cover {
+  width: min(78%, 17.5rem);
+  transform: translate3d(calc(var(--px, 0) * 5px), calc(var(--py, 0) * 4px), 0) rotate(calc(var(--px, 0) * 0.6deg));
+  transition: transform 500ms var(--ease-settle);
+}
+@media (max-width: 767.98px) { .home-feature__cover { width: min(72%, 15rem); } }
+.home-feature__cover .home-cover { width: min(100%, var(--cover-cap, 100%)); }
+.home-feature__cover:focus-visible { outline: none; }
+
+/* A cover as it is: flat, its own proportions, a believable contact shadow. */
+.home-cover { position: relative; display: block; transition: transform var(--motion-base) var(--ease); }
+.home-cover img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  box-shadow: 0 1px 2px rgba(25, 24, 21, 0.22), 0 14px 24px -14px rgba(25, 24, 21, 0.45);
+  transition: box-shadow var(--motion-base) var(--ease);
+}
+.home-feature__cover .home-cover img {
+  box-shadow: 0 1px 2px rgba(25, 24, 21, 0.24), 0 28px 40px -22px rgba(25, 24, 21, 0.55);
+}
+.home-cover::after {
+  content: "";
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: -10px;
+  height: 18px;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgba(25, 24, 21, 0.28), transparent);
+  transition: opacity var(--motion-base) var(--ease), transform var(--motion-base) var(--ease);
+}
+.home-cover--blank {
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 2 / 3;
+  padding: 12%;
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  color: var(--ink);
+}
+
+.home-feature__picks { min-width: 0; }
+
+/* Ledger rows light up as the links they are. */
+.ledger-row { transition: background-color var(--motion-fast) var(--ease); }
+.ledger-row:hover { background: var(--wash); }
+.ledger-row:hover span:first-child { text-decoration: underline; text-underline-offset: 4px; }
+
+/* The reader's books, on tiles. */
+.home-section { margin-top: var(--space-16); border-top: 1px solid var(--rule); padding-top: var(--space-6); }
+@media (min-width: 1024px) { .home-section { margin-top: 5rem; } }
+.home-section__head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
+
+.home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8) var(--space-4); }
+@media (min-width: 768px) { .home-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8) var(--space-5); } }
+@media (min-width: 1280px) { .home-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
+.home-tile { color: inherit; }
+.home-tile__display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 5 / 6;
+  background: var(--tile);
+  isolation: isolate;
+  container-type: inline-size;
+  transition: background-color var(--motion-base) var(--ease);
+}
+.home-tile__display > .home-cover { width: min(64cqw, calc(100cqw / var(--cover-ar, 1.5)), var(--cover-cap, 100cqw)); }
+.home-tile:hover .home-tile__display { background: var(--tile-hover); }
+.home-tile:hover .home-cover,
+.home-tile:focus-visible .home-cover,
+.quiet-book:hover .home-cover,
+.quiet-book:focus-visible .home-cover { transform: translateY(-4px); }
+.home-tile:hover .home-cover img,
+.home-tile:focus-visible .home-cover img,
+.quiet-book:hover .home-cover img { box-shadow: 0 1px 2px rgba(25, 24, 21, 0.22), 0 22px 30px -14px rgba(25, 24, 21, 0.5); }
+.home-tile:hover h3, .quiet-book:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.home-tile:focus-visible, .quiet-book:focus-visible { outline: none; }
+.home-tile:focus-visible .home-tile__display,
+.quiet-book:focus-visible .quiet-book__cover { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+
+/* The public row: smaller covers straight on the page. A shelf that scrolls on phones. */
+.catalogue-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-6); }
+@media (max-width: 1023.98px) {
+  .catalogue-row {
+    display: flex;
+    gap: var(--space-5);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    margin-inline: calc(var(--gutter) * -1);
+    padding: 0 var(--gutter) var(--space-3);
+  }
+  .catalogue-row > li { flex: 0 0 min(34vw, 9.5rem); scroll-snap-align: start; }
+}
+/* Smaller than the reader's own books, standing on one baseline like a shelf. */
+.quiet-book__cover { display: flex; align-items: flex-end; height: 11.5rem; }
+.quiet-book__cover > .home-cover { width: min(7rem, 86%, var(--cover-cap, 100%)); }
+
+.also-reading:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-feature__settle { animation: none; }
+  .home-feature__cover, .home-cover, .home-cover img { transition: none; }
+  .home-feature__cover { transform: none; }
+  .home-tile:hover .home-cover, .home-tile:focus-visible .home-cover,
+  .quiet-book:hover .home-cover, .quiet-book:focus-visible .home-cover { transform: none; }
+}
+@media (forced-colors: active) {
+  .home-tile__display, .home-feature__paper { border: 1px solid CanvasText; }
+  .home-feature__leaf { display: none; }
+}
