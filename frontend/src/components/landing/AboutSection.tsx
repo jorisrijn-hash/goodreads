@@ -1,4 +1,5 @@
 import { Reveal } from "../motion/Reveal";
+import { SectionEdge } from "./SectionEdge";
 
 const QUESTIONS = [
   { q: "What is this?", a: "An independent redesign of a book-tracking product, built end to end as a design and engineering case study: a Next.js frontend, a Spring Boot API and a PostgreSQL catalogue." },
@@ -10,11 +11,14 @@ const QUESTIONS = [
 /** About the project: what it is, where its data comes from, what the demo is. */
 export function AboutSection() {
   return (
-    <section id="about" data-surface="ivory" aria-labelledby="about-heading" className="chapter border-t border-[var(--rule)]">
-      <div className="page-frame grid grid-cols-[minmax(0,1fr)] gap-y-[var(--space-8)] py-[var(--space-16)] lg:grid-cols-12 lg:gap-x-[var(--space-8)]">
+    // Back matter: it rises over the foot of the last chapter along a stitched edge, so
+    // Read anywhere resolves into it instead of trailing off into empty ivory.
+    <section id="about" data-surface="paper" aria-labelledby="about-heading" className="chapter relative z-[35] [--edge-h:56px] lg:-mt-[2.5rem]">
+      <SectionEdge shape="tilt" />
+      <div className="page-frame grid grid-cols-[minmax(0,1fr)] gap-y-[var(--space-6)] pb-[var(--space-10)] pt-[var(--space-10)] lg:grid-cols-12 lg:gap-x-[var(--space-8)]">
         <Reveal className="lg:col-span-4">
           <h2 id="about-heading" className="type-label text-[var(--fg)]">About this project</h2>
-          <p className="mt-[var(--space-4)] max-w-[36ch] font-serif text-[1.0625rem] leading-[1.6] text-[var(--fg-muted)]">
+          <p className="mt-[var(--space-4)] max-w-[36ch] font-serif text-[1.0625rem] leading-[1.6] text-[var(--ink)]">
             An independent redesign and engineering case study. Not affiliated with Goodreads or
             Amazon. Catalogue and covers from Open Library (CC0).
           </p>

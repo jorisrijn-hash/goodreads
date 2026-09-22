@@ -65,7 +65,7 @@ export default async function LandingPage() {
     fetchCatalogueStats(),
     fetchPublic<Genre[]>("/api/v1/genres", 21600),
     fetchPublic<BookPage>(`/api/v1/books?q=${encodeURIComponent(TYPO_EXAMPLE)}&size=4`, 3600),
-    fetchPublic<BookPage>(`/api/v1/books?q=${encodeURIComponent(HOW_IT_WORKS_QUERY)}&size=4`, 3600),
+    fetchPublic<BookPage>(`/api/v1/books?q=${encodeURIComponent(HOW_IT_WORKS_QUERY)}&size=5`, 3600),
     ...LANDING_SLUGS.map((slug) => book(slug)),
   ]);
 

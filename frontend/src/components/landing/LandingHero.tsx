@@ -29,7 +29,7 @@ export function LandingHero({
       {/* Light through a window: a leaf's shadow drifting over the paper. */}
       {/* Window light moving across the paper, and a leaf's shadow within it. */}
       <div aria-hidden="true" className="daylight" style={{ ["--lx" as string]: "16px", ["--ly" as string]: "6px", ["--ld" as string]: "28s" }} />
-      <Leaf shadow priority width="26rem" rotate={-18} className="right-[16%] top-[4%] hidden lg:block" style={{ ["--sx" as string]: "16px", ["--sy" as string]: "9px", ["--sd" as string]: "26s", ["--so" as string]: "0.11" }} />
+      <Leaf shadow priority width="26rem" rotate={-18} className="right-[16%] top-[4%] hidden lg:block" style={{ ["--sx" as string]: "19px", ["--sy" as string]: "11px", ["--sd" as string]: "26s", ["--so" as string]: "0.11" }} />
 
       <div className="page-frame relative z-10 grid grid-cols-[minmax(0,1fr)] lg:min-h-[min(calc(100svh-68px),58rem)] lg:grid-cols-12 lg:items-center">
         <div className="pb-[var(--space-10)] pt-[var(--space-12)] lg:col-span-5 lg:pb-[var(--space-16)] lg:pt-[var(--space-10)]">
@@ -81,10 +81,10 @@ export function LandingHero({
           {/* The floor the books stand on: a soft contact shadow, nothing drawn. */}
           <div aria-hidden="true" className="absolute bottom-[1%] left-0 right-[6%] h-[14%] rounded-[50%] bg-[radial-gradient(closest-side,rgba(25,24,21,0.2),rgba(25,24,21,0))] blur-[6px]" />
           <CoverCollage books={books} sizes="17rem" media="(min-width: 1024px)" />
-          <p aria-hidden="true" className="hand absolute left-[18%] top-[14%] rotate-[-5deg] text-[1.625rem] text-[var(--ink-70)]">
+          <p aria-hidden="true" className="hand absolute left-[18%] top-[14%] rotate-[-5deg] text-[1.4375rem] text-[var(--ink-70)] opacity-80">
             Selected / 0{books.length} <span className="ml-1 inline-block rotate-[30deg]">↘</span>
           </p>
-          <Leaf width="13rem" rotate={-24} className="left-[70%] top-[4%] z-[25]" breeze={{ x: 5, y: 3, r: 1.2, d: 16 }} />
+          <Leaf width="13rem" rotate={-24} className="left-[70%] top-[4%] z-[25]" breeze={{ x: 6, y: 3, r: 1.35, d: 16 }} />
         </div>
       )}
 
@@ -105,7 +105,7 @@ export function LandingHero({
         <div className="page-frame pb-[var(--space-16)] lg:hidden">
           <div className="relative h-[19rem] sm:h-[26rem]">
             <CoverCollage books={mobileBooks} sizes="40vw" interactive={false} priority={false} startDelay={0.5} media="(max-width: 1023.98px)" />
-            <Leaf width="8rem" rotate={-24} className="right-[-1.5rem] top-[-2rem] z-[25]" breeze={{ x: 4, y: 2, r: 1, d: 18 }} />
+            <Leaf width="8rem" rotate={-24} className="right-[-1.5rem] top-[-2rem] z-[25]" breeze={{ x: 5, y: 2, r: 1.15, d: 18 }} />
           </div>
           <p aria-hidden="true" className="hand mt-[var(--space-2)] text-[1.375rem] text-[var(--ink-70)]">Selected / 0{mobileBooks.length}</p>
         </div>

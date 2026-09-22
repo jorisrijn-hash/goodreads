@@ -89,10 +89,10 @@ export function DiscoverSection({
               {results.map((book, i) => (
                 <li key={book.slug} className="unfold__item" style={{ ["--i" as string]: i }}>
                   <Link href={`/book/${book.slug}`} className="result-link">
-                    <CoverPrint slug={book.slug} title={book.title} authors={book.authors} coverKey={book.coverKey} width="4.75rem" sizes="5rem" link={false} />
+                    <CoverPrint slug={book.slug} title={book.title} authors={book.authors} coverKey={book.coverKey} width="5.125rem" sizes="5.25rem" link={false} />
                     <span className="result-link__text min-w-0">
                       <span className="block font-serif text-[1rem] leading-tight">{book.title}</span>
-                      <span className="mt-[2px] block text-[0.75rem] text-[var(--fg-subtle)]">{book.authors[0]}</span>
+                      <span className="mt-[2px] block text-[0.8125rem] text-[var(--fg-muted)]">{book.authors[0]}</span>
                       <span aria-hidden="true" className="result-link__arrow mt-[var(--space-3)] inline-block text-[var(--fg-muted)]">→</span>
                     </span>
                   </Link>
@@ -125,7 +125,7 @@ export function DiscoverSection({
       </div>
 
       {/* A leaf from the reading table below reaches up into the library. */}
-      <Leaf width="12rem" rotate={-140} className="crossing bottom-[-6.5rem] right-[6%] hidden md:block" breeze={{ x: 4, y: -2, r: -1.1, d: 21, delay: 3 }} />
+      <Leaf width="12rem" rotate={-140} className="crossing bottom-[-6.5rem] right-[6%] hidden md:block" breeze={{ x: 5, y: -2, r: -1.25, d: 21, delay: 3 }} />
     </section>
   );
 }
