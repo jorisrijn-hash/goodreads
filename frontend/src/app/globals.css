@@ -70,6 +70,10 @@
  * is what lets the same component sit on ivory in one place and forest in another, and
  * what keeps the focus ring visible on both: forest-on-forest would vanish.
  *
+ * Light-surface small text (--fg-subtle) is #4f4a42: 7.72:1 on ivory, 6.77:1 on paper. It
+ * was --ink-60 (4.86:1) and each redesigned route raised it on its own; now it is the
+ * default, so the shared header, footer, waiting screens and any new page get it too.
+ *
  * Dark-surface text values are solid colours, not ivory at an alpha, so their contrast
  * is exact (docs/spike/scripts/contrast.py method):
  *   forest:   fg 10.93:1   muted #babcb3 6.47:1   subtle #a6aaa1 5.26:1   rule-strong 3.54:1
@@ -81,7 +85,7 @@
   --surface: var(--ivory);
   --fg: var(--ink);
   --fg-muted: var(--ink-70);
-  --fg-subtle: var(--ink-60);
+  --fg-subtle: #4f4a42;
   --rule: var(--border);
   --rule-strong: var(--border-strong);
   --focus-ring: var(--forest);
@@ -92,7 +96,7 @@
   --surface: var(--paper);
   --fg: var(--ink);
   --fg-muted: var(--ink-70);
-  --fg-subtle: var(--ink-60);
+  --fg-subtle: #4f4a42;
   --rule: #d3c8b6;
   --rule-strong: var(--border-strong);
   --focus-ring: var(--forest);
@@ -1001,8 +1005,6 @@ body::after {
  * proportions with a contact shadow.
  */
 .discover {
-  /* The same stronger metadata tone as the landing's light sections (7.72:1 on ivory). */
-  --fg-subtle: #4f4a42;
   --tile: #ebe4d7;
   --tile-hover: #e6dece;
 }
@@ -1244,7 +1246,6 @@ summary:hover .link-draw,
  * ledger beside it, the reader's books below on tiles, the catalogue quieter still.
  */
 .home {
-  --fg-subtle: #4f4a42;
   --tile: #ebe4d7;
   --tile-hover: #e6dece;
 }
@@ -1418,7 +1419,6 @@ summary:hover .link-draw,
  */
 .auth-shell {
   --split: 58%;
-  --fg-subtle: #4f4a42;
   position: relative;
   display: grid;
   min-height: 100dvh;
@@ -1766,7 +1766,7 @@ summary:hover .link-draw,
  */
 /* The lower band runs to the window's edges; nothing may widen the page. */
 body:has(.book) { overflow-x: clip; }
-.book { --fg-subtle: #4f4a42; display: flex; flex-direction: column; gap: var(--space-8); }
+.book { display: flex; flex-direction: column; gap: var(--space-8); }
 .book__cover { order: 1; }
 .book__intro { order: 2; }
 .book__lower { order: 3; }
@@ -1855,9 +1855,8 @@ body:has(.book) { overflow-x: clip; }
  * a quiet toolbar, then the books on neutral display fields at a size their files keep
  * sharp. No cards, no pills, no photography.
  */
-.library-head { --fg-subtle: #4f4a42; }
 .library-head__title { font-family: var(--font-serif); font-size: clamp(2.25rem, 4vw, 3.5rem); font-weight: 380; line-height: 1.04; letter-spacing: -0.025em; }
-.library { --fg-subtle: #4f4a42; --tile: #ebe4d7; --tile-hover: #e6dece; margin-top: var(--space-8); }
+.library { --tile: #ebe4d7; --tile-hover: #e6dece; margin-top: var(--space-8); }
 
 .library-shelves { border-bottom: 1px solid var(--rule); }
 .library-shelves__list {

@@ -38,7 +38,7 @@ export function PersonalBookRow({ entries }: { entries: LibraryEntry[] }) {
                 {STATUS_LABEL[entry.status]}
                 <span aria-hidden="true"> · </span>
                 <span className="sr-only">, </span>
-                <LocalDate iso={entry.savedAt} prefix="Saved " />
+                <LocalDate iso={entry.savedAt} prefix="Saved " month="short" />
               </p>
             </Link>
           </li>
