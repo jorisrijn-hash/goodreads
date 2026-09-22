@@ -49,6 +49,10 @@ export function AuthScene() {
               <span className="auth-book__depth">
                 <span className="auth-book__lift">
                   <picture>
+                    {/* Phones draw these ~80px wide: a 200px file is sharp there and a
+                        fraction of the bytes, so it does not hold back the first paint. */}
+                    {!book.wide && <source type="image/avif" media="(max-width: 767.98px)" srcSet={`/covers-hq/${book.slug}-200.avif`} />}
+                    {!book.wide && <source type="image/webp" media="(max-width: 767.98px)" srcSet={`/covers-hq/${book.slug}-200.webp`} />}
                     <source type="image/avif" media={book.wide ? WIDE : undefined} srcSet={cover.widths.map((w) => `/covers-hq/${book.slug}-${w}.avif ${w}w`).join(", ")} sizes="(min-width: 768px) 18vw, 22vw" />
                     {book.wide && <source type="image/webp" media={WIDE} srcSet={cover.widths.map((w) => `/covers-hq/${book.slug}-${w}.webp ${w}w`).join(", ")} sizes="18vw" />}
                     <img

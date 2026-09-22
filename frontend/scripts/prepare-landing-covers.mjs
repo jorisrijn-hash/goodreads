@@ -11,7 +11,9 @@ import sharp from "sharp";
 
 const src = await readFile("src/content/landing-covers.ts", "utf8");
 const entries = [...src.matchAll(/slug: "([^"]+)", coverId: (\d+)/g)].map((m) => ({ slug: m[1], id: m[2] }));
-const widths = [320, 560, 840];
+// 200 is for the sign-in scene's phone strip (covers drawn ~80px wide); the landing's own
+// srcsets list only the widths in content/landing-covers.ts, so it never picks it.
+const widths = [200, 320, 560, 840];
 await mkdir(".photo-cache", { recursive: true });
 await mkdir("public/covers-hq", { recursive: true });
 
