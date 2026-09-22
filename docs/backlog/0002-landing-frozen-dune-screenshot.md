@@ -1,6 +1,7 @@
 # 0002: Landing frozen; low-resolution Dune cover in the Read anywhere screenshot
 
-**Status:** open. Revisit when /book/[slug] is redesigned.
+**Status:** resolved 2026-09-22. The Dune screenshot was regenerated from the redesigned
+Book Detail; the landing freeze still applies.
 **Found:** 2026-09-22, milestone 4.2 HQ audit.
 
 ## Landing freeze
@@ -22,3 +23,11 @@ the catalogue's low-resolution Dune cover, so the cover inside the screenshot is
 When /book/[slug] is redesigned (and serves a sharp cover), re-run
 `scripts/prepare-product-shots.mjs` to regenerate the mobile product screenshot. Do not
 retouch the screenshot or swap in an HQ cover by hand: it is labelled real product UI.
+
+## Resolution
+
+Book Detail was redesigned (commit 557ac7e). It now shows the full-resolution Dune scan
+(content/landing-covers.ts) at a size the file keeps sharp, and
+`node scripts/prepare-product-shots.mjs` was re-run against production. The phone on the
+landing now shows the current Book Detail with a sharp cover. The screenshot was not
+retouched; it is the real page. The landing's layout and code were not changed.
