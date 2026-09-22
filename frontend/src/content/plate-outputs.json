@@ -1,1 +1,56 @@
-{}
+{
+  "page-turn": {
+    "wide": {
+      "ratio": 1.6,
+      "files": [
+        {
+          "width": 800,
+          "height": 500,
+          "avifBytes": 16501,
+          "webpBytes": 22116
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "avifBytes": 34673,
+          "webpBytes": 47796
+        },
+        {
+          "width": 1920,
+          "height": 1200,
+          "avifBytes": 54370,
+          "webpBytes": 132208
+        },
+        {
+          "width": 2560,
+          "height": 1600,
+          "avifBytes": 247822,
+          "webpBytes": 458370
+        }
+      ]
+    },
+    "tall": {
+      "ratio": 0.8,
+      "files": [
+        {
+          "width": 600,
+          "height": 750,
+          "avifBytes": 18308,
+          "webpBytes": 25494
+        },
+        {
+          "width": 900,
+          "height": 1125,
+          "avifBytes": 51823,
+          "webpBytes": 77716
+        },
+        {
+          "width": 1200,
+          "height": 1500,
+          "avifBytes": 166436,
+          "webpBytes": 235700
+        }
+      ]
+    }
+  }
+}

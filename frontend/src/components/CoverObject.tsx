@@ -8,9 +8,11 @@ import { coverUrl } from "@/lib/api";
  * A book cover as an object, for Book Detail and the Library.
  *
  * - Its own proportions: never cropped to 2:3.
- * - Never drawn wider than its file: catalogue covers are mostly ~320px wide, so once one
- *   has loaded its real pixel width is measured and becomes the cap. A small sharp cover
- *   on a generous field reads as deliberate; a large blurred one does not.
+ * - Drawn only as large as its file can keep sharp. Catalogue covers are mostly ~320px
+ *   wide; once one has loaded its real pixel width is measured, and the cover is capped
+ *   at that width divided by the screen's density (up to `density`, 1.6 by default). A
+ *   320px file therefore shows at about 200 CSS px on a 2x screen, not 300: visibly sharp,
+ *   and the field around it, not an enlarged cover, gives it presence.
  * - Where a full-resolution scan exists (content/landing-covers.ts) it is used instead,
  *   with its ratio known in advance, in the same template.
  * - A contact shadow and nothing else: no page block, no spine, no 3D.
@@ -25,6 +27,7 @@ export function CoverObject({
   surface = false,
   align = "center",
   fill = 0.62,
+  density = 1.6,
   priority = false,
   decorative = true,
   className = "",
@@ -36,6 +39,8 @@ export function CoverObject({
   align?: "center" | "bottom";
   /** Share of the field's width the cover may take (0-1). */
   fill?: number;
+  /** Device pixels each CSS pixel should get, at most (a 1x screen needs only 1). */
+  density?: number;
   priority?: boolean;
   /** True where the title is written beside it (the usual case): empty alt. */
   decorative?: boolean;
@@ -53,12 +58,14 @@ export function CoverObject({
       const probe = new Image();
       probe.src = img.currentSrc || img.src;
       probe.decode().then(() => {
-        if (probe.naturalWidth) setMeasured({ ratio: probe.naturalHeight / probe.naturalWidth, width: probe.naturalWidth });
+        if (!probe.naturalWidth) return;
+        const effective = Math.max(1, Math.min(density, window.devicePixelRatio || 1));
+        setMeasured({ ratio: probe.naturalHeight / probe.naturalWidth, width: Math.floor(probe.naturalWidth / effective) });
       }, () => {});
     };
     if (img.complete && img.naturalWidth) fit();
     else img.addEventListener("load", fit, { once: true });
-  }, [hq]);
+  }, [hq, density]);
 
   const alt = decorative ? "" : `${book.title}${book.authors.length ? ` by ${book.authors.join(", ")}` : ""}`;
   const ratio = hq ? 1 / hq.ratio : measured?.ratio;

@@ -13,14 +13,19 @@ export function cropRect(
   native: { width: number; height: number },
   ratio: number,
   focal: Focal,
+  /** 1 = the largest crop of this ratio; 0.7 = 70% of that, tighter on the focal point. */
+  scale = 1,
 ): { left: number; top: number; width: number; height: number } {
   const { width: W, height: H } = native;
   const clamp = (v: number, max: number) => Math.round(Math.min(Math.max(v, 0), max));
-  if (W / H > ratio) {
-    // Wider than wanted: keep the full height, slide a window across to the focal point.
-    const width = Math.round(H * ratio);
-    return { left: clamp(focal.x * W - width / 2, W - width), top: 0, width, height: H };
-  }
-  const height = Math.round(W / ratio);
-  return { left: 0, top: clamp(focal.y * H - height / 2, H - height), width: W, height };
+  // The largest window of this shape, then scaled down around the focal point.
+  const full = W / H > ratio ? { width: H * ratio, height: H } : { width: W, height: W / ratio };
+  const width = Math.round(full.width * Math.min(1, scale));
+  const height = Math.round(full.height * Math.min(1, scale));
+  return {
+    left: clamp(focal.x * W - width / 2, W - width),
+    top: clamp(focal.y * H - height / 2, H - height),
+    width,
+    height,
+  };
 }

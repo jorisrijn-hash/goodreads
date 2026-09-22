@@ -105,6 +105,8 @@ export type PlateCrop = {
   ratio: number;
   /** The point (0..1 of the source) that must stay in frame. */
   focal: { x: number; y: number };
+  /** 1 (default) = the largest window of this ratio; less = tighter on the focal point. */
+  scale?: number;
   /** Output widths; the script skips any wider than the crop itself. */
   widths: number[];
 };
@@ -120,13 +122,34 @@ export type PlateEntry = {
   photographer: string;
   sourceUrl: string;
   licence: "Unsplash License" | "Own work" | "Pexels License" | "AI-generated (disclosed)";
-  /** The shared grade (warm afternoon, slightly desaturated) or none. */
-  grade: "world" | "none";
+  /** "world": the shared atmospheric grade. "natural": a lighter one for skin and paper
+   *  (cream highlights, deeper neutral shadows, colour kept). "none": as shot. */
+  grade: "world" | "natural" | "none";
   crops: Record<string, PlateCrop>;
 };
 
 /** Empty until a photograph is approved; nothing renders a plate that is not listed. */
-export const PLATES: PlateEntry[] = [];
+export const PLATES: PlateEntry[] = [
+  {
+    // Book Detail's one photograph, until it can be replaced with our own shot of the same
+    // moment (hands turning a page on stone, window light): see the note above.
+    id: "page-turn",
+    alt: "Two hands turning the pages of a small hardback book, in soft daylight",
+    category: "human-interaction",
+    source: { kind: "unsplash", id: "QgCNcHLpPok" },
+    native: { width: 6000, height: 4000 },
+    photographer: "Jessica Da Rosa",
+    sourceUrl: "https://unsplash.com/photos/QgCNcHLpPok",
+    licence: "Unsplash License",
+    grade: "natural",
+    crops: {
+      // Both hands and the turning page, starting just under the necklace cords.
+      wide: { ratio: 1.6, focal: { x: 0.49, y: 0.6 }, scale: 0.72, widths: [800, 1280, 1920, 2560] },
+      // Phones: the fingers and the page being turned, closer in.
+      tall: { ratio: 0.8, focal: { x: 0.5, y: 0.63 }, scale: 0.74, widths: [600, 900, 1200] },
+    },
+  },
+];
 
 export function plate(id: string): PlateEntry {
   const found = PLATES.find((p) => p.id === id);

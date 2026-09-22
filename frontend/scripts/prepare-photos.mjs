@@ -17,6 +17,12 @@ import sharp from "sharp";
  * forced everywhere. Sources are the 3600px downloads.
  */
 const WORLD = { saturation: 0.86, warm: [1.035, 1.0, 0.93], lift: 7 };
+/*
+ * For photographs with skin, paper and fabric in them: the same warmth, gentler. Colour
+ * is only slightly muted, highlights lean cream, and shadows go a little deeper rather
+ * than lifting, with a touch more contrast. No orange, no sepia, no green in the skin.
+ */
+const NATURAL = { saturation: 0.92, gain: [1.045, 1.03, 1.0], offset: [-6, -7, -9] };
 
 const PHOTOS = [
   // Discover, desktop: the bust and the shelves behind it, as a tall right-hand field.
@@ -115,14 +121,18 @@ for (const entry of PLATES) {
   }
   outputs[entry.id] = {};
   for (const [name, crop] of Object.entries(entry.crops)) {
-    const rect = cropRect(native, crop.ratio, crop.focal);
+    const rect = cropRect(native, crop.ratio, crop.focal, crop.scale ?? 1);
     let cut = sharp(buffer).rotate().extract(rect);
     if (entry.grade === "world") cut = cut.modulate({ saturation: WORLD.saturation }).linear(WORLD.warm, [WORLD.lift, WORLD.lift, WORLD.lift * 0.6]);
+    if (entry.grade === "natural") cut = cut.modulate({ saturation: NATURAL.saturation }).linear(NATURAL.gain, NATURAL.offset);
     const written = [];
     for (const width of crop.widths.filter((w) => w <= rect.width)) {
       const resized = cut.clone().resize({ width }).toColourspace("srgb");
-      const avif = await resized.clone().avif({ quality: 58, effort: 7 }).toBuffer();
-      const webp = await resized.clone().webp({ quality: 78, effort: 6 }).toBuffer();
+      // The two largest widths are only fetched by dense, wide screens, where fine grain
+      // survives a lower quality; it keeps a 2560px plate well under half a megabyte.
+      const q = width >= 1920 ? 50 : 58;
+      const avif = await resized.clone().avif({ quality: q, effort: 7 }).toBuffer();
+      const webp = await resized.clone().webp({ quality: q + 20, effort: 6 }).toBuffer();
       await writeFile(`${OUT}/${entry.id}-${name}-${width}.avif`, avif);
       await writeFile(`${OUT}/${entry.id}-${name}-${width}.webp`, webp);
       const { height } = await sharp(avif).metadata();

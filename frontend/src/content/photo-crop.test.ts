@@ -17,6 +17,11 @@ describe("cropRect", () => {
     expect(cropRect(native, 2, { x: 0.5, y: 0.8 })).toEqual({ left: 0, top: 1000, width: 6000, height: 3000 });
   });
 
+  it("tightens around the focal point with a scale", () => {
+    // 50% of the 4000x4000 square, centred on (0.25, 0.25) of the frame, clamped inside it.
+    expect(cropRect(native, 1, { x: 0.25, y: 0.25 }, 0.5)).toEqual({ left: 500, top: 0, width: 2000, height: 2000 });
+  });
+
   it("returns the whole photo when the ratio matches", () => {
     expect(cropRect(native, 1.5, { x: 0.3, y: 0.3 })).toEqual({ left: 0, top: 0, width: 6000, height: 4000 });
   });

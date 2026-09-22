@@ -167,6 +167,32 @@ test.describe("book detail", () => {
   });
 });
 
+test.describe("book detail, as a product page", () => {
+  test("shows the book, an honest related rail, one credited photograph and the facts", async ({ page }) => {
+    await page.goto("/book/dune-ol893414w");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Dune");
+    // Related books are labelled for what they are: never a recommendation.
+    await expect(page.getByRole("heading", { name: "More by Frank Herbert" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /recommend|for you/i })).toHaveCount(0);
+    await expect(page.locator(".book-rail a[href^='/book/']")).not.toHaveCount(0);
+    // One photograph, credited where it stands.
+    await expect(page.locator("figure.plate")).toHaveCount(1);
+    await expect(page.locator("figure.plate figcaption")).toContainText("Jessica Da Rosa");
+    // The facts ledger, from real catalogue fields only.
+    const facts = page.getByRole("region", { name: "About this edition" });
+    await expect(facts.getByText("First published")).toBeVisible();
+    await expect(facts.getByText("607")).toBeVisible();
+    await expect(page.getByText(/out of 5|★|\d+ ratings|\d+ reviews/)).toHaveCount(0);
+  });
+
+  test("shows the source's prose without its markup", async ({ page }) => {
+    await page.goto("/book/the-road-ol40873w");
+    await expect(page.locator("article")).toContainText("Pulitzer Prize");
+    await expect(page.locator("article")).not.toContainText("[source]");
+    await expect(page.locator("article")).not.toContainText("https://");
+  });
+});
+
 test.describe("the reading loop", () => {
   test("saves a book, changes its state, and finds it in the library", async ({ page }) => {
     await enterDemo(page);
