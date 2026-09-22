@@ -5,7 +5,9 @@ import { libraryHref, matches, parseShelf, parseSort, view } from "./filter";
 function entry(slug: string, title: string, author: string, status: ReadingStatus, saved: number, updated: number): LibraryEntry {
   return {
     book: { slug, title, authors: [author], publishedYear: null, pageCount: null, genres: [], coverKey: null },
-    status, saveReason: null, saveNote: null, startedAt: null, finishedAt: null,
+    status, saveReason: null, saveNote: null,
+    currentPage: null, progressPercent: null, progressUpdatedAt: null,
+    startedAt: null, finishedAt: null,
     savedAt: `2026-09-${String(saved).padStart(2, "0")}T10:00:00Z`,
     updatedAt: `2026-09-${String(updated).padStart(2, "0")}T10:00:00Z`,
   };

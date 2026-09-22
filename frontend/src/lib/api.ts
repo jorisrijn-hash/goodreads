@@ -141,11 +141,67 @@ export type LibraryEntry = {
   status: ReadingStatus;
   saveReason: SaveReason | null;
   saveNote: string | null;
+  /** Where the reader is in the reading they are on now; null before any is recorded. */
+  currentPage: number | null;
+  progressPercent: number | null;
+  progressUpdatedAt: string | null;
+  /**
+   * These describe the current reading, not the first one ever: starting a finished book
+   * again moves startedAt and clears finishedAt. The journal holds the history.
+   */
   startedAt: string | null;
   finishedAt: string | null;
   savedAt: string;
   updatedAt: string;
 };
+
+/** One recorded position. Append-only: a correction is a new entry, never an edit. */
+export type ProgressUpdate = {
+  id: number;
+  page: number | null;
+  percent: number | null;
+  note: string | null;
+  at: string;
+};
+
+/**
+ * The result of recording progress. `progressUpdate` is null when nothing changed (the
+ * same page with no note), so the UI can tell "saved" from "nothing to save".
+ */
+export type ProgressResult = { libraryItem: LibraryEntry; progressUpdate: ProgressUpdate | null };
+
+export type ReadingEventType =
+  | "SAVED"
+  | "STARTED"
+  | "FINISHED"
+  | "ABANDONED"
+  | "RESUMED"
+  | "RESTARTED"
+  | "STATUS_CHANGED";
+
+/**
+ * One line of the reader's journal: either a status event or a recorded position.
+ *
+ * The wording belongs to the client, because the event alone does not carry the meaning:
+ * FINISHED reads as "Finished Dune" after reading it, and "Added Dune as Read" when a
+ * reader logs a book they finished years ago. That is what `fromStatus` is for.
+ */
+export type JournalEntry = {
+  id: string;
+  kind: "EVENT" | "PROGRESS";
+  at: string;
+  book: Book;
+  event: ReadingEventType | null;
+  fromStatus: ReadingStatus | null;
+  toStatus: ReadingStatus | null;
+  page: number | null;
+  pageCount: number | null;
+  percent: number | null;
+  note: string | null;
+};
+
+/** A page of the journal, newest first. `nextCursor` is null on the last page. */
+export type JournalPage = { items: JournalEntry[]; nextCursor: string | null };
 
 export type LibrarySummary = {
   total: number;
@@ -236,7 +292,22 @@ export const api = {
 
   removeBook: (slug: string) =>
     request<void>("DELETE", `/api/v1/me/library/${slug}`),
+
+  /**
+   * Records where the reader has got to. Send the page for a book whose length the
+   * catalogue knows (the server derives the percentage), otherwise the percentage.
+   * Only while a book is Currently Reading; the same page with no note changes nothing.
+   */
+  recordProgress: (slug: string, body: { page?: number; percent?: number; note?: string }) =>
+    request<ProgressResult>("POST", `/api/v1/me/library/${slug}/progress`, body),
+
+  /** The reader's own journal, newest first; `book` narrows it to one book's history. */
+  journal: (params: { before?: string; limit?: number; book?: string } = {}) =>
+    request<JournalPage>("GET", `/api/v1/me/journal${query(params)}`),
 };
+
+/** The product's note limit, the same number the API and the schema enforce. */
+export const MAX_PROGRESS_NOTE = 1000;
 
 /** The labels readers see. The API's values are deliberately not shown as-is. */
 export const STATUS_LABEL: Record<ReadingStatus, string> = {

@@ -177,32 +177,44 @@ class LibraryApiTest {
     }
 
     @Test
-    @DisplayName("a book can be finished without ever being marked as started")
-    void finishingDirectlyStillRecordsBothDates() throws Exception {
+    @DisplayName("logging a book as read records the finish, and does not invent a start")
+    void finishingDirectlyRecordsOnlyWhatIsKnown() throws Exception {
         Cookie reader = signIn("reader");
         mvc.perform(put("/api/v1/me/library/{slug}", slug).with(csrf()).cookie(reader));
 
+        // Checkpoint E: these dates describe the reading, and nobody said when this one
+        // began. The journal is the history; a made-up start date would not be.
         mvc.perform(patch("/api/v1/me/library/{slug}", slug).with(csrf()).cookie(reader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"READ\"}"))
                 .andExpect(jsonPath("$.status").value("READ"))
-                .andExpect(jsonPath("$.startedAt").isNotEmpty())
-                .andExpect(jsonPath("$.finishedAt").isNotEmpty());
+                .andExpect(jsonPath("$.startedAt").doesNotExist())
+                .andExpect(jsonPath("$.finishedAt").isNotEmpty())
+                .andExpect(jsonPath("$.progressPercent").value(100));
     }
 
     @Test
-    @DisplayName("re-reading a finished book does not erase that it was finished")
-    void statusChangesDoNotDestroyHistory() throws Exception {
+    @DisplayName("reading a finished book again starts a new reading, and keeps the history")
+    void rereadingStartsANewReading() throws Exception {
         Cookie reader = signIn("reader");
         mvc.perform(put("/api/v1/me/library/{slug}", slug).with(csrf()).cookie(reader));
         mvc.perform(patch("/api/v1/me/library/{slug}", slug).with(csrf()).cookie(reader)
                 .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"READ\"}"));
 
+        // Checkpoint E: the row describes the reading under way, so the finish date is
+        // cleared and the place starts over. What happened is in the journal, which still
+        // holds the finish.
         mvc.perform(patch("/api/v1/me/library/{slug}", slug).with(csrf()).cookie(reader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"CURRENTLY_READING\"}"))
                 .andExpect(jsonPath("$.status").value("CURRENTLY_READING"))
-                .andExpect(jsonPath("$.finishedAt").isNotEmpty());
+                .andExpect(jsonPath("$.startedAt").isNotEmpty())
+                .andExpect(jsonPath("$.finishedAt").doesNotExist())
+                .andExpect(jsonPath("$.currentPage").doesNotExist());
+
+        mvc.perform(get("/api/v1/me/journal").cookie(reader))
+                .andExpect(jsonPath("$.items[0].event").value("RESTARTED"))
+                .andExpect(jsonPath("$.items[1].event").value("FINISHED"));
     }
 
     @Test

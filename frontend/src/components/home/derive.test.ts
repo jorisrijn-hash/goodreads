@@ -5,7 +5,9 @@ import { deriveHome } from "./derive";
 function entry(slug: string, status: ReadingStatus, savedDay: number, updatedDay = savedDay): LibraryEntry {
   return {
     book: { slug, title: slug, authors: [], publishedYear: null, pageCount: null, genres: [], coverKey: null },
-    status, saveReason: null, saveNote: null, startedAt: null, finishedAt: null,
+    status, saveReason: null, saveNote: null,
+    currentPage: null, progressPercent: null, progressUpdatedAt: null,
+    startedAt: null, finishedAt: null,
     savedAt: `2026-09-${String(savedDay).padStart(2, "0")}T10:00:00Z`,
     updatedAt: `2026-09-${String(updatedDay).padStart(2, "0")}T10:00:00Z`,
   };

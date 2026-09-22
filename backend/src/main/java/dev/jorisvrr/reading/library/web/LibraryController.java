@@ -96,6 +96,24 @@ class LibraryController {
                                 HttpStatus.NOT_FOUND, "Not in your library")));
     }
 
+    /**
+     * Records where the reader has got to, and returns both the book's state now and the
+     * history entry that was written (null when the same page was sent again with no
+     * note, which changes nothing).
+     *
+     * <p>Notes are refused on the shared demo account: everyone who opens the demo sees
+     * the same library, and a private note there would not be private.
+     */
+    @PostMapping("/{slug}/progress")
+    ResponseEntity<ProgressResponse> recordProgress(@AuthenticationPrincipal AppUserDetails reader,
+                                                    @PathVariable String slug,
+                                                    @Valid @RequestBody RecordProgressRequest request) {
+        LibraryService.Progress progress = library.recordProgress(reader.getUserId(), slug,
+                request.page(), request.percent(), request.note(), !reader.isDemo());
+        return ResponseEntity.status(progress.update() == null ? HttpStatus.OK : HttpStatus.CREATED)
+                .body(ProgressResponse.from(progress));
+    }
+
     @DeleteMapping("/{slug}")
     ResponseEntity<Void> remove(@AuthenticationPrincipal AppUserDetails reader,
                                 @PathVariable String slug) {

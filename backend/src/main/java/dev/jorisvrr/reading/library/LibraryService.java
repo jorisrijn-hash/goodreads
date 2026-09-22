@@ -5,12 +5,14 @@ import dev.jorisvrr.reading.catalog.CatalogueRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 /**
@@ -24,16 +26,28 @@ public class LibraryService {
 
     private static final Logger log = LoggerFactory.getLogger(LibraryService.class);
 
+    /** The product's limit, the same number the field, the request and the schema use. */
+    public static final int MAX_NOTE = 1000;
+
     private final LibraryItemRepository items;
     private final CatalogueRepository catalogue;
+    private final ReadingEventRepository events;
+    private final ProgressUpdateRepository progress;
 
-    public LibraryService(LibraryItemRepository items, CatalogueRepository catalogue) {
+    public LibraryService(LibraryItemRepository items, CatalogueRepository catalogue,
+                          ReadingEventRepository events, ProgressUpdateRepository progress) {
         this.items = items;
         this.catalogue = catalogue;
+        this.events = events;
+        this.progress = progress;
     }
 
     /** A library row together with the book it refers to. */
     public record Entry(LibraryItem item, BookRow book) {
+    }
+
+    /** A recorded position, and the state it left the book in. */
+    public record Progress(Entry entry, ProgressUpdate update) {
     }
 
     /**
@@ -49,15 +63,13 @@ public class LibraryService {
         BookRow book = catalogue.findBySlug(bookSlug)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "No such book"));
 
-        LibraryItem item = items.findByUserIdAndBookId(userId, book.id())
-                .map(existing -> {
-                    existing.applyStatus(status);
-                    if (reason != null || note != null) {
-                        existing.describeSave(reason, note);
-                    }
-                    return existing;
-                })
-                .orElseGet(() -> LibraryItem.save(userId, book.id(), status, reason, note));
+        Optional<LibraryItem> existing = items.findByUserIdAndBookId(userId, book.id());
+        LibraryItem item = existing.orElseGet(() -> LibraryItem.save(userId, book.id(), reason, note));
+        ReadingStatus before = existing.map(LibraryItem::getStatus).orElse(null);
+        ReadingEventType event = item.applyStatus(status, book.pageCount());
+        if (existing.isPresent() && (reason != null || note != null)) {
+            item.describeSave(reason, note);
+        }
 
         try {
             items.save(item);
@@ -65,16 +77,97 @@ public class LibraryService {
             // Two concurrent saves of the same book: the constraint held, so re-read the
             // winner rather than failing the reader's request.
             log.debug("concurrent save for userId={} bookId={}", userId, book.id());
-            item = items.findByUserIdAndBookId(userId, book.id()).orElseThrow();
+            return new Entry(items.findByUserIdAndBookId(userId, book.id()).orElseThrow(), book);
         }
+        record(item, event, before, status);
         return new Entry(item, book);
     }
 
     @Transactional
     public Entry updateStatus(long userId, String bookSlug, ReadingStatus status) {
         Entry entry = require(userId, bookSlug);
-        entry.item().applyStatus(status);
+        ReadingStatus before = entry.item().getStatus();
+        ReadingEventType event = entry.item().applyStatus(status, entry.book().pageCount());
+        record(entry.item(), event, before, status);
         return entry;
+    }
+
+    /**
+     * Records where the reader has got to.
+     *
+     * <p>Only while a book is being read: a page number must never quietly start a book,
+     * and a finished or set-aside book has no current position to move. The row is locked
+     * for the whole transaction, so the position and the history it produces are written
+     * together or not at all.
+     *
+     * <p>A page that does not move and carries no note changes nothing: no row, no
+     * timestamp, no journal entry. The same page <em>with</em> a note is a real entry,
+     * which is how a reader records a thought without having read further. Going
+     * backwards is allowed and recorded; the history is never rewritten.
+     */
+    @Transactional
+    public Progress recordProgress(long userId, String bookSlug, Integer page, Integer percent,
+                                   String note, boolean notesAllowed) {
+        BookRow book = catalogue.findBySlug(bookSlug)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "No such book"));
+        LibraryItem item = items.findForUpdate(userId, book.id())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Not in your library"));
+
+        if (item.getStatus() != ReadingStatus.CURRENTLY_READING) {
+            throw new ResponseStatusException(CONFLICT,
+                    "Start reading this book before recording progress.");
+        }
+        String cleaned = (note == null || note.isBlank()) ? null : note.trim();
+        if (cleaned != null && !notesAllowed) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Notes are turned off on the shared demo account.");
+        }
+        if (cleaned != null && cleaned.length() > MAX_NOTE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Keep the note under " + MAX_NOTE + " characters.");
+        }
+
+        boolean byPage = LibraryItem.hasPageCount(book.pageCount());
+        if (byPage) {
+            if (page == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Give the page you have reached.");
+            }
+            if (page < 0 || page > book.pageCount()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Page must be between 0 and " + book.pageCount() + ".");
+            }
+        } else {
+            if (percent == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "This book has no page count, so give your progress as a percentage.");
+            }
+            if (percent < 0 || percent > 100) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Progress must be between 0 and 100 percent.");
+            }
+        }
+
+        boolean unchanged = byPage
+                ? Objects.equals(item.getCurrentPage(), page)
+                : Objects.equals(item.getProgressPercent(), percent);
+        if (unchanged && cleaned == null) {
+            // Nothing happened. Saying so is better than a journal full of "page 183".
+            return new Progress(new Entry(item, book), null);
+        }
+
+        item.recordProgress(byPage ? page : null, byPage ? null : percent, book.pageCount());
+        items.save(item);
+        ProgressUpdate update = progress.save(ProgressUpdate.of(
+                item.getId(), item.getCurrentPage(), item.getProgressPercent(), cleaned));
+        return new Progress(new Entry(item, book), update);
+    }
+
+    /** One meaningful action, one event. A status that did not change writes nothing. */
+    private void record(LibraryItem item, ReadingEventType event, ReadingStatus from, ReadingStatus to) {
+        if (event != null) {
+            events.save(ReadingEvent.of(item.getId(), event, from, to));
+        }
     }
 
     @Transactional

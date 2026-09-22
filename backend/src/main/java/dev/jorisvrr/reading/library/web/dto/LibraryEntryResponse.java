@@ -13,6 +13,11 @@ public record LibraryEntryResponse(
         ReadingStatus status,
         SaveReason saveReason,
         String saveNote,
+        /** Where the reader has got to in the reading they are on now; null before any. */
+        Integer currentPage,
+        Integer progressPercent,
+        Instant progressUpdatedAt,
+        /** These describe the current reading, not the first one ever; the journal is the history. */
         Instant startedAt,
         Instant finishedAt,
         Instant savedAt,
@@ -23,6 +28,7 @@ public record LibraryEntryResponse(
         return new LibraryEntryResponse(
                 BookSummaryResponse.from(entry.book()),
                 item.getStatus(), item.getSaveReason(), item.getSaveNote(),
+                item.getCurrentPage(), item.getProgressPercent(), item.getProgressUpdatedAt(),
                 item.getStartedAt(), item.getFinishedAt(),
                 item.getCreatedAt(), item.getUpdatedAt());
     }
