@@ -129,27 +129,14 @@ export type PlateEntry = {
 };
 
 /** Empty until a photograph is approved; nothing renders a plate that is not listed. */
-export const PLATES: PlateEntry[] = [
-  {
-    // Book Detail's one photograph, until it can be replaced with our own shot of the same
-    // moment (hands turning a page on stone, window light): see the note above.
-    id: "page-turn",
-    alt: "Two hands turning the pages of a small hardback book, in soft daylight",
-    category: "human-interaction",
-    source: { kind: "unsplash", id: "QgCNcHLpPok" },
-    native: { width: 6000, height: 4000 },
-    photographer: "Jessica Da Rosa",
-    sourceUrl: "https://unsplash.com/photos/QgCNcHLpPok",
-    licence: "Unsplash License",
-    grade: "natural",
-    crops: {
-      // Both hands and the turning page, starting just under the necklace cords.
-      wide: { ratio: 1.6, focal: { x: 0.49, y: 0.6 }, scale: 0.72, widths: [800, 1280, 1920, 2560] },
-      // Phones: the fingers and the page being turned, closer in.
-      tall: { ratio: 0.8, focal: { x: 0.5, y: 0.63 }, scale: 0.74, widths: [600, 900, 1200] },
-    },
-  },
-];
+/**
+ * Empty for now. The first plate (hands turning a page, Jessica Da Rosa, Unsplash
+ * QgCNcHLpPok, crops wide 1.6 @ focal 0.49/0.6 scale 0.72 and tall 0.8 @ 0.5/0.63 scale
+ * 0.74, grade "natural") was tried on Book Detail and removed there as too strong for a
+ * product page. Kept out of the list so the footer does not credit a photograph that is
+ * not shown; re-adding it is one entry here and a run of the script.
+ */
+export const PLATES: PlateEntry[] = [];
 
 export function plate(id: string): PlateEntry {
   const found = PLATES.find((p) => p.id === id);

@@ -168,16 +168,16 @@ test.describe("book detail", () => {
 });
 
 test.describe("book detail, as a product page", () => {
-  test("shows the book, an honest related rail, one credited photograph and the facts", async ({ page }) => {
+  test("shows the book, an honest related rail and the facts, with no photograph competing", async ({ page }) => {
     await page.goto("/book/dune-ol893414w");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Dune");
     // Related books are labelled for what they are: never a recommendation.
     await expect(page.getByRole("heading", { name: "More by Frank Herbert" })).toBeVisible();
     await expect(page.getByRole("heading", { name: /recommend|for you/i })).toHaveCount(0);
     await expect(page.locator(".book-rail a[href^='/book/']")).not.toHaveCount(0);
-    // One photograph, credited where it stands.
-    await expect(page.locator("figure.plate")).toHaveCount(1);
-    await expect(page.locator("figure.plate figcaption")).toContainText("Jessica Da Rosa");
+    // A product page, not a campaign: no photography competes with the book.
+    await expect(page.locator("figure.plate")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "About this book" })).toBeVisible();
     // The facts ledger, from real catalogue fields only.
     const facts = page.getByRole("region", { name: "About this edition" });
     await expect(facts.getByText("First published")).toBeVisible();

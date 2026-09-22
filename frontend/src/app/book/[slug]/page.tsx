@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { CoverObject } from "@/components/CoverObject";
-import { Plate } from "@/components/Plate";
 import { PublicShell } from "@/components/PublicShell";
 import { SaveControl } from "@/components/SaveControl";
 import { WakingPage } from "@/components/WakingPage";
@@ -30,9 +29,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
  *
  * First the book itself: the cover on a display field (at a size its file keeps sharp),
  * the title, author, the reader's own control, the plain facts and the opening of the
- * description, with a narrow rail of related books beside it. Then one photograph, set
- * into the page from its left edge, with the rest of the description and the edition's
- * facts beside it.
+ * description, with a narrow rail of related books beside it. Then, on a quieter band,
+ * the rest of the description and the edition's facts. No photography: the book is the
+ * strongest object on the page, and the page is a product page, not a campaign.
  *
  * Public, so a book can be linked and shared; the reader's own relationship with it is
  * layered on when there is a session. Nothing here is a rating, a review or progress.
@@ -134,21 +133,20 @@ export default async function BookPageRoute({
         <RelatedRail related={related} />
       </div>
 
-      <div className="book__plate">
-        <Plate id="page-turn" crop="wide" mobileCrop="tall" placement="bleed-left" sizes="(min-width: 1024px) 60vw, 100vw" parallax={14} credit decorative />
-      </div>
-
-      {rest && (
-        <section id="about" aria-labelledby="about-heading" className="book__about">
-          <h2 id="about-heading" className="type-label m-0 text-[var(--fg-subtle)]">About this book</h2>
-          {paragraphs(rest).map((para, i) => (
-            <p key={i} dir="auto" className="book__prose">{para}</p>
-          ))}
-        </section>
-      )}
-
-      <div className="book__facts">
-        <BookFacts book={book} />
+      {/* After the book: the rest of its description in the same column as the opening,
+          and the edition's facts under the cover, like a product's specification. */}
+      <div className="book__lower">
+        {rest && (
+          <section id="about" aria-labelledby="about-heading" className="book__about">
+            <h2 id="about-heading" className="type-label m-0 text-[var(--fg-subtle)]">About this book</h2>
+            {paragraphs(rest).map((para, i) => (
+              <p key={i} dir="auto" className="book__prose">{para}</p>
+            ))}
+          </section>
+        )}
+        <div className="book__facts">
+          <BookFacts book={book} />
+        </div>
       </div>
     </article>
   );

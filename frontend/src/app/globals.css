@@ -1759,18 +1759,18 @@ summary:hover .link-draw,
 /*
  * Book Detail: a product page where the book is the product.
  *
- * Desktop: [cover field | intro | related rail] across the first viewport; below it the
- * photograph enters from the left edge across seven columns, and the description
- * continues beside it, then the edition's facts. Phones: one column in reading order.
+ * Desktop: [cover field | intro | related rail] across the first viewport. Below, on a
+ * faintly warmer band set off by one rule, the description continues in the intro's
+ * column at a reading measure, and the edition's facts sit under the cover like a
+ * product's specification. No photography. Phones: one column in reading order.
  */
+/* The lower band runs to the window's edges; nothing may widen the page. */
 body:has(.book) { overflow-x: clip; }
 .book { --fg-subtle: #4f4a42; display: flex; flex-direction: column; gap: var(--space-8); }
 .book__cover { order: 1; }
 .book__intro { order: 2; }
-.book__about { order: 3; }
-.book__plate { order: 4; margin-top: var(--space-4); }
-.book__facts { order: 5; }
-.book__rail { order: 6; }
+.book__lower { order: 3; }
+.book__rail { order: 4; }
 
 .book__field { height: 21rem; }
 @media (min-width: 640px) { .book__field { height: 26rem; } }
@@ -1794,6 +1794,24 @@ body:has(.book) { overflow-x: clip; }
 .book__more:hover { color: var(--fg); }
 .book__prose { margin: var(--space-4) 0 0; max-width: 34rem; font-family: var(--font-serif); font-size: 1.0625rem; line-height: 1.75; color: var(--fg); text-wrap: pretty; hanging-punctuation: first; }
 
+/* The lower band: one rule, a slightly warmer paper tone running to the window's edges. */
+.book__lower {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding-block: var(--space-10) var(--space-12);
+  border-top: 1px solid var(--rule);
+}
+.book__lower::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(max(0px, (100vw - var(--page-max)) / 2) * -1 - var(--gutter)) calc(var(--space-12) * -1);
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(233, 225, 212, 0.55), rgba(233, 225, 212, 0) 70%);
+  pointer-events: none;
+}
+
 .book-rail__list { margin-top: var(--space-2); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-4); }
 .book-rail__item { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--rule); color: inherit; }
 .book-rail__cover { display: block; height: 80px; }
@@ -1814,16 +1832,20 @@ body:has(.book) { overflow-x: clip; }
   .book__intro { grid-column: 6 / 10; grid-row: 1; padding-top: var(--space-6); }
   .book__rail { grid-column: 10 / 13; grid-row: 1; padding-top: var(--space-8); }
   .book-rail__list { grid-template-columns: 1fr; }
-  /* The photograph enters from the page's left edge; the text carries on beside it. */
-  /* Sticky within its rows: beside a long description it stays in view while the text
-     scrolls past, so the spread never turns into a photo above an empty column. */
-  .book__plate { grid-column: 1 / 8; grid-row: 2 / span 2; align-self: start; margin-top: clamp(4.5rem, 8vw, 7.5rem); position: sticky; top: var(--space-8); }
-  .book__about, .book__facts { grid-column: 8 / 13; padding-left: clamp(0.5rem, 1.5vw, 1.5rem); }
-  .book__about { margin-top: clamp(4.5rem, 8vw, 7.5rem); }
-  .book__facts { margin-top: var(--space-12); align-self: start; }
-  .book__about + .book__facts { margin-top: var(--space-12); }
+  /* The lower band shares the page's twelve columns: facts under the cover, the text
+     continuing under the intro. */
+  .book__lower {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: subgrid;
+    align-items: start;
+    margin-top: clamp(4rem, 7vw, 6.5rem);
+    padding-block: clamp(3rem, 5vw, 4.5rem) var(--space-16);
+  }
+  /* Beside a long description the edition stays in view instead of leaving an empty column. */
+  .book__facts { grid-column: 1 / 5; grid-row: 1; position: sticky; top: var(--space-8); }
+  .book__about { grid-column: 6 / 11; grid-row: 1; }
+  .book__about .book__prose:first-of-type { margin-top: var(--space-5); }
 }
-@media (min-width: 1024px) {
-  /* A short description has no continuation: the facts take its place beside the photo. */
-  .book__plate + .book__facts { margin-top: clamp(4.5rem, 8vw, 7.5rem); }
-}
+
