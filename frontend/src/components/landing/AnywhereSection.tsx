@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { LandingCover } from "@/content/landing-covers";
 import type { BookDetail } from "@/lib/api";
 import { CoverPrint } from "../CoverPrint";
 import { DemoButton } from "../DemoButton";
@@ -16,11 +17,12 @@ import { SectionEdge } from "./SectionEdge";
  * and the code beside it simply opens the site. The phone rises out of the burgundy
  * chapter above, across the stitched edge.
  */
-export function AnywhereSection({ book }: { book: { book: BookDetail; ratio: number } | null }) {
+export function AnywhereSection({ book }: { book: { book: BookDetail; ratio: number; hq?: LandingCover } | null }) {
   return (
     <section id="anywhere" data-surface="ivory" aria-labelledby="anywhere-heading" className="chapter [--edge-h:88px] lg:min-h-[92svh]">
-      <SectionEdge shape="wave" fill="var(--ivory)" />
-      <Leaf shadow width="22rem" rotate={-30} className="left-[44%] top-[34%] hidden lg:block" style={{ ["--sx" as string]: "10px", ["--sy" as string]: "-8px", ["--sd" as string]: "30s" }} />
+      <SectionEdge shape="wave" />
+      <div aria-hidden="true" className="daylight" style={{ ["--lx" as string]: "12px", ["--ly" as string]: "-6px", ["--ld" as string]: "30s" }} />
+      <Leaf shadow width="24rem" rotate={-30} className="left-[44%] top-[30%] hidden lg:block" style={{ ["--sx" as string]: "13px", ["--sy" as string]: "-8px", ["--sd" as string]: "27s", ["--so" as string]: "0.1" }} />
 
       <div className="page-frame relative grid grid-cols-[minmax(0,1fr)] gap-y-[var(--space-12)] pb-[var(--space-16)] pt-[var(--space-16)] lg:min-h-[92svh] lg:grid-cols-12 lg:items-center lg:gap-x-[var(--space-8)] lg:pt-[4rem]">
         <Reveal className="lg:col-span-5">
@@ -52,24 +54,24 @@ export function AnywhereSection({ book }: { book: { book: BookDetail; ratio: num
           <PointerDepth className="relative mx-auto h-[34rem] w-full max-w-[34rem] lg:-mt-[22rem] lg:h-[50rem]">
             {book && (
               <div aria-hidden="true" className="absolute bottom-[10%] right-[2%] rotate-[9deg] [translate:calc(var(--px)*-3px)_calc(var(--py)*-2px)]">
-                <CoverPrint slug={book.book.slug} title={book.book.title} authors={book.book.authors} coverKey={book.book.coverKey} width="clamp(8rem, 13vw, 12rem)" ratio={book.ratio} sizes="12rem" link={false} />
+                <CoverPrint slug={book.book.slug} title={book.book.title} authors={book.book.authors} coverKey={book.book.coverKey} width="clamp(8rem, 13vw, 12rem)" ratio={book.ratio} sizes="12rem" link={false} hq={book.hq} />
               </div>
             )}
             <p aria-hidden="true" className="hand absolute left-[2%] top-[34%] rotate-[-6deg] text-[1.625rem] text-[var(--ink-70)]">Mobile web <span className="inline-block rotate-[-15deg]">→</span></p>
             {/* The phone crosses up into the chapter above. */}
             <div className="crossing left-1/2 top-0 [translate:calc(-50%+var(--px)*6px)_calc(var(--py)*4px)]">
-              <div className="phone rotate-[5deg]" style={{ ["--phone-w" as string]: "min(18.5rem, 64vw)" }}>
+              <div className="phone rotate-[5deg]" style={{ ["--phone-w" as string]: "min(20rem, 66vw)" }}>
                 <div className="phone__screen">
                   <span className="phone__island" />
                   <div className="demo__status-bar absolute inset-x-0 top-0 z-[4] flex h-[34px] items-center justify-between px-[22px] pt-[4px] text-[10px] font-semibold"><span>9:41</span><span>●●●</span></div>
                   <picture className="absolute inset-x-0 bottom-0 top-[34px] block">
-                    <source type="image/avif" srcSet="/product/mobile-book-390.avif 390w, /product/mobile-book-700.avif 700w" sizes="18.5rem" />
-                    <img className="shot" src="/product/mobile-book-390.webp" srcSet="/product/mobile-book-390.webp 390w, /product/mobile-book-700.webp 700w" sizes="18.5rem" alt="The Dune page of this site on a phone: the cover, title, author and a Want to Read button" loading="lazy" width={390} height={844} />
+                    <source type="image/avif" srcSet="/product/mobile-book-600.avif 600w, /product/mobile-book-900.avif 900w, /product/mobile-book-1170.avif 1170w" sizes="20rem" />
+                    <img className="shot" src="/product/mobile-book-600.webp" srcSet="/product/mobile-book-600.webp 600w, /product/mobile-book-900.webp 900w, /product/mobile-book-1170.webp 1170w" sizes="20rem" alt="The Dune page of this site on a phone: the cover, title, author and a Want to Read button" loading="lazy" width={390} height={844} />
                   </picture>
                 </div>
               </div>
             </div>
-            <Leaf width="10rem" rotate={115} className="bottom-[14%] right-[-6%]" breeze={{ x: 2, y: 2, r: 0.8, d: 20, delay: 2 }} />
+            <Leaf width="10rem" rotate={115} className="bottom-[14%] right-[-6%]" breeze={{ x: 4, y: 3, r: 1, d: 23, delay: 2 }} />
           </PointerDepth>
         </div>
       </div>

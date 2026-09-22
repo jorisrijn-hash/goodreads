@@ -2,6 +2,7 @@
 
 import { m, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from "motion/react";
 import { useEffect, useRef } from "react";
+import type { LandingCover } from "@/content/landing-covers";
 import type { BookDetail } from "@/lib/api";
 import { PARALLAX_MAX, STAGGER } from "@/lib/motion";
 import { CoverPrint } from "../CoverPrint";
@@ -20,7 +21,7 @@ export type CollagePlacement = {
   depth: number;
 };
 
-export type CollageBook = { book: BookDetail; ratio: number; placement: CollagePlacement };
+export type CollageBook = { book: BookDetail; ratio: number; placement: CollagePlacement; hq?: LandingCover };
 
 /**
  * Real covers laid down by hand: a mosaic with gaps and the odd overlap, not a shelf.
@@ -81,10 +82,11 @@ function Collage({
 
   return (
     <div ref={ref} className="absolute inset-0">
-      {books.map(({ book, ratio, placement }, index) => (
+      {books.map(({ book, ratio, placement, hq }, index) => (
         <Item
           key={book.slug}
           book={book}
+          hq={hq}
           ratio={ratio}
           placement={placement}
           sizes={sizes}
@@ -100,9 +102,10 @@ function Collage({
 }
 
 function Item({
-  book, ratio, placement, sizes, delay, x, y, priority, media,
+  book, hq, ratio, placement, sizes, delay, x, y, priority, media,
 }: {
   book: BookDetail;
+  hq?: LandingCover;
   ratio: number;
   placement: CollagePlacement;
   sizes: string;
@@ -116,6 +119,8 @@ function Item({
   const shiftY = useTransform(y, (v) => v * (PARALLAX_MAX / 2) * placement.depth);
   // Nearer books also turn very slightly toward the pointer: under a degree at most.
   const turn = useTransform(x, (v) => v * 0.7 * placement.depth);
+  // The light a matte cover catches slides a little with the pointer.
+  const sheen = useTransform(x, (v) => `${50 - v * 22}%`);
 
   return (
     // Outer: position and entrance. Inner: the pointer's shift. Kept apart because both
@@ -126,7 +131,7 @@ function Item({
       className="collage-item collage-enter absolute"
       style={{ left: placement.left, top: placement.top, bottom: placement.bottom, zIndex: placement.z, animationDelay: `${delay}s` }}
     >
-      <m.div style={{ x: shiftX, y: shiftY, rotate: turn }}>
+      <m.div style={{ x: shiftX, y: shiftY, rotate: turn, ["--sheen" as string]: sheen }}>
         <CoverPrint
           slug={book.slug}
           title={book.title}
@@ -138,6 +143,7 @@ function Item({
           priority={priority}
           sizes={sizes}
           media={media}
+          hq={hq}
         />
       </m.div>
     </div>

@@ -21,10 +21,10 @@ for (const shot of SHOTS) {
   // The whole top of the page at the phone screen's own proportion (about 390 x 830),
   // not just the browser viewport, so the phone frame crops nothing at the sides.
   const png = await page.screenshot({ fullPage: true, clip: { x: 0, y: 0, width: 390, height: 830 } });
-  for (const width of [390, 700]) {
+  for (const width of [600, 900, 1170]) {
     const resized = sharp(png).resize({ width });
-    await writeFile(`public/product/${shot.id}-${width}.avif`, await resized.clone().avif({ quality: 60 }).toBuffer());
-    await writeFile(`public/product/${shot.id}-${width}.webp`, await resized.clone().webp({ quality: 80 }).toBuffer());
+    await writeFile(`public/product/${shot.id}-${width}.avif`, await resized.clone().avif({ quality: 64 }).toBuffer());
+    await writeFile(`public/product/${shot.id}-${width}.webp`, await resized.clone().webp({ quality: 84 }).toBuffer());
   }
   const { width, height } = await sharp(png).metadata();
   console.log(`${shot.id}: ${width}x${height} from ${shot.path}`);

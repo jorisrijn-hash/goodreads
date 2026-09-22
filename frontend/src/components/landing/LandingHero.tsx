@@ -27,7 +27,9 @@ export function LandingHero({
   return (
     <section id="hero" data-surface="ivory" aria-labelledby="hero-heading" className="chapter hero">
       {/* Light through a window: a leaf's shadow drifting over the paper. */}
-      <Leaf shadow width="24rem" rotate={-18} className="right-[16%] top-[6%] hidden lg:block" style={{ ["--sx" as string]: "14px", ["--sy" as string]: "10px", ["--sd" as string]: "28s" }} />
+      {/* Window light moving across the paper, and a leaf's shadow within it. */}
+      <div aria-hidden="true" className="daylight" style={{ ["--lx" as string]: "16px", ["--ly" as string]: "6px", ["--ld" as string]: "28s" }} />
+      <Leaf shadow priority width="26rem" rotate={-18} className="right-[16%] top-[4%] hidden lg:block" style={{ ["--sx" as string]: "16px", ["--sy" as string]: "9px", ["--sd" as string]: "26s", ["--so" as string]: "0.11" }} />
 
       <div className="page-frame relative z-10 grid grid-cols-[minmax(0,1fr)] lg:min-h-[min(calc(100svh-68px),58rem)] lg:grid-cols-12 lg:items-center">
         <div className="pb-[var(--space-10)] pt-[var(--space-12)] lg:col-span-5 lg:pb-[var(--space-16)] lg:pt-[var(--space-10)]">
@@ -45,7 +47,7 @@ export function LandingHero({
             ))}
           </h1>
 
-          <p className="seq mt-[var(--space-6)] max-w-[40ch] text-[1rem] leading-[1.65] text-[var(--fg-muted)]" style={{ ["--i" as string]: 3 }}>
+          <p className="seq mt-[var(--space-6)] max-w-[40ch] text-[1.0625rem] leading-[1.65] text-[var(--fg-muted)]" style={{ ["--i" as string]: 3 }}>
             Discover books worth reading, save the ones you want, and keep track of where each
             one stands, all in one place.
           </p>
@@ -82,14 +84,14 @@ export function LandingHero({
           <p aria-hidden="true" className="hand absolute left-[18%] top-[14%] rotate-[-5deg] text-[1.625rem] text-[var(--ink-70)]">
             Selected / 0{books.length} <span className="ml-1 inline-block rotate-[30deg]">↘</span>
           </p>
-          <Leaf width="13rem" rotate={-24} className="left-[70%] top-[4%] z-[25]" breeze={{ x: 3, y: 2, r: 0.9, d: 17 }} />
+          <Leaf width="13rem" rotate={-24} className="left-[70%] top-[4%] z-[25]" breeze={{ x: 5, y: 3, r: 1.2, d: 16 }} />
         </div>
       )}
 
       {/* A scrap of the real first page, lying at the books' feet and over the edge. */}
       {fragment && (
         <div className="crossing drift bottom-[-4rem] left-[calc(43%+5rem)] hidden w-[19rem] lg:block" style={{ ["--drift" as string]: "8px" }}>
-          <div className="breeze" style={{ ["--bx" as string]: "1px", ["--by" as string]: "-1px", ["--br" as string]: "0.35deg", ["--bd" as string]: "23s", ["--borigin" as string]: "0 0" }}>
+          <div className="breeze" style={{ ["--bx" as string]: "2px", ["--by" as string]: "-1px", ["--br" as string]: "0.45deg", ["--bd" as string]: "24s", ["--borigin" as string]: "0 0" }}>
             <div className="paper-fragment relative rotate-[-3deg]">
               <p className="m-0 mb-[6px] font-sans text-[8px] font-semibold uppercase tracking-[0.18em] text-[#7a7266]">{fragment.title}</p>
               <p className="m-0 [column-count:2] [column-gap:14px]">{fragment.text}</p>
@@ -103,7 +105,7 @@ export function LandingHero({
         <div className="page-frame pb-[var(--space-16)] lg:hidden">
           <div className="relative h-[19rem] sm:h-[26rem]">
             <CoverCollage books={mobileBooks} sizes="40vw" interactive={false} priority={false} startDelay={0.5} media="(max-width: 1023.98px)" />
-            <Leaf width="8rem" rotate={-24} className="right-[-1.5rem] top-[-2rem] z-[25]" breeze={{ x: 2, y: 1, r: 0.8, d: 16 }} />
+            <Leaf width="8rem" rotate={-24} className="right-[-1.5rem] top-[-2rem] z-[25]" breeze={{ x: 4, y: 2, r: 1, d: 18 }} />
           </div>
           <p aria-hidden="true" className="hand mt-[var(--space-2)] text-[1.375rem] text-[var(--ink-70)]">Selected / 0{mobileBooks.length}</p>
         </div>

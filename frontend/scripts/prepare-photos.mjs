@@ -10,31 +10,23 @@
 import { mkdir, readFile, writeFile, access } from "node:fs/promises";
 import sharp from "sharp";
 
+/*
+ * One world: atmospheric photographs share a restrained grade (warm afternoon, slightly
+ * desaturated, cream highlights, lifted rather than crushed blacks). Book covers are never
+ * graded; they are shown as printed. Crops are made per layout rather than one crop
+ * forced everywhere. Sources are the 3600px downloads.
+ */
+const WORLD = { saturation: 0.86, warm: [1.035, 1.0, 0.93], lift: 7 };
+
 const PHOTOS = [
-  // The Old Library at Trinity College Dublin, Michaela Murphy. One photograph used as a
-  // tall strip of vault; its companion below is the same library's bust and shelves.
-  {
-    id: "library-vault",
-    unsplash: "TIS8AnSiFI4",
-    crop: { left: 640, top: 0, width: 1120, height: 3200 },
-    widths: [420, 760],
-  },
-  {
-    id: "library-bust",
-    unsplash: "X4Xgm-kWpYY",
-    crop: { left: 0, top: 0, width: 2400, height: 3584 },
-    widths: [640, 1100],
-    grade: { saturation: 0.8, brightness: 0.95 },
-  },
-  // Leaves photographed on white, cut out: the white becomes transparent and the soft
-  // shadow under each leaf is kept as a transparent shade, so it still falls naturally.
-  {
-    id: "leaf-pair",
-    unsplash: "_mUVHhvBYZ0",
-    cutout: true,
-    crop: { left: 380, top: 180, width: 1680, height: 2020 },
-    widths: [400, 800],
-  },
+  // Discover, desktop: the bust and the shelves behind it, as a tall right-hand field.
+  { id: "library-bust", unsplash: "X4Xgm-kWpYY", crop: { left: 0, top: 380, width: 3600, height: 4000 }, widths: [900, 1400, 1900], grade: WORLD, quality: 60 },
+  // Discover, phones: shelves above the head, the bust low in the frame, behind the text.
+  { id: "library-bust-tall", unsplash: "X4Xgm-kWpYY", crop: { left: 700, top: 0, width: 2900, height: 5378 }, widths: [600, 900], grade: WORLD, quality: 58 },
+  // The Old Library's vault: small prints in the library and how-it-works chapters.
+  { id: "library-vault", unsplash: "TIS8AnSiFI4", crop: { left: 960, top: 0, width: 1680, height: 2600 }, widths: [360, 600], grade: WORLD, quality: 62 },
+  // The leaf, cut out, lightly graded to sit in the same light.
+  { id: "leaf-pair", unsplash: "_mUVHhvBYZ0", cutout: true, crop: { left: 570, top: 270, width: 2520, height: 3030 }, widths: [400, 800], grade: { saturation: 0.92, warm: [1.02, 1.0, 0.95], lift: 0 }, quality: 64 },
 ];
 
 /** White to transparent. Saturated pixels are leaf; grey ones are its shadow, kept as translucent ink. */
@@ -79,12 +71,16 @@ for (const photo of PHOTOS) {
   const meta = await sharp(await readFile(original)).metadata();
   const crop = { ...photo.crop, width: Math.min(photo.crop.width, meta.width - photo.crop.left), height: Math.min(photo.crop.height, meta.height - photo.crop.top) };
   let cropped = sharp(await readFile(original)).extract(crop);
-  if (photo.grade) cropped = cropped.modulate(photo.grade);
+  if (photo.grade) {
+    const { saturation, warm, lift } = photo.grade;
+    cropped = cropped.modulate({ saturation }).linear(warm, [lift, lift, lift * 0.6]);
+  }
   if (photo.cutout) cropped = await cutout(cropped);
   for (const width of photo.widths) {
     const resized = cropped.clone().resize({ width }).toColourspace("srgb");
-    const avif = await resized.clone().avif({ quality: 48, effort: 7 }).toBuffer();
-    const webp = await resized.clone().webp({ quality: 72, effort: 6 }).toBuffer();
+    const q = photo.quality ?? 58;
+    const avif = await resized.clone().avif({ quality: q, effort: 7 }).toBuffer();
+    const webp = await resized.clone().webp({ quality: Math.min(90, q + 20), effort: 6 }).toBuffer();
     await writeFile(`${OUT}/${photo.id}-${width}.avif`, avif);
     await writeFile(`${OUT}/${photo.id}-${width}.webp`, webp);
     const { height } = await sharp(avif).metadata();

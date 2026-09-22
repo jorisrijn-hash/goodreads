@@ -13,16 +13,20 @@ const SHAPES = {
   tilt: { fill: "M0,64 C420,54 860,30 1440,18 L1440,88 L0,88 Z", stitch: "M0,70 C420,60 860,36 1440,24" },
 } as const;
 
-export function SectionEdge({ shape, fill }: { shape: keyof typeof SHAPES; fill: string }) {
+import { StitchReveal } from "./StitchReveal";
+
+export function SectionEdge({ shape, fill = "var(--surface)" }: { shape: keyof typeof SHAPES; fill?: string }) {
   const s = SHAPES[shape];
   return (
     <>
       <svg className="edge" viewBox="0 0 1440 88" preserveAspectRatio="none" aria-hidden="true" focusable="false">
         <path d={s.fill} fill={fill} />
       </svg>
-      <svg className="edge edge--stitch" viewBox="0 0 1440 88" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <path d={s.stitch} className="stitch" />
-      </svg>
+      <StitchReveal>
+        <svg className="edge edge--stitch" viewBox="0 0 1440 88" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <path d={s.stitch} className="stitch" />
+        </svg>
+      </StitchReveal>
     </>
   );
 }

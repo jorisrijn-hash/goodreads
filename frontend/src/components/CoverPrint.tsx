@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import type { LandingCover } from "@/content/landing-covers";
 import { coverUrl } from "@/lib/api";
 
 const EMPTY_IMAGE = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -26,6 +27,7 @@ export function CoverPrint({
   className = "",
   style,
   link = true,
+  hq,
 }: {
   slug: string;
   title: string;
@@ -45,6 +47,8 @@ export function CoverPrint({
   style?: CSSProperties;
   /** False when the cover sits inside another link (a result row): a span, not a link. */
   link?: boolean;
+  /** A full-resolution landing cover (content/landing-covers.ts), used instead of the stored derivative. */
+  hq?: LandingCover;
 }) {
   const srcSet = coverKey
     ? ([160, 320, 640] as const).map((w) => `${coverUrl(coverKey, w)} ${w}w`).join(", ")
@@ -52,11 +56,30 @@ export function CoverPrint({
 
   const shared = {
     className: `cover-print ${className}`,
-    style: { ["--w" as string]: width, ["--ratio" as string]: ratio, ["--rot" as string]: `${rotate}deg`, ...style },
+    style: { ["--w" as string]: width, ["--ratio" as string]: hq?.ratio ?? ratio, ["--rot" as string]: `${rotate}deg`, ...style },
   };
+  const hqSet = (format: "avif" | "webp") =>
+    hq ? hq.widths.map((w) => `/covers-hq/${hq.slug}-${w}.${format} ${w}w`).join(", ") : "";
+
   const inner = (
     <>
-      {coverKey ? (
+      {hq ? (
+        <picture className="contents">
+          <source type="image/avif" srcSet={hqSet("avif")} sizes={sizes} media={media} />
+          <source type="image/webp" srcSet={hqSet("webp")} sizes={sizes} media={media} />
+          <img
+            src={media ? EMPTY_IMAGE : `/covers-hq/${hq.slug}-${hq.widths[0]}.webp`}
+            sizes={sizes}
+            alt=""
+            width={hq.widths[0]}
+            height={Math.round(hq.widths[0] / hq.ratio)}
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : undefined}
+            decoding="async"
+            draggable={false}
+          />
+        </picture>
+      ) : coverKey ? (
         <picture className="contents">
           {media && <source media={media} srcSet={srcSet} sizes={sizes} />}
           <img

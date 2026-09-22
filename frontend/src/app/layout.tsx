@@ -53,7 +53,7 @@ export default function RootLayout({
       <head>
         {/* Entrances start hidden and some wait for JavaScript; without it, show everything. */}
         <noscript>
-          <style>{`[data-reveal],[data-motion-initial],.seq,.seq-line>span,.unfold__item,.collage-item,.collage-enter,.lib-book{opacity:1!important;transform:none!important;animation:none!important}.draw-rule{transform:none!important}`}</style>
+          <style>{`[data-reveal],[data-motion-initial],.seq,.seq-line>span,.unfold__item,.collage-item,.collage-enter,.lib-book{opacity:1!important;transform:none!important;animation:none!important}.draw-rule{transform:none!important}.edge--stitch{clip-path:none!important}`}</style>
         </noscript>
       </head>
       <body>{children}</body>

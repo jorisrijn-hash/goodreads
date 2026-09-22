@@ -49,7 +49,11 @@ export function HowItWorksSection({ dune, herbert, shelf }: { dune: BookDetail |
               <div key={b.slug} className="demo__row">{img(b.coverKey, 160)}<span><b>{b.title}</b>{b.authors[0]}{b.publishedYear ? `, ${b.publishedYear}` : ""}</span></div>
             ))}
           </div>
-          <div className="demo__part demo__cover">{img(dune?.coverKey, 320)}</div>
+          {/* Dune grows to about 200px here, so it takes the full-resolution scan. */}
+          <div className="demo__part demo__cover">
+            {/* eslint-disable-next-line @next/next/no-img-element -- prepared landing cover */}
+            <img src="/covers-hq/dune-ol893414w-560.webp" srcSet="/covers-hq/dune-ol893414w-320.webp 320w, /covers-hq/dune-ol893414w-560.webp 560w" sizes="12rem" alt="" loading="lazy" decoding="async" />
+          </div>
           <div className="demo__part demo__title">
             <strong>{dune?.title ?? "Dune"}</strong>
             <span>{dune?.authors[0]}</span>
@@ -68,7 +72,9 @@ export function HowItWorksSection({ dune, herbert, shelf }: { dune: BookDetail |
             <p className="demo__label">My Library</p>
             <div className="demo__library-row">
               {shelf.map((b) => <span key={b.slug}>{img(b.coverKey, 160)}</span>)}
-              <span className="demo__slot">{img(dune?.coverKey, 160)}<span className="demo__slot-tag"><span className="when-1">Want to Read</span><span className="when-2">Currently Reading</span></span></span>
+              <span className="demo__slot">
+                {/* eslint-disable-next-line @next/next/no-img-element -- prepared landing cover */}
+                <img src="/covers-hq/dune-ol893414w-320.webp" alt="" loading="lazy" decoding="async" /><span className="demo__slot-tag"><span className="when-1">Want to Read</span><span className="when-2">Currently Reading</span></span></span>
             </div>
           </div>
         </div>
@@ -86,7 +92,7 @@ export function HowItWorksSection({ dune, herbert, shelf }: { dune: BookDetail |
 
   return (
     <section id="how" data-surface="burgundy" aria-labelledby="how-heading" className="chapter how [--edge-h:88px]">
-      <SectionEdge shape="tilt" fill="var(--burgundy)" />
+      <SectionEdge shape="tilt" />
       {/* Desktop: the pinned stage. */}
       <StepSequence className="sticky top-0 hidden h-[var(--pin)] overflow-hidden lg:block">
               <div className="page-frame grid h-full grid-cols-12 items-center gap-x-[var(--space-8)]">
@@ -104,7 +110,9 @@ export function HowItWorksSection({ dune, herbert, shelf }: { dune: BookDetail |
                   <div className="print absolute right-[2%] top-[18%] h-[15rem] w-[11rem] rotate-[6deg] opacity-90">
                     <Photograph id="library-vault" sizes="11rem" className="block h-full" imgClassName="object-[50%_20%]" />
                   </div>
-                  <div className="relative rotate-[-4deg]">{phone(undefined, "min(19rem, 38vh)")}</div>
+                  {/* A sheet of paper under the phone, so it rests on something. */}
+                  <div className="paper-fragment absolute left-[4%] top-[26%] h-[52%] w-[44%] rotate-[-9deg] opacity-95" />
+                  <div className="relative rotate-[-4deg]">{phone(undefined, "min(21rem, 44vh)")}</div>
                   <p className="hand absolute bottom-[12%] right-[4%] rotate-[-6deg] text-[1.5rem] text-[#d4c7bf]">Real product UI</p>
                 </div>
 

@@ -509,7 +509,7 @@ body::after {
 
 /* The stitch sits above everything that crosses it, so the boundary always reads. */
 .edge--stitch { z-index: 40; }
-.stitch { fill: none; stroke: #9f463d; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 0.1 6.5; vector-effect: non-scaling-stroke; }
+.stitch { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 0.1 6.5; vector-effect: non-scaling-stroke; }
 
 /* Objects that cross a boundary. */
 .crossing { position: absolute; z-index: 30; pointer-events: none; }
@@ -539,8 +539,8 @@ body::after {
 .leaf-shadow {
   position: absolute;
   pointer-events: none;
-  filter: brightness(0) blur(5px);
-  opacity: 0.085;
+  filter: brightness(0) blur(4px);
+  opacity: var(--so, 0.1);
   animation: shadow-drift var(--sd, 26s) ease-in-out infinite alternate;
 }
 
@@ -597,8 +597,8 @@ body::after {
 
 /* 02 Discover ----------------------------------------------------------------------- */
 .discover-photo {
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 38%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 38%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 18%, #000 52%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.35) 18%, #000 52%);
 }
 .discover-photo img { filter: brightness(0.62) saturate(0.8) sepia(0.12); }
 /* On phones the photograph runs behind the text itself, so it steps much further back. */
@@ -662,7 +662,10 @@ body::after {
   padding: 11px;
   border-radius: 46px;
   background: linear-gradient(145deg, #3a3a3a, #121212 40%, #262626);
-  box-shadow: 0 0 0 1.5px #555 inset, 0 2px 2px rgba(0,0,0,0.4), 0 50px 70px -30px rgba(0,0,0,0.75), 0 20px 30px -20px rgba(0,0,0,0.5);
+  box-shadow: 0 0 0 1.5px #555 inset, 0 1px 0 rgba(255,255,255,0.12) inset;
+  /* The cast shadow as a filter: a large box-shadow on this transformed element was
+     clipped to a hard-edged box when composited. */
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4)) drop-shadow(0 34px 34px rgba(0,0,0,0.45)) drop-shadow(0 12px 14px rgba(0,0,0,0.3));
 }
 .phone__screen { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 36px; background: var(--ivory); }
 .phone__screen img.shot { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
@@ -748,6 +751,132 @@ body::after {
 .step__dot { position: absolute; left: -4px; width: 9px; height: 9px; border-radius: 50%; background: var(--surface); border: 1px solid var(--fg-muted); transition: background-color 300ms; }
 [data-state="0"] .step[data-step="0"] .step__dot, [data-state="1"] .step[data-step="1"] .step__dot, [data-state="2"] .step[data-step="2"] .step__dot { background: var(--fg); border-color: var(--fg); }
 @media (max-width: 1023.98px) { .step { opacity: 1; } }
+
+
+/*
+ * LANDING SURFACES (4.1). The landing page pushes contrast harder than the rest of the
+ * product, so these are contextual: set under .landing, they leave other routes' tokens
+ * alone. Every text colour was measured (see the table in the commit):
+ *   light:  muted #3f3b35 9.78:1, subtle #5a544b 6.58:1, rule-strong #6f685c 4.85:1
+ *   forest: #14221c, muted #d2d1c9 10.75:1, subtle #b1b2aa 7.70:1, rule-strong 4.61:1
+ *   wine:   #521d1b, muted #dcd0c8 8.97:1, subtle #c3b1aa 6.57:1, rule-strong 4.05:1
+ */
+.landing [data-surface="ivory"],
+.landing [data-surface="paper"] {
+  --fg-muted: #3f3b35;
+  --fg-subtle: #5a544b;
+  --rule: #cbbfa9;
+  --rule-strong: #6f685c;
+  --thread: #9f463d;
+}
+
+.landing [data-surface="forest"] {
+  --surface: #14221c;
+  --fg-muted: #d2d1c9;
+  --fg-subtle: #b1b2aa;
+  --rule: #2f4037;
+  --rule-strong: #848982;
+  --thread: #b85a4e;
+  background-image: none;
+}
+
+.landing [data-surface="burgundy"] {
+  --surface: #521d1b;
+  --fg-muted: #dcd0c8;
+  --fg-subtle: #c3b1aa;
+  --rule: #6e3a36;
+  --rule-strong: #a38681;
+  --thread: #c0655a;
+  /* Book cloth: a fine woven cross-grain under the print grain. */
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,235,220,0.022) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,0.05) 0 1px, transparent 1px 3px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  background-size: auto, auto, 220px 220px;
+}
+
+/* Paper: warmer and with a visible fibre running across the sheet. */
+.landing [data-surface="paper"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.25 0 0 0 0 0.18 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  background-size: 260px 260px, 220px 220px;
+}
+
+/* Darker, heavier primary actions on the landing page. */
+.landing .action--primary { background: #16231c; }
+.landing .action--primary:hover { background: #0e1712; box-shadow: 0 12px 26px -14px rgba(14,23,18,0.7); }
+.landing [data-surface="ivory"] .quiet-strong,
+.landing [data-surface="paper"] .quiet-strong { color: var(--ink); }
+
+/* The stitch takes its thread colour from the surface below it, and draws itself across
+   once, the first time the boundary comes into view. */
+.stitch { stroke: var(--thread, #9f463d); stroke-dasharray: 0.1 6 0.1 7.5 0.1 5.5 0.1 6.8; }
+.edge--stitch { clip-path: inset(0 100% 0 0); transition: clip-path 820ms var(--ease-settle) 120ms; }
+.edge--stitch[data-shown] { clip-path: inset(0 0 0 0); }
+
+/*
+ * Daylight. A soft band of warm window light across the paper and a cool shade at the
+ * far edge, drifting a few pixels over half a minute, so the surface is never a flat
+ * beige. Opacity stays low; it is light, not a spotlight.
+ */
+@keyframes daylight { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(var(--lx, 14px), var(--ly, 6px), 0); } }
+.daylight {
+  position: absolute;
+  inset: -40px;
+  pointer-events: none;
+  /* Normal blending on purpose: soft-light composited unevenly against transformed
+     neighbours and left a visible rectangle behind the phone. */
+  background:
+    linear-gradient(112deg, rgba(255,251,240,0) 18%, rgba(255,250,238,0.32) 34%, rgba(255,251,240,0) 50%),
+    linear-gradient(112deg, rgba(255,251,240,0) 52%, rgba(255,248,232,0.2) 62%, rgba(255,251,240,0) 72%),
+    radial-gradient(120% 90% at 100% 110%, rgba(60,48,32,0.08), rgba(60,48,32,0) 60%);
+  animation: daylight var(--ld, 28s) ease-in-out infinite alternate;
+}
+
+/* Discover: light entering the library from the upper right, deepening to the left. */
+.library-light {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 60% at 88% 8%, rgba(255,214,160,0.22), rgba(255,214,160,0) 60%),
+    linear-gradient(to top, rgba(10,18,14,0.75), rgba(10,18,14,0) 35%);
+  mix-blend-mode: normal;
+}
+.library-light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(60% 50% at 90% 10%, rgba(255,226,180,0.18), rgba(255,226,180,0) 70%);
+  mix-blend-mode: screen;
+  animation: daylight 30s ease-in-out infinite alternate;
+  --lx: -12px; --ly: 8px;
+}
+
+/* A matte printed cover catches the light from wherever the pointer is. */
+.cover-print::after { background-size: 220% 100%; background-position: var(--sheen, 50%) 0; }
+
+/* Neighbours give way a little when a book is lifted. */
+.hero-collage:has(.cover-print:is(:hover, :focus-visible)) .collage-item:not(:has(.cover-print:is(:hover, :focus-visible))) .cover-print {
+  transform: translateY(2px) rotate(var(--rot));
+  filter: brightness(0.97);
+}
+
+/* Contact shadow that deepens as a book lifts. */
+.cover-print:hover img, .cover-print:focus-visible img {
+  box-shadow:
+    0 0 0 1px rgba(25, 24, 21, 0.06),
+    0 3px 4px rgba(25, 24, 21, 0.18),
+    0 18px 26px -10px rgba(25, 24, 21, 0.42),
+    0 44px 60px -32px rgba(25, 24, 21, 0.6);
+}
+
+.hero-search button:active { transform: translateY(1px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .daylight, .library-light::after { animation: none !important; }
+  .edge--stitch { clip-path: none !important; transition: none !important; }
+  .hero-collage:has(.cover-print:hover) .collage-item .cover-print { transform: rotate(var(--rot)) !important; }
+}
 
 /* The chapter index at the right edge. */
 .chapter-index a { display: flex; align-items: center; gap: 8px; min-height: 22px; font-size: 10px; font-variant-numeric: tabular-nums; letter-spacing: 0.06em; color: currentColor; opacity: 0.45; text-decoration: none; transition: opacity 200ms; }

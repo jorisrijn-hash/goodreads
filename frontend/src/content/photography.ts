@@ -34,19 +34,28 @@ const OLD_LIBRARY = {
 
 export const PHOTOGRAPHS: Photograph[] = [
   {
-    id: "library-vault",
-    widths: [420, 760],
-    ratio: 0.35,
-    alt: "The timber barrel vault of a long library hall, above shelves of old books",
-    ...OLD_LIBRARY,
-  },
-  {
     id: "library-bust",
-    widths: [640, 1100],
-    ratio: 0.67,
+    widths: [900, 1400, 1900],
+    ratio: 0.9,
     alt: "A marble bust in a ruffled collar in front of shelves of old leather-bound books",
     ...OLD_LIBRARY,
     sourceUrl: "https://unsplash.com/photos/X4Xgm-kWpYY",
+  },
+  {
+    // The same photograph, cropped tall for phones.
+    id: "library-bust-tall",
+    widths: [600, 900],
+    ratio: 0.539,
+    alt: "A marble bust in a ruffled collar in front of shelves of old leather-bound books",
+    ...OLD_LIBRARY,
+    sourceUrl: "https://unsplash.com/photos/X4Xgm-kWpYY",
+  },
+  {
+    id: "library-vault",
+    widths: [360, 600],
+    ratio: 0.646,
+    alt: "The timber barrel vault of a long library hall, above shelves of old books",
+    ...OLD_LIBRARY,
   },
   {
     id: "leaf-pair",

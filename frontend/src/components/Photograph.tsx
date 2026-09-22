@@ -13,6 +13,7 @@ export function Photograph({
   priority = false,
   decorative = false,
   media,
+  art,
   className = "",
   imgClassName = "",
 }: {
@@ -25,6 +26,8 @@ export function Photograph({
   /** Only fetch where this media query matches — for a photo that one layout hides.
    *  Elsewhere the <img> falls back to an empty source and nothing is downloaded. */
   media?: string;
+  /** A different crop of the photograph for another layout: used where `art.media` matches. */
+  art?: { id: string; media: string; sizes: string };
   className?: string;
   imgClassName?: string;
 }) {
@@ -33,8 +36,14 @@ export function Photograph({
     photo.widths.map((w) => `/photography/${photo.id}-${w}.${format} ${w}w`).join(", ");
   const smallest = photo.widths[0];
 
+  const alt = art ? photograph(art.id) : null;
+  const artSet = (format: "avif" | "webp") =>
+    alt ? alt.widths.map((w) => `/photography/${alt.id}-${w}.${format} ${w}w`).join(", ") : "";
+
   return (
     <picture className={className}>
+      {alt && art && <source type="image/avif" srcSet={artSet("avif")} sizes={art.sizes} media={art.media} />}
+      {alt && art && <source type="image/webp" srcSet={artSet("webp")} sizes={art.sizes} media={art.media} />}
       <source type="image/avif" srcSet={set("avif")} sizes={sizes} media={media} />
       <source type="image/webp" srcSet={set("webp")} sizes={sizes} media={media} />
       <img

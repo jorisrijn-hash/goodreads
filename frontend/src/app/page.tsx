@@ -12,6 +12,7 @@ import {
   ANYWHERE_BOOK, COVER_RATIO, EXAMPLE_LIBRARY, HERO_BOOKS, HERO_BOOKS_MOBILE, HERO_FRAGMENT,
   HOW_IT_WORKS_QUERY, HOW_SHELF, LANDING_SLUGS, TYPO_EXAMPLE,
 } from "@/content/selected";
+import { landingCover } from "@/content/landing-covers";
 import type { BookDetail, BookPage, Genre } from "@/lib/api";
 import { fetchCatalogueStats, fetchPublic } from "@/lib/server-api";
 import { getCurrentUser } from "@/lib/session";
@@ -25,17 +26,18 @@ export const dynamic = "force-dynamic";
  * depth: how strongly each answers the pointer (back 0.3, front 1).
  */
 const DESKTOP: Record<string, CollagePlacement> = {
-  // Standing on the floor of the box, at slightly different depths.
+  // Standing on the floor of the box, at slightly different depths. Never Let Me Go is
+  // the front and the tallest; Nineteen Eighty-Four is cut by the edge of the window.
   "dune-ol893414w": { left: "3%", bottom: "4%", width: "min(27cqw, 15.5rem)", rotate: -2.5, z: 3, depth: 0.85 },
   "the-secret-history-ol4321141w": { left: "25%", bottom: "11%", width: "min(23cqw, 13.25rem)", rotate: 1, z: 2, depth: 0.35 },
-  "circe-ol18012166w": { left: "45%", bottom: "7%", width: "min(29cqw, 16.5rem)", rotate: 0.5, z: 4, depth: 1 },
-  "project-hail-mary-ol21745884w": { left: "72%", bottom: "5%", width: "min(26cqw, 14.75rem)", rotate: 2.5, z: 3, depth: 0.6 },
+  "never-let-me-go-ol59038w": { left: "45%", bottom: "6%", width: "min(29cqw, 17rem)", rotate: 0.5, z: 4, depth: 1 },
+  "nineteen-eighty-four-ol1168083w": { left: "72%", bottom: "4%", width: "min(26cqw, 15rem)", rotate: 2.5, z: 3, depth: 0.6 },
 };
 
 const MOBILE: Record<string, CollagePlacement> = {
   "dune-ol893414w": { left: "0%", top: "14%", width: "min(34vw, 10rem)", rotate: -2.5, z: 2, depth: 0 },
-  "circe-ol18012166w": { left: "30%", top: "0%", width: "min(40vw, 12rem)", rotate: 0.5, z: 3, depth: 0 },
-  "project-hail-mary-ol21745884w": { left: "64%", top: "12%", width: "min(34vw, 10rem)", rotate: 2.5, z: 2, depth: 0 },
+  "never-let-me-go-ol59038w": { left: "30%", top: "0%", width: "min(40vw, 12rem)", rotate: 0.5, z: 3, depth: 0 },
+  "nineteen-eighty-four-ol1168083w": { left: "64%", top: "12%", width: "min(34vw, 10rem)", rotate: 2.5, z: 2, depth: 0 },
 };
 
 /** First sentences of a description, cut at a sentence end near `max` characters. */
@@ -74,11 +76,11 @@ export default async function LandingPage() {
   const collage = (slugs: string[], places: Record<string, CollagePlacement>): CollageBook[] =>
     slugs.flatMap((slug) => {
       const found = find(slug);
-      return found ? [{ book: found, ratio: ratio(slug), placement: places[slug] }] : [];
+      return found ? [{ book: found, ratio: ratio(slug), placement: places[slug], hq: landingCover(slug) }] : [];
     });
   const library = EXAMPLE_LIBRARY.flatMap(({ slug, status }) => {
     const found = find(slug);
-    return found ? [{ book: found, status, ratio: ratio(slug) }] : [];
+    return found ? [{ book: found, status, ratio: ratio(slug), hq: landingCover(slug) }] : [];
   });
   const fragmentBook = find(HERO_FRAGMENT);
   const fragmentText = opening(fragmentBook?.description ?? null);
@@ -86,6 +88,7 @@ export default async function LandingPage() {
 
   return (
     <PublicShell bare>
+      <div className="landing">
       <LandingHero
         books={collage(HERO_BOOKS, DESKTOP)}
         mobileBooks={collage(HERO_BOOKS_MOBILE, MOBILE)}
@@ -95,8 +98,9 @@ export default async function LandingPage() {
       <DiscoverSection stats={stats} genres={genres} typo={typo} typoQuery={TYPO_EXAMPLE} />
       <LibrarySection entries={library} />
       <HowItWorksSection dune={find("dune-ol893414w")} herbert={herbert} shelf={HOW_SHELF.flatMap((s) => find(s) ?? [])} />
-      <AnywhereSection book={anywhere ? { book: anywhere, ratio: ratio(ANYWHERE_BOOK) } : null} />
+      <AnywhereSection book={anywhere ? { book: anywhere, ratio: ratio(ANYWHERE_BOOK), hq: landingCover(ANYWHERE_BOOK) } : null} />
       <AboutSection />
+      </div>
       {/* Last in the document so keyboard order reaches the page content first. */}
       <ChapterIndex />
     </PublicShell>

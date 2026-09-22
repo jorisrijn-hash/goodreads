@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { LandingCover } from "@/content/landing-covers";
 import { STATUS_LABEL, type BookDetail, type ReadingStatus } from "@/lib/api";
 import { CoverPrint } from "../CoverPrint";
 import { Reveal } from "../motion/Reveal";
@@ -16,7 +17,7 @@ const LEDGER: ReadingStatus[] = ["WANT_TO_READ", "CURRENTLY_READING", "READ", "D
  * The book being read stands tallest and settles last. Beside them, a small ledger of the
  * counts. All of it is an example and says so: not the visitor's library.
  */
-export function LibrarySection({ entries }: { entries: { book: BookDetail; status: ReadingStatus; ratio: number }[] }) {
+export function LibrarySection({ entries }: { entries: { book: BookDetail; status: ReadingStatus; ratio: number; hq?: LandingCover }[] }) {
   const count = (status: ReadingStatus) => entries.filter((e) => e.status === status).length;
   // Left to right as they stand; the book being read in the middle, largest.
   const order = ["WANT_TO_READ", "DNF", "CURRENTLY_READING", "READ", "WANT_TO_READ"] as const;
@@ -29,12 +30,13 @@ export function LibrarySection({ entries }: { entries: { book: BookDetail; statu
   });
 
   return (
-    <section id="library" data-surface="paper" aria-labelledby="library-heading" className="chapter [--edge-h:88px] lg:min-h-[86svh]">
-      <SectionEdge shape="swell" fill="var(--paper)" />
+    <section id="library" data-surface="paper" aria-labelledby="library-heading" className="chapter [--edge-h:88px] lg:min-h-[94svh]">
+      <SectionEdge shape="swell" />
       {/* Daylight on the table. */}
-      <Leaf shadow width="22rem" rotate={24} className="left-[46%] top-[2rem] hidden lg:block" style={{ ["--sx" as string]: "-12px", ["--sy" as string]: "8px", ["--sd" as string]: "24s" }} />
+      <div aria-hidden="true" className="daylight" style={{ ["--lx" as string]: "-10px", ["--ly" as string]: "5px", ["--ld" as string]: "24s" }} />
+      <Leaf shadow width="24rem" rotate={24} className="left-[44%] top-[1rem] hidden lg:block" style={{ ["--sx" as string]: "-11px", ["--sy" as string]: "7px", ["--sd" as string]: "22s", ["--so" as string]: "0.1" }} />
 
-      <div className="page-frame relative grid grid-cols-[minmax(0,1fr)] items-center gap-y-[var(--space-10)] pb-[var(--space-16)] pt-[var(--space-16)] lg:min-h-[86svh] lg:grid-cols-12 lg:gap-x-[var(--space-8)] lg:pb-[8rem] lg:pt-[5rem]">
+      <div className="page-frame relative grid grid-cols-[minmax(0,1fr)] items-center gap-y-[var(--space-10)] pb-[var(--space-16)] pt-[var(--space-16)] lg:min-h-[94svh] lg:grid-cols-12 lg:gap-x-[var(--space-8)] lg:pb-[8rem] lg:pt-[5rem]">
         <Reveal className="lg:col-span-3">
           <SectionLabel number="03" label="Your library" />
           <h2 id="library-heading" className="mt-[var(--space-6)] font-serif text-[clamp(2.25rem,3.4vw,3.25rem)] font-[380] leading-[1.02] tracking-[-0.02em]">
@@ -57,7 +59,7 @@ export function LibrarySection({ entries }: { entries: { book: BookDetail; statu
             </p>
             <Reveal className="lib-row">
               <ul className="-mx-[var(--gutter)] m-0 flex list-none items-end gap-[clamp(0.5rem,1.4vw,1.25rem)] overflow-x-auto px-[var(--gutter)] pb-[var(--space-2)] pt-[var(--space-3)] [scrollbar-width:none] lg:mx-0 lg:justify-center lg:overflow-visible lg:px-0" aria-label="Example library">
-                {row.map(({ book, status, ratio }, i) => {
+                {row.map(({ book, status, ratio, hq }, i) => {
                   const current = status === "CURRENTLY_READING";
                   return (
                     <li
@@ -74,7 +76,8 @@ export function LibrarySection({ entries }: { entries: { book: BookDetail; statu
                         width={current ? "clamp(6rem, 10vw, 10rem)" : "clamp(4.25rem, 7.2vw, 7.75rem)"}
                         ratio={ratio}
                         rotate={[-1, 1.2, 0, -0.8, 1][i] ?? 0}
-                        sizes="11rem"
+                        sizes={current ? "10rem" : "7.75rem"}
+                        hq={hq}
                       />
                       <span className={`status-pill mt-[var(--space-4)] ${current ? "status-pill--active" : ""}`}>{STATUS_LABEL[status]}</span>
                     </li>
@@ -107,7 +110,7 @@ export function LibrarySection({ entries }: { entries: { book: BookDetail; statu
           <Photograph id="library-vault" sizes="15rem" className="block h-full" imgClassName="object-[50%_62%]" />
         </div>
       </div>
-      <Leaf width="12rem" rotate={-50} className="crossing bottom-[2rem] left-[-3.5rem] hidden lg:block" breeze={{ x: 2, y: 1, r: 1, d: 19, delay: 5 }} />
+      <Leaf width="12rem" rotate={-50} className="crossing bottom-[2rem] left-[-3.5rem] hidden lg:block" breeze={{ x: 4, y: 2, r: 1.1, d: 19, delay: 5 }} />
     </section>
   );
 }

@@ -32,15 +32,25 @@ export function DiscoverSection({
 
   return (
     <section id="discover" data-surface="forest" aria-labelledby="discover-heading" className="chapter [--edge-h:88px] lg:min-h-[100svh]">
-      <SectionEdge shape="wave" fill="var(--forest)" />
+      <SectionEdge shape="wave" />
 
       <div className="absolute inset-0 overflow-hidden">
-        <figure className="reveal-up discover-photo absolute bottom-0 right-0 top-0 m-0 w-full lg:w-[58%]">
-          <Photograph id="library-bust" sizes="(min-width: 1024px) 58vw, 100vw" className="block h-full" imgClassName="h-full w-full object-cover object-[70%_40%]" />
+        {/* The library moves a little slower than the page, so the room has depth. */}
+        <div className="drift absolute inset-y-[-24px] right-0 w-full lg:w-[58%]" style={{ ["--drift" as string]: "-14px" }}>
+        <figure className="reveal-up discover-photo absolute inset-0 m-0">
+          <Photograph
+            id="library-bust"
+            art={{ id: "library-bust-tall", media: "(max-width: 1023.98px)", sizes: "100vw" }}
+            sizes="58vw"
+            className="block h-full"
+            imgClassName="h-full w-full object-cover object-[64%_45%]"
+          />
           <figcaption className="type-caption absolute bottom-[11rem] right-[var(--gutter)] hidden text-[0.8125rem] text-[#a6aaa1] lg:block">
             {photo.caption}
           </figcaption>
+          <div aria-hidden="true" className="library-light" />
         </figure>
+        </div>
       </div>
 
       <div className="page-frame relative flex flex-col pb-[calc(88px+var(--space-8))] pt-[var(--space-16)] lg:min-h-[100svh] lg:pt-[7rem]">
@@ -115,7 +125,7 @@ export function DiscoverSection({
       </div>
 
       {/* A leaf from the reading table below reaches up into the library. */}
-      <Leaf width="12rem" rotate={-140} className="crossing bottom-[-6.5rem] right-[6%] hidden md:block" breeze={{ x: 2, y: -2, r: -0.8, d: 21, delay: 3 }} />
+      <Leaf width="12rem" rotate={-140} className="crossing bottom-[-6.5rem] right-[6%] hidden md:block" breeze={{ x: 4, y: -2, r: -1.1, d: 21, delay: 3 }} />
     </section>
   );
 }
