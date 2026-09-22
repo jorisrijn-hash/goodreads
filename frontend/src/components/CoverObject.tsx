@@ -53,6 +53,12 @@ export function CoverObject({
 
   const measure = useCallback((img: HTMLImageElement | null) => {
     if (!img || hq) return;
+    // An image that failed before React hydrated never fires onError; catch it here so a
+    // broken cover still becomes the typographic stand-in.
+    if (img.complete && img.naturalWidth === 0) {
+      setFailed(true);
+      return;
+    }
     const fit = () => {
       // A fresh Image without srcset reports the file's true size (from cache).
       const probe = new Image();
@@ -97,7 +103,7 @@ export function CoverObject({
     );
   } else if (book.coverKey && !failed) {
     image = (
-      // eslint-disable-next-line @next/next/no-img-element -- covers are already-optimised derivatives; see BookCover
+      // eslint-disable-next-line @next/next/no-img-element -- the ingest already wrote these widths; re-encoding them would gain nothing
       <img
         ref={measure}
         src={coverUrl(book.coverKey, 320)!}

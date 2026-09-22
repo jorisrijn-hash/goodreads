@@ -300,12 +300,46 @@ test.describe("home", () => {
   });
 });
 
+test.describe("library, as an archive", () => {
+  test("shelves, search and order change the view instantly and stay in the URL", async ({ page }) => {
+    await enterDemo(page);
+    await openSecretHistory(page);
+    await page.getByRole("button", { name: "Want to Read" }).click();
+    await expect(page.getByRole("button", { name: "Start reading" })).toBeVisible();
+
+    await page.goto("/library");
+    const shelves = page.getByRole("navigation", { name: "Reading status" });
+    await expect(shelves.getByRole("link", { name: /^All \d+ books?$/ })).toHaveAttribute("aria-current", "page");
+    // Changing shelf renders nothing on the server: no document or RSC request.
+    const renders: string[] = [];
+    page.on("request", (r) => { if (r.url().includes("/library") && (r.resourceType() === "document" || r.headers()["rsc"])) renders.push(r.url()); });
+    await shelves.getByRole("link", { name: /^Want to Read/ }).click();
+    await expect(page).toHaveURL(/status=WANT_TO_READ/);
+    await expect(page.getByRole("heading", { name: "The Secret History" })).toBeVisible();
+    await page.getByLabel("Search your library").fill("zzzz");
+    await expect(page.getByRole("heading", { name: /Nothing matches/ })).toBeVisible();
+    await page.getByLabel("Search your library").fill("tartt");
+    await expect(page.getByRole("heading", { name: "The Secret History" })).toBeVisible();
+    await page.getByRole("link", { name: "Title" }).click();
+    await expect(page).toHaveURL(/sort=title/);
+    expect(renders).toEqual([]);
+    // The URL alone reproduces the view.
+    await page.reload();
+    await expect(page.getByLabel("Search your library")).toHaveValue("tartt");
+    await expect(page.getByRole("heading", { name: "The Secret History" })).toBeVisible();
+
+    // Leave the demo account as it was (this helper removes the book if it is saved).
+    await openSecretHistory(page);
+  });
+});
+
 test.describe("library", () => {
   test("empty states explain what to do next", async ({ page }) => {
     await enterDemo(page);
     await page.goto("/library?status=DNF");
     // The demo account has nothing abandoned, so this is the real empty state.
-    await expect(page.getByRole("link", { name: "Discover books" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Nothing set aside." })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Explore books/ })).toBeVisible();
   });
 
   test("navigation only offers destinations that exist", async ({ page }) => {

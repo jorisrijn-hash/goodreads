@@ -51,13 +51,13 @@ export function HomeGreeting({ name }: { name: string }) {
  * year only when it is not this one. Rendered invisibly on the server so the line keeps
  * its place until the browser formats it.
  */
-export function LocalDate({ iso, prefix = "" }: { iso: string; prefix?: string }) {
+export function LocalDate({ iso, prefix = "", month = "long" }: { iso: string; prefix?: string; month?: "long" | "short" }) {
   const text = useSyncExternalStore(
     subscribe,
     () => {
       const date = new Date(iso);
       const thisYear = date.getFullYear() === new Date().getFullYear();
-      return date.toLocaleDateString(undefined, { day: "numeric", month: "long", ...(thisYear ? {} : { year: "numeric" }) });
+      return date.toLocaleDateString(undefined, { day: "numeric", month, ...(thisYear ? {} : { year: "numeric" }) });
     },
     onServer,
   );
