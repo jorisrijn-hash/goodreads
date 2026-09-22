@@ -1407,3 +1407,283 @@ summary:hover .link-draw,
   .home-tile__display, .home-feature__paper { border: 1px solid CanvasText; }
   .home-feature__leaf { display: none; }
 }
+
+/*
+ * Sign in and sign up: a book scene beside the form, one composition across both routes.
+ *
+ * The scene's five real covers each have a position per route (data-variant on the
+ * shell) and move between them. The form panel is ivory, the scene paper; on success an
+ * ivory veil opens from the split across the whole page, which is the colour Home
+ * begins with.
+ */
+.auth-shell {
+  --split: 58%;
+  --fg-subtle: #4f4a42;
+  position: relative;
+  display: grid;
+  min-height: 100dvh;
+  background: var(--ivory);
+  color: var(--ink);
+}
+@media (min-width: 768px) {
+  .auth-shell { grid-template-columns: minmax(0, 58fr) minmax(0, 42fr); }
+}
+
+/* ---------------------------------------------------------------- the scene -- */
+.auth-scene { position: relative; overflow: hidden; background: var(--paper); height: 11rem; }
+@media (min-width: 768px) { .auth-scene { height: auto; min-height: 100dvh; } }
+.auth-scene__frame { position: absolute; inset: 0; }
+
+.auth-scene__fragment {
+  position: absolute;
+  left: 50%; top: 11%; width: 27%; height: 30%;
+  background: #efe8dc;
+  box-shadow: 0 1px 0 rgba(25, 24, 21, 0.05), 0 18px 30px -24px rgba(25, 24, 21, 0.35);
+  transform: rotate(-1.5deg);
+  animation: auth-drift 22s ease-in-out infinite alternate;
+  transition: left 700ms var(--ease-settle), top 700ms var(--ease-settle), opacity 500ms var(--ease);
+}
+@keyframes auth-drift { to { translate: 1.5px -1px; } }
+
+.auth-scene__block {
+  position: absolute;
+  left: var(--bx); bottom: var(--by); width: var(--bw); height: var(--bh);
+  background: var(--forest);
+  transition: left 700ms var(--ease-settle), bottom 700ms var(--ease-settle), width 700ms var(--ease-settle), height 700ms var(--ease-settle);
+}
+.auth-scene__shelf {
+  position: absolute; left: 0; right: 0; bottom: 13%; height: 1px;
+  background: rgba(244, 240, 231, 0.35);
+  opacity: 0;
+  transition: opacity 500ms var(--ease);
+}
+.auth-scene__leaf { right: -5rem; top: -4rem; --so: 0.11; --sd: 24s; }
+
+.auth-scene__label, .auth-scene__caption { position: absolute; left: clamp(1.5rem, 4vw, 3.5rem); margin: 0; }
+.auth-scene__label { top: clamp(1.5rem, 4vw, 3rem); color: var(--fg); }
+.auth-scene__caption { left: auto; right: clamp(1.5rem, 4vw, 3.5rem); bottom: clamp(1.25rem, 3vw, 2.5rem); font-size: 0.8125rem; color: var(--fg-muted); transition: color 500ms var(--ease); }
+.auth-scene__caption span span { padding-inline: 0.35em; }
+.auth-shell[data-variant="login"] :is(.auth-scene__label-signup, .auth-scene__caption-signup),
+.auth-shell[data-variant="signup"] :is(.auth-scene__label-login, .auth-scene__caption-login) { display: none; }
+@media (max-width: 767.98px) { .auth-scene__label, .auth-scene__caption { display: none; } }
+
+/* A book: placed per scene, then pointer depth, then the hover lift. */
+.auth-book {
+  position: absolute;
+  left: var(--x); bottom: var(--y); width: var(--w);
+  z-index: var(--z, 1);
+  opacity: var(--o, 1);
+  transform: rotate(var(--rot, 0deg));
+  transform-origin: 50% 100%;
+  transition: left 700ms var(--ease-settle), bottom 700ms var(--ease-settle), width 700ms var(--ease-settle),
+              transform 700ms var(--ease-settle), opacity 500ms var(--ease), translate 520ms var(--ease-settle);
+}
+.auth-book__depth {
+  display: block;
+  transform: translate3d(calc(var(--px, 0) * var(--d) * 5px), calc(var(--py, 0) * var(--d) * 4px), 0);
+  transition: transform 500ms var(--ease-settle);
+}
+.auth-book__lift { display: block; transition: transform var(--motion-base) var(--ease); }
+.auth-book__lift:hover { transform: translateY(-4px); }
+.auth-book img {
+  display: block; width: 100%; height: auto;
+  box-shadow: 0 1px 2px rgba(25, 24, 21, 0.22), 0 22px 34px -20px rgba(25, 24, 21, 0.55);
+}
+
+/* Return to your reading: a desk, the book in progress on a forest mat, others around it. */
+.auth-shell[data-variant="login"] { --bx: 15%; --by: 12%; --bw: 44%; --bh: 60%; }
+.auth-shell[data-variant="login"] .auth-book--0 { --x: 21%; --y: 17%; --w: clamp(11rem, 19vw, 18rem); --rot: -2deg; --z: 4; }
+.auth-shell[data-variant="login"] .auth-book--1 { --x: 56%; --y: 30%; --w: clamp(8.5rem, 14vw, 13rem); --rot: 3deg; --z: 3; }
+.auth-shell[data-variant="login"] .auth-book--2 { --x: 65%; --y: 64%; --w: clamp(6rem, 9vw, 8.5rem); --rot: 5deg; --z: 2; }
+.auth-shell[data-variant="login"] .auth-book--3 { --x: 4%; --y: -8%; --w: clamp(8.5rem, 13vw, 12rem); --rot: -8deg; --z: 5; }
+.auth-shell[data-variant="login"] .auth-book--4 { --x: 104%; --y: 30%; --w: 9rem; --rot: 8deg; --o: 0; }
+
+/* Start your library: an empty shelf, a few books arriving on it. */
+.auth-shell[data-variant="signup"] { --bx: 0%; --by: 0%; --bw: 100%; --bh: 13%; }
+.auth-shell[data-variant="signup"] .auth-scene__shelf { opacity: 1; }
+.auth-shell[data-variant="signup"] .auth-scene__fragment { left: 9%; top: 12%; opacity: 0; }
+.auth-shell[data-variant="signup"] .auth-scene__caption { color: #babcb3; }
+/* Standing side by side with a little air, the fourth leaning, the fifth still arriving. */
+.auth-shell[data-variant="signup"] .auth-book--4 { --x: 7%; --y: 13%; --w: clamp(7rem, 10.4vw, 10rem); --z: 3; }
+.auth-shell[data-variant="signup"] .auth-book--2 { --x: 25%; --y: 13%; --w: clamp(6.75rem, 10vw, 9.6rem); --z: 3; }
+.auth-shell[data-variant="signup"] .auth-book--1 { --x: 42.5%; --y: 13%; --w: clamp(7rem, 10.6vw, 10.25rem); --z: 3; }
+.auth-shell[data-variant="signup"] .auth-book--0 { --x: 61%; --y: 13%; --w: clamp(7rem, 10.4vw, 10rem); --rot: 6deg; --z: 3; }
+.auth-shell[data-variant="signup"] .auth-book--3 { --x: 91%; --y: 13%; --w: clamp(7rem, 10.2vw, 9.8rem); --z: 2; }
+
+/* Phones: a short strip of three books under the identity, the form right after. */
+@media (max-width: 767.98px) {
+  .auth-shell[data-variant="login"] { --bx: 48%; --by: 0%; --bw: 44%; --bh: 72%; }
+  .auth-shell[data-variant="login"] .auth-book--0 { --x: 56%; --y: 12%; --w: 5.4rem; }
+  .auth-shell[data-variant="login"] .auth-book--1 { --x: 75%; --y: 20%; --w: 4.4rem; }
+  .auth-shell[data-variant="login"] .auth-book--3 { --x: 40%; --y: 8%; --w: 4.4rem; }
+  .auth-shell[data-variant="login"] .auth-book--2 { --o: 0; }
+  .auth-shell[data-variant="signup"] { --bh: 16%; }
+  .auth-shell[data-variant="signup"] .auth-scene__shelf { bottom: 16%; }
+  .auth-shell[data-variant="signup"] .auth-book--4 { --x: 42%; --y: 16%; --w: 3.9rem; }
+  .auth-shell[data-variant="signup"] .auth-book--2 { --x: 54%; --y: 16%; --w: 3.7rem; }
+  .auth-shell[data-variant="signup"] .auth-book--1 { --x: 66%; --y: 16%; --w: 4rem; }
+  .auth-shell[data-variant="signup"] .auth-book--0 { --x: 79%; --y: 16%; --w: 3.9rem; }
+  .auth-shell[data-variant="signup"] .auth-book--3 { --o: 0; }
+  .auth-scene__fragment { left: 36%; width: 30%; top: 12%; height: 60%; }
+  .auth-scene__leaf { display: none; }
+}
+
+/* ---------------------------------------------------------------- the panel -- */
+.auth-panel { display: flex; align-items: center; padding: var(--space-8) var(--gutter) var(--space-10); }
+@media (min-width: 768px) {
+  .auth-panel { position: relative; min-height: 100dvh; padding: 5.5rem clamp(2rem, 5vw, 5rem) var(--space-8); }
+  /* The identity holds the panel's corner, out of the form's flow, so the form and the
+     disclaimer beside it fit a 900px-high window. */
+  .auth-panel__inner > a:first-child { position: absolute; top: var(--space-8); left: max(clamp(2rem, 5vw, 5rem), calc(50% - 12.5rem)); }
+  .auth-panel__body { margin-top: 0; }
+}
+.auth-panel__inner { display: flex; flex-direction: column; width: 100%; max-width: 25rem; margin-inline: auto; }
+.auth-panel__body { margin-top: var(--space-8); }
+@media (max-width: 767.98px) {
+  /* The identity sits on the strip, so the form starts right under it. */
+  .auth-panel__inner > a:first-child { position: absolute; top: var(--space-5); left: var(--gutter); z-index: 6; padding: 6px 10px 6px 0; }
+  .auth-panel__body { margin-top: 0; }
+}
+
+.auth-title {
+  margin-top: var(--space-3);
+  font-family: var(--font-serif);
+  font-size: clamp(2.25rem, 3.4vw, 3rem);
+  font-weight: 380;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: var(--space-4); margin-top: var(--space-6); }
+.auth-fields { display: flex; flex-direction: column; gap: var(--space-4); transform-origin: 50% 0; transition: opacity 280ms var(--ease), transform 280ms var(--ease); }
+
+.auth-field { display: flex; flex-direction: column; gap: 6px; }
+.auth-field__label { font-size: 0.875rem; font-weight: 500; color: var(--fg-muted); transition: color var(--motion-fast) var(--ease); }
+.auth-field:focus-within .auth-field__label { color: var(--fg); }
+.auth-field__input {
+  min-height: 48px;
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  background: var(--ivory);
+  color: var(--ink);
+  font-size: 1rem;
+  transition: border-color var(--motion-fast) var(--ease), background-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+}
+.auth-field__input:focus { outline: none; border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); background: #efe9de; }
+.auth-field__input:read-only { cursor: progress; color: var(--ink-70); }
+.auth-field[data-invalid] .auth-field__input { border-color: var(--burgundy); }
+.auth-field__meta { display: flex; gap: var(--space-3); font-size: 0.8125rem; color: var(--fg-subtle); }
+
+.auth-error { margin: 0; padding-left: 10px; border-left: 2px solid var(--burgundy); font-size: 0.875rem; font-weight: 500; color: var(--burgundy); }
+.auth-error--summary { padding: 4px 0 4px 12px; font-weight: 400; color: var(--ink); }
+.auth-error--summary:focus { outline: none; }
+.auth-error--summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 4px; }
+
+/* The actions: full width, so a changing label never changes the button's size. */
+.auth-action { position: relative; }
+.auth-action__button {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  width: 100%; min-height: 50px; padding: 0 var(--space-5);
+  border: 1.5px solid var(--forest); border-radius: 2px;
+  background: var(--forest); color: var(--ivory);
+  font-size: 0.9375rem; font-weight: 500; text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease), opacity var(--motion-base) var(--ease);
+}
+.auth-action__button:hover:not(:disabled) { background: var(--forest-hover); }
+.auth-action[data-variant="demo"] .auth-action__button { background: transparent; color: var(--ink); border-color: var(--ink); }
+.auth-action[data-variant="demo"] .auth-action__button:hover:not(:disabled) { background: var(--paper); }
+.auth-action[data-variant="demo"][data-state="pending"] .auth-action__button,
+.auth-action[data-variant="demo"][data-state="success"] .auth-action__button { background: var(--forest); color: var(--ivory); border-color: var(--forest); }
+.auth-action__button:disabled { cursor: progress; }
+/* The other action, while one runs: plainly unavailable, still legible. */
+.auth-action[data-state="idle"] .auth-action__button:disabled { opacity: 0.45; cursor: not-allowed; }
+.auth-action__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth-action__mark { flex: none; transition: transform var(--motion-base) var(--ease); }
+.auth-action__button:hover:not(:disabled) .auth-action__mark { transform: translateX(3px); }
+
+/* A 1px line that travels while waiting. Not a spinner, and no percentage. */
+.auth-action__progress { position: absolute; left: 0; right: 0; bottom: -6px; height: 1px; overflow: hidden; opacity: 0; transition: opacity var(--motion-base) var(--ease); }
+.auth-action__progress::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 32%; background: var(--forest); animation: auth-progress 1.4s var(--ease) infinite; }
+.auth-action[data-state="pending"] .auth-action__progress { opacity: 1; }
+@keyframes auth-progress { from { translate: -100% 0; } to { translate: 320% 0; } }
+
+/* Reserved height, so the supporting line never pushes anything when it appears. */
+.auth-status { min-height: 1.35rem; margin: var(--space-2) 0 var(--space-1); font-size: 0.8125rem; line-height: 1.35rem; color: var(--fg-muted); }
+
+.auth-or { display: flex; align-items: center; gap: var(--space-4); margin: 0 0 var(--space-4); font-size: 0.6875rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-subtle); }
+.auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.auth-switch { margin: var(--space-5) 0 0; font-size: 0.9375rem; color: var(--fg-muted); }
+.auth-switch a { color: var(--forest); text-decoration: underline; text-underline-offset: 3px; }
+.auth-note { margin: var(--space-5) 0 0; padding-left: var(--space-4); border-left: 2px solid var(--burgundy); font-size: 0.8125rem; line-height: 1.55; color: var(--fg-muted); }
+
+/* ------------------------------------------------------------- arriving -- */
+/* CSS only, so without JavaScript the page still arrives, and in well under a second.
+   "backwards" fill: before its delay an element waits unseen; after, nothing lingers. */
+.auth-in { animation: auth-in 520ms var(--ease-settle) backwards; }
+.auth-in--1 { animation-delay: 100ms; }
+.auth-in--2 { animation-delay: 220ms; }
+.auth-in--3 { animation-delay: 280ms; }
+.auth-in--4 { animation-delay: 340ms; }
+.auth-in--5 { animation-delay: 400ms; }
+@keyframes auth-in { from { opacity: 0; translate: 0 8px; } }
+/* The heading (with the disclaimer, the largest text on a phone) only moves: it is
+   visible from the first paint, so the page's largest paint is never held back by a fade. */
+.auth-in--2 { animation-name: auth-in-move; }
+@keyframes auth-in-move { from { translate: 0 8px; } }
+.auth-book { animation: auth-in 700ms var(--ease-settle) 160ms backwards; }
+.auth-shell[data-variant="signup"] .auth-book { animation-name: auth-arrive; }
+.auth-shell[data-variant="signup"] .auth-book--2 { animation-delay: 220ms; }
+.auth-shell[data-variant="signup"] .auth-book--1 { animation-delay: 280ms; }
+.auth-shell[data-variant="signup"] .auth-book--0 { animation-delay: 340ms; }
+.auth-shell[data-variant="signup"] .auth-book--3 { animation-delay: 400ms; }
+@keyframes auth-arrive { from { opacity: 0; translate: 36px 0; } }
+/* Arriving happens once; moving between the two forms uses the view transition. */
+.auth-shell[data-entered] :is(.auth-in, .auth-book) { animation: none; }
+
+/* Between the forms: the panel crosses over, 8px, where view transitions exist. */
+::view-transition-old(.auth-panel-out) { animation: auth-panel-out 160ms var(--ease) both; }
+::view-transition-new(.auth-panel-in) { animation: auth-panel-in 280ms var(--ease-settle) 60ms both; }
+@keyframes auth-panel-out { to { opacity: 0; translate: 0 -8px; } }
+@keyframes auth-panel-in { from { opacity: 0; translate: 0 8px; } }
+
+/* -------------------------------------------------------------- leaving -- */
+.auth-shell[data-leaving] .auth-book { translate: calc(var(--in) * 14px) 0; }
+.auth-shell[data-leaving] :is(.auth-fields, .auth-or, .auth-switch, .auth-form > .auth-error) { opacity: 0.35; transform: scale(0.985); transition: opacity 280ms var(--ease), transform 280ms var(--ease); }
+.auth-shell[data-leaving="signup"] .auth-fields { opacity: 0; transform: translateY(-6px) scaleY(0.94); }
+.auth-shell[data-leaving="signup"] .auth-book--3 { --x: 62%; }
+
+.auth-veil { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: var(--ivory); visibility: hidden; clip-path: inset(0 42% 0 58%); pointer-events: none; }
+.auth-veil__edge { position: absolute; top: 0; bottom: 0; left: var(--split); width: 2px; background: var(--forest); opacity: 0; }
+.auth-veil__label { opacity: 0; color: var(--fg-subtle); }
+@media (max-width: 767.98px) {
+  .auth-veil { clip-path: inset(0 50% 0 50%); } .auth-veil__edge { left: 50%; }
+  .auth-shell[data-leaving] .auth-veil { animation-name: auth-veil-narrow; }
+}
+@keyframes auth-veil-narrow { to { clip-path: inset(0 0 0 0); } }
+/* The confirmation is read first (300ms), then the spread closes over the scene, and
+   only at the end over the form. */
+.auth-shell[data-leaving] .auth-veil { visibility: visible; animation: auth-veil 620ms var(--ease) 300ms forwards; }
+.auth-shell[data-leaving] .auth-veil__edge { animation: auth-veil-edge 700ms var(--ease) 240ms forwards; }
+/* Only if the next page is slow: say what is happening instead of holding a blank page. */
+.auth-shell[data-leaving] .auth-veil__label { animation: auth-veil-label 400ms var(--ease) 1200ms forwards; }
+@keyframes auth-veil-label { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+@keyframes auth-veil { 60% { clip-path: inset(0 42% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes auth-veil-edge { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-in, .auth-book, .auth-scene__fragment, .auth-action__progress::before { animation: none !important; }
+  .auth-book, .auth-book__depth, .auth-book__lift, .auth-scene__block, .auth-fields { transition: none !important; }
+  .auth-book__depth, .auth-book__lift:hover { transform: none !important; }
+  .auth-shell[data-leaving] .auth-book { translate: none; }
+  /* No morph: the button's own words carry the success, then the next page appears. */
+  .auth-shell[data-leaving] .auth-veil { display: none; }
+  .auth-action[data-state="pending"] .auth-action__progress::before { width: 100%; opacity: 0.5; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+@media (forced-colors: active) {
+  .auth-scene__block, .auth-veil { forced-color-adjust: none; }
+  .auth-action__button { border: 2px solid ButtonText; }
+}

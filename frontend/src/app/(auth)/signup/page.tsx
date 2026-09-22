@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { AuthLayout } from "@/components/AuthLayout";
-import { SignupForm } from "@/components/SignupForm";
+import { AuthHeading } from "@/components/auth/AuthHeading";
+import { SignupForm } from "@/components/auth/SignupForm";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata = { title: "Create an account" };
@@ -9,11 +9,9 @@ export default async function SignupPage() {
   if (await getCurrentUser()) redirect("/home");
 
   return (
-    <AuthLayout
-      title="Start your reading life."
-      intro="Three fields. No questionnaire."
-    >
+    <>
+      <AuthHeading label="Your library" title="Create your account." intro="Three fields. No questionnaire." />
       <SignupForm />
-    </AuthLayout>
+    </>
   );
 }

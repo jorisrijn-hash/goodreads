@@ -30,8 +30,10 @@ export function DemoButton({
     setFailed(false);
     try {
       await api.enterDemo();
+      // No router.refresh() after the push: the destination is rendered fresh anyway, and
+      // refreshing as well rendered it twice (and prefetched pages around it) before the
+      // navigation could finish, about a second of avoidable wait on production.
       router.push(returnTo);
-      router.refresh();
     } catch {
       setFailed(true);
       setLoading(false);
