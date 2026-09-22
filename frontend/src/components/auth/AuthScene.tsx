@@ -30,7 +30,9 @@ export function AuthScene() {
         <span className="auth-scene__fragment" />
         <span className="auth-scene__block" />
         <span className="auth-scene__shelf" />
-        <Leaf shadow width="30rem" rotate={-28} className="auth-scene__leaf" priority />
+        {/* Fetched early where it shows (it is the largest image there), and not at all on
+            phones, where it is hidden and would only compete with the text and font. */}
+        <Leaf shadow width="30rem" rotate={-28} className="auth-scene__leaf" priority media="(min-width: 768px)" />
 
         {BOOKS.map((book, i) => {
           const cover = LANDING_COVERS.find((c) => c.slug === book.slug)!;
@@ -52,7 +54,7 @@ export function AuthScene() {
                       height={Math.round(320 / cover.ratio)}
                       alt=""
                       decoding="async"
-                      fetchPriority={i === 0 ? "high" : "auto"}
+                      fetchPriority={i === 0 ? "auto" : "low"}
                     />
                   </picture>
                 </span>
