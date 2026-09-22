@@ -41,11 +41,21 @@ export const PHOTOGRAPHS: Photograph[] = [
     ...OLD_LIBRARY,
   },
   {
-    id: "library-shelves",
-    widths: [560, 1000],
-    ratio: 0.776,
-    alt: "Tall wooden bookcases in a library gallery, packed with leather-bound books",
+    id: "library-bust",
+    widths: [640, 1100],
+    ratio: 0.67,
+    alt: "A marble bust in a ruffled collar in front of shelves of old leather-bound books",
     ...OLD_LIBRARY,
+    sourceUrl: "https://unsplash.com/photos/X4Xgm-kWpYY",
+  },
+  {
+    id: "leaf-pair",
+    widths: [400, 800],
+    ratio: 0.832,
+    alt: "",
+    photographer: "Mockup Graphics",
+    sourceUrl: "https://unsplash.com/photos/_mUVHhvBYZ0",
+    licence: "Unsplash License",
   },
 ];
 

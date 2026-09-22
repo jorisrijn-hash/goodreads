@@ -57,7 +57,18 @@ export function SiteHeader({
             ) : (
               <>
                 <li><NavLink href="/discover">Discover</NavLink></li>
-                <li><NavLink href="/login">Sign in</NavLink></li>
+                <li className="hidden sm:block"><NavLink href="/#about">About</NavLink></li>
+                <li className="hidden sm:block">
+                  <Link
+                    href="/discover"
+                    aria-label="Search the catalogue"
+                    className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-[var(--radius-input)] text-[var(--fg-muted)] transition-colors duration-[var(--motion-fast)] hover:bg-[var(--wash)] hover:text-[var(--fg)]"
+                  >
+                    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+                  </Link>
+                </li>
+                <li className="hidden sm:block border-l border-[var(--rule)] pl-[var(--space-2)]"><NavLink href="/login">Sign in</NavLink></li>
+                <li className="sm:hidden"><NavLink href="/login">Sign in</NavLink></li>
                 <li className="ml-[var(--space-2)] hidden sm:block">
                   <Link
                     href="/signup"

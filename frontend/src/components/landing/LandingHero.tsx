@@ -2,91 +2,110 @@ import Link from "next/link";
 import type { CatalogueStats } from "@/lib/api";
 import { DemoButton } from "../DemoButton";
 import { CoverCollage, type CollageBook } from "./CoverCollage";
+import { Leaf } from "./Leaf";
 
 /**
- * 01 The hero: typography and real covers on paper, nothing else.
+ * 01 The hero.
  *
- * Everything on the left hangs from one vertical edge. On the right, the selected covers
- * lie as a loose mosaic that runs off the edge of the page, resting on a single hairline,
- * with a small caption in the margin saying what they are.
+ * Left, one vertical edge: the statement, the ways in, the size of the catalogue. Right,
+ * four real covers standing large and overlapping in afternoon light, with a leaf at the
+ * corner of the page and a scrap of a real page lying at their foot. The scrap crosses
+ * the stitched edge into the next chapter.
  */
 export function LandingHero({
   books,
   mobileBooks,
   stats,
+  fragment,
 }: {
   books: CollageBook[];
   mobileBooks: CollageBook[];
   stats: CatalogueStats | null;
+  /** Real opening text of a selected book, set on the paper scrap. */
+  fragment: { title: string; text: string } | null;
 }) {
   return (
-    <section data-surface="ivory" aria-labelledby="hero-heading" className="hero relative z-20 [overflow-x:clip]">
-      <div className="page-frame relative z-10 grid grid-cols-[minmax(0,1fr)] lg:min-h-[min(calc(100svh-68px),56rem)] lg:grid-cols-12 lg:items-center">
-        <div className="pb-[var(--space-10)] pt-[var(--space-12)] lg:col-span-6 lg:py-[var(--space-16)]">
-          <p className="seq type-label text-[var(--fg-subtle)]" style={{ ["--i" as string]: 0 }}>
-            A reading tracker, redesigned
+    <section id="hero" data-surface="ivory" aria-labelledby="hero-heading" className="chapter hero">
+      {/* Light through a window: a leaf's shadow drifting over the paper. */}
+      <Leaf shadow width="24rem" rotate={-18} className="right-[16%] top-[6%] hidden lg:block" style={{ ["--sx" as string]: "14px", ["--sy" as string]: "10px", ["--sd" as string]: "28s" }} />
+
+      <div className="page-frame relative z-10 grid grid-cols-[minmax(0,1fr)] lg:min-h-[min(calc(100svh-68px),58rem)] lg:grid-cols-12 lg:items-center">
+        <div className="pb-[var(--space-10)] pt-[var(--space-12)] lg:col-span-5 lg:pb-[var(--space-16)] lg:pt-[var(--space-10)]">
+          <p className="seq flex items-center gap-[var(--space-3)] text-[var(--fg-subtle)]" style={{ ["--i" as string]: 0 }}>
+            <span className="type-folio">01</span>
+            <span aria-hidden="true" className="h-px w-8 bg-[var(--rule-strong)]" />
+            <span className="type-label">A more thoughtful way to read</span>
           </p>
 
-          <h1
-            id="hero-heading"
-            className="mt-[var(--space-6)] font-serif text-[clamp(2.5rem,4.1vw,4.25rem)] font-[360] leading-[1.02] tracking-[-0.03em]"
-          >
-            {["A better home", "for your reading life."].map((line, i) => (
+          <h1 id="hero-heading" className="mt-[var(--space-6)] font-serif text-[clamp(3rem,5.6vw,5.5rem)] font-[380] leading-[1] tracking-[-0.03em]">
+            {["A better home", "for your", "reading life."].map((line, i) => (
               <span key={line} className="seq-line" style={{ ["--i" as string]: i }}>
                 <span>{line}</span>
               </span>
             ))}
           </h1>
 
-          <p
-            className="seq mt-[var(--space-8)] max-w-[34ch] font-serif text-[1.1875rem] leading-[1.6] text-[var(--fg-muted)]"
-            style={{ ["--i" as string]: 3 }}
-          >
-            Discover books worth reading, save the ones you want, and keep track of where
-            each one stands, all in one place.
+          <p className="seq mt-[var(--space-6)] max-w-[40ch] text-[1rem] leading-[1.65] text-[var(--fg-muted)]" style={{ ["--i" as string]: 3 }}>
+            Discover books worth reading, save the ones you want, and keep track of where each
+            one stands, all in one place.
           </p>
 
           <div className="seq mt-[var(--space-8)] flex flex-wrap items-start gap-[var(--space-3)]" style={{ ["--i" as string]: 4 }}>
             <Link href="/signup" className="action action--primary">
-              Create an account <span aria-hidden="true" className="action__arrow">→</span>
+              Get started, it&rsquo;s free <span aria-hidden="true" className="action__arrow">→</span>
             </Link>
             <DemoButton label="Explore demo" size="large" />
           </div>
 
           {stats && (
-            <dl className="seq mt-[var(--space-12)] flex max-w-[34rem] flex-wrap gap-x-[var(--space-8)] gap-y-[var(--space-2)] border-t border-[var(--rule)] pt-[var(--space-4)]" style={{ ["--i" as string]: 6 }}>
+            <dl className="seq mt-[var(--space-10)] flex divide-x divide-[var(--rule)]" style={{ ["--i" as string]: 6 }}>
               {([["Books", stats.books], ["Authors", stats.authors], ["Genres", stats.genres]] as const).map(([label, value]) => (
-                <div key={label} className="flex items-baseline gap-[var(--space-2)]">
-                  <dd className="m-0 text-[0.9375rem] font-medium text-[var(--fg)] [font-variant-numeric:tabular-nums]">{value.toLocaleString("en")}</dd>
-                  <dt className="type-label text-[var(--fg-subtle)]">{label}</dt>
+                <div key={label} className="flex flex-col-reverse px-[var(--space-6)] first:pl-0">
+                  <dt className="type-label mt-[var(--space-1)] text-[var(--fg-subtle)]">{label}</dt>
+                  <dd className="m-0 font-serif text-[1.75rem] leading-none tracking-[-0.01em] [font-variant-numeric:lining-nums_tabular-nums]">{value.toLocaleString("en")}</dd>
                 </div>
               ))}
             </dl>
           )}
+
+          <a href="#discover" className="seq link-rule mt-[var(--space-12)] hidden items-center gap-[var(--space-3)] border-l border-[var(--rule-strong)] pl-[var(--space-3)] text-[var(--fg-subtle)] lg:inline-flex" style={{ ["--i" as string]: 7 }}>
+            <span className="type-label">Scroll for more</span> <span aria-hidden="true">→</span>
+          </a>
         </div>
       </div>
 
-      {/* Desktop mosaic: after the copy in the document, so the copy's actions come
-          first in keyboard order. */}
       {books.length > 0 && (
-        <div className="hero-collage absolute bottom-[10%] top-[9%] z-20 hidden lg:block">
-          <CoverCollage books={books} sizes="15rem" media="(min-width: 1024px)" />
-          <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 h-px bg-[var(--rule-strong)] opacity-60" />
-          <p className="absolute left-0 top-[calc(100%+12px)] flex items-baseline gap-[var(--space-3)] text-[var(--fg-subtle)]">
-            <span className="type-label text-[var(--fg)]">Selected / 0{books.length}</span>
-            <span className="type-caption text-[0.875rem]">Chosen from the catalogue for the page.</span>
+        <div className="hero-collage absolute bottom-0 top-[8%] z-20 hidden lg:block [container-type:inline-size]">
+          {/* The floor the books stand on: a soft contact shadow, nothing drawn. */}
+          <div aria-hidden="true" className="absolute bottom-[1%] left-0 right-[6%] h-[14%] rounded-[50%] bg-[radial-gradient(closest-side,rgba(25,24,21,0.2),rgba(25,24,21,0))] blur-[6px]" />
+          <CoverCollage books={books} sizes="17rem" media="(min-width: 1024px)" />
+          <p aria-hidden="true" className="hand absolute left-[18%] top-[14%] rotate-[-5deg] text-[1.625rem] text-[var(--ink-70)]">
+            Selected / 0{books.length} <span className="ml-1 inline-block rotate-[30deg]">↘</span>
           </p>
+          <Leaf width="13rem" rotate={-24} className="left-[70%] top-[4%] z-[25]" breeze={{ x: 3, y: 2, r: 0.9, d: 17 }} />
         </div>
       )}
 
-      {/* Phones: after the words, never instead of them. */}
-      {mobileBooks.length > 0 && (
-        <div className="page-frame pb-[var(--space-12)] lg:hidden">
-          <div className="relative h-[20rem] sm:h-[26rem]">
-            <CoverCollage books={mobileBooks} sizes="40vw" interactive={false} priority={false} startDelay={0.5} media="(max-width: 1023.98px)" />
-            <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 h-px bg-[var(--rule-strong)] opacity-60" />
+      {/* A scrap of the real first page, lying at the books' feet and over the edge. */}
+      {fragment && (
+        <div className="crossing drift bottom-[-4rem] left-[calc(43%+5rem)] hidden w-[19rem] lg:block" style={{ ["--drift" as string]: "8px" }}>
+          <div className="breeze" style={{ ["--bx" as string]: "1px", ["--by" as string]: "-1px", ["--br" as string]: "0.35deg", ["--bd" as string]: "23s", ["--borigin" as string]: "0 0" }}>
+            <div className="paper-fragment relative rotate-[-3deg]">
+              <p className="m-0 mb-[6px] font-sans text-[8px] font-semibold uppercase tracking-[0.18em] text-[#7a7266]">{fragment.title}</p>
+              <p className="m-0 [column-count:2] [column-gap:14px]">{fragment.text}</p>
+            </div>
           </div>
-          <p className="mt-[var(--space-3)] type-label text-[var(--fg)]">Selected / 0{mobileBooks.length}</p>
+        </div>
+      )}
+
+      {/* Phones: the covers follow the words. */}
+      {mobileBooks.length > 0 && (
+        <div className="page-frame pb-[var(--space-16)] lg:hidden">
+          <div className="relative h-[19rem] sm:h-[26rem]">
+            <CoverCollage books={mobileBooks} sizes="40vw" interactive={false} priority={false} startDelay={0.5} media="(max-width: 1023.98px)" />
+            <Leaf width="8rem" rotate={-24} className="right-[-1.5rem] top-[-2rem] z-[25]" breeze={{ x: 2, y: 1, r: 0.8, d: 16 }} />
+          </div>
+          <p aria-hidden="true" className="hand mt-[var(--space-2)] text-[1.375rem] text-[var(--ink-70)]">Selected / 0{mobileBooks.length}</p>
         </div>
       )}
     </section>

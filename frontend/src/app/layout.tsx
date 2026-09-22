@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Literata } from "next/font/google";
+import { Caveat, Inter, Literata } from "next/font/google";
 import "./globals.css";
 
 /*
@@ -24,6 +24,15 @@ const literataItalic = Literata({
   preload: false,
 });
 
+// Handwriting, for short factual annotations on the landing page only. Decorative, so
+// not preloaded: it must never compete with the headline for bandwidth.
+const hand = Caveat({
+  variable: "--font-hand",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
+});
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -40,11 +49,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${literata.variable} ${literataItalic.variable} ${inter.variable}`}>
+    <html lang="en" className={`${literata.variable} ${literataItalic.variable} ${hand.variable} ${inter.variable}`}>
       <head>
         {/* Entrances start hidden and some wait for JavaScript; without it, show everything. */}
         <noscript>
-          <style>{`[data-reveal],[data-motion-initial],.seq,.seq-line>span,.unfold__item,.collage-item,.collage-enter{opacity:1!important;transform:none!important;animation:none!important}.draw-rule{transform:none!important}`}</style>
+          <style>{`[data-reveal],[data-motion-initial],.seq,.seq-line>span,.unfold__item,.collage-item,.collage-enter,.lib-book{opacity:1!important;transform:none!important;animation:none!important}.draw-rule{transform:none!important}`}</style>
         </noscript>
       </head>
       <body>{children}</body>

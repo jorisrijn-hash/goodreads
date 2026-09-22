@@ -25,6 +25,7 @@ export function CoverPrint({
   media,
   className = "",
   style,
+  link = true,
 }: {
   slug: string;
   title: string;
@@ -42,18 +43,19 @@ export function CoverPrint({
   media?: string;
   className?: string;
   style?: CSSProperties;
+  /** False when the cover sits inside another link (a result row): a span, not a link. */
+  link?: boolean;
 }) {
   const srcSet = coverKey
     ? ([160, 320, 640] as const).map((w) => `${coverUrl(coverKey, w)} ${w}w`).join(", ")
     : undefined;
 
-  return (
-    <Link
-      href={`/book/${slug}`}
-      aria-label={`${title}${authors[0] ? ` by ${authors[0]}` : ""}`}
-      className={`cover-print ${className}`}
-      style={{ ["--w" as string]: width, ["--ratio" as string]: ratio, ["--rot" as string]: `${rotate}deg`, ...style }}
-    >
+  const shared = {
+    className: `cover-print ${className}`,
+    style: { ["--w" as string]: width, ["--ratio" as string]: ratio, ["--rot" as string]: `${rotate}deg`, ...style },
+  };
+  const inner = (
+    <>
       {coverKey ? (
         <picture className="contents">
           {media && <source media={media} srcSet={srcSet} sizes={sizes} />}
@@ -73,6 +75,12 @@ export function CoverPrint({
       ) : (
         <span className="cover-print__blank">{title}</span>
       )}
-    </Link>
+    </>
+  );
+
+  return link ? (
+    <Link href={`/book/${slug}`} aria-label={`${title}${authors[0] ? ` by ${authors[0]}` : ""}`} {...shared}>{inner}</Link>
+  ) : (
+    <span {...shared}>{inner}</span>
   );
 }

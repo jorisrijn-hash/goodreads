@@ -10,7 +10,9 @@ import { MotionProvider } from "../motion/MotionProvider";
 /** Where a cover lies in the collage: percentages of the collage box, a CSS width. */
 export type CollagePlacement = {
   left: string;
-  top: string;
+  /** From the top, or (for books standing on the floor of the box) from the bottom. */
+  top?: string;
+  bottom?: string;
   width: string;
   rotate: number;
   z: number;
@@ -112,6 +114,8 @@ function Item({
 }) {
   const shiftX = useTransform(x, (v) => v * PARALLAX_MAX * placement.depth);
   const shiftY = useTransform(y, (v) => v * (PARALLAX_MAX / 2) * placement.depth);
+  // Nearer books also turn very slightly toward the pointer: under a degree at most.
+  const turn = useTransform(x, (v) => v * 0.7 * placement.depth);
 
   return (
     // Outer: position and entrance. Inner: the pointer's shift. Kept apart because both
@@ -120,9 +124,9 @@ function Item({
     // JavaScript (they are the page's largest images); Motion only drives the shift.
     <div
       className="collage-item collage-enter absolute"
-      style={{ left: placement.left, top: placement.top, zIndex: placement.z, animationDelay: `${delay}s` }}
+      style={{ left: placement.left, top: placement.top, bottom: placement.bottom, zIndex: placement.z, animationDelay: `${delay}s` }}
     >
-      <m.div style={{ x: shiftX, y: shiftY }}>
+      <m.div style={{ x: shiftX, y: shiftY, rotate: turn }}>
         <CoverPrint
           slug={book.slug}
           title={book.title}
