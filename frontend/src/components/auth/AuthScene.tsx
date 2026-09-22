@@ -9,12 +9,16 @@ import { PointerDepth } from "../landing/PointerDepth";
  * each moves when the page closes on success.
  */
 const BOOKS = [
-  { slug: "dune-ol893414w", title: "Dune", depth: 1, inward: 1 },
-  { slug: "the-secret-history-ol4321141w", title: "The Secret History", depth: 0.7, inward: -1 },
-  { slug: "never-let-me-go-ol59038w", title: "Never Let Me Go", depth: 0.45, inward: -1 },
-  { slug: "tomorrow-and-tomorrow-and-tomorrow-ol26004554w", title: "Tomorrow, and Tomorrow, and Tomorrow", depth: 0.85, inward: 1 },
-  { slug: "educated-ol18139176w", title: "Educated", depth: 0.55, inward: 1 },
+  { slug: "dune-ol893414w", title: "Dune", depth: 1, inward: 1, wide: false },
+  { slug: "the-secret-history-ol4321141w", title: "The Secret History", depth: 0.7, inward: -1, wide: false },
+  { slug: "never-let-me-go-ol59038w", title: "Never Let Me Go", depth: 0.45, inward: -1, wide: true },
+  { slug: "tomorrow-and-tomorrow-and-tomorrow-ol26004554w", title: "Tomorrow, and Tomorrow, and Tomorrow", depth: 0.85, inward: 1, wide: false },
+  { slug: "educated-ol18139176w", title: "Educated", depth: 0.55, inward: 1, wide: true },
 ] as const;
+
+/** Phones show three books; the other two are not even fetched there (see `wide`). */
+const WIDE = "(min-width: 768px)";
+const EMPTY = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
 /**
  * Decorative: real catalogue covers (the landing's full-resolution files, served
@@ -45,15 +49,18 @@ export function AuthScene() {
               <span className="auth-book__depth">
                 <span className="auth-book__lift">
                   <picture>
-                    <source type="image/avif" srcSet={cover.widths.map((w) => `/covers-hq/${book.slug}-${w}.avif ${w}w`).join(", ")} sizes="(min-width: 768px) 18vw, 22vw" />
+                    <source type="image/avif" media={book.wide ? WIDE : undefined} srcSet={cover.widths.map((w) => `/covers-hq/${book.slug}-${w}.avif ${w}w`).join(", ")} sizes="(min-width: 768px) 18vw, 22vw" />
+                    {book.wide && <source type="image/webp" media={WIDE} srcSet={cover.widths.map((w) => `/covers-hq/${book.slug}-${w}.webp ${w}w`).join(", ")} sizes="18vw" />}
                     <img
-                      src={`/covers-hq/${book.slug}-320.webp`}
-                      srcSet={cover.widths.map((w) => `/covers-hq/${book.slug}-${w}.webp ${w}w`).join(", ")}
+                      src={book.wide ? EMPTY : `/covers-hq/${book.slug}-320.webp`}
+                      srcSet={book.wide ? undefined : cover.widths.map((w) => `/covers-hq/${book.slug}-${w}.webp ${w}w`).join(", ")}
                       sizes="(min-width: 768px) 18vw, 22vw"
                       width={320}
                       height={Math.round(320 / cover.ratio)}
                       alt=""
                       decoding="async"
+                      // Educated waits off-canvas in the sign-in scene: fetched when it is needed.
+                      loading={i === 4 ? "lazy" : undefined}
                       fetchPriority={i === 0 ? "auto" : "low"}
                     />
                   </picture>

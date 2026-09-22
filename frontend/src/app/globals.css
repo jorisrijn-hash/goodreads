@@ -1517,13 +1517,13 @@ summary:hover .link-draw,
   .auth-shell[data-variant="login"] .auth-book--1 { --x: 75%; --y: 20%; --w: 4.4rem; }
   .auth-shell[data-variant="login"] .auth-book--3 { --x: 40%; --y: 8%; --w: 4.4rem; }
   .auth-shell[data-variant="login"] .auth-book--2 { --o: 0; }
+  /* The same three books as the sign-in strip, now standing on the shelf. */
   .auth-shell[data-variant="signup"] { --bh: 16%; }
   .auth-shell[data-variant="signup"] .auth-scene__shelf { bottom: 16%; }
-  .auth-shell[data-variant="signup"] .auth-book--4 { --x: 42%; --y: 16%; --w: 3.9rem; }
-  .auth-shell[data-variant="signup"] .auth-book--2 { --x: 54%; --y: 16%; --w: 3.7rem; }
-  .auth-shell[data-variant="signup"] .auth-book--1 { --x: 66%; --y: 16%; --w: 4rem; }
-  .auth-shell[data-variant="signup"] .auth-book--0 { --x: 79%; --y: 16%; --w: 3.9rem; }
-  .auth-shell[data-variant="signup"] .auth-book--3 { --o: 0; }
+  .auth-shell[data-variant="signup"] .auth-book--3 { --x: 46%; --y: 16%; --w: 4rem; --rot: 0deg; }
+  .auth-shell[data-variant="signup"] .auth-book--1 { --x: 60%; --y: 16%; --w: 4.1rem; }
+  .auth-shell[data-variant="signup"] .auth-book--0 { --x: 75%; --y: 16%; --w: 4rem; }
+  .auth-shell[data-variant="signup"] :is(.auth-book--2, .auth-book--4) { --o: 0; }
   .auth-scene__fragment { left: 36%; width: 30%; top: 12%; height: 60%; }
   .auth-scene__leaf { display: none; }
 }
